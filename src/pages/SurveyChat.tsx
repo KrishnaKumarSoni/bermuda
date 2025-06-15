@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import SurveyChatbot from '../components/SurveyChatbot';
 import SurveyAuth from '../components/SurveyAuth';
 import { supabase } from '../lib/supabase';
@@ -13,6 +13,8 @@ export default function SurveyChat() {
   const [loading, setLoading] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
   const [error, setError] = useState('');
+  const [surveyData, setSurveyData] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     initializeAuth();
@@ -56,28 +58,88 @@ export default function SurveyChat() {
 
   const checkIfCreator = async (userId: string, surveyId: string) => {
     try {
-      const { data, error } = await supabase
+      // First, let's check if the survey exists at all (without user restriction)
+      const { data: surveyCheck, error: surveyCheckError } = await supabase
         .from('surveys')
-        .select('created_by, is_active')
+        .select('id, title, created_by, is_active')
         .eq('id', surveyId)
         .single();
 
-      if (error) {
-        console.error('Survey not found:', error);
-        setError('Survey not found or not accessible');
+      setDebugInfo({
+        surveyExists: !!surveyCheck,
+        surveyData: surveyCheck,
+        userId,
+        isTest,
+        error: surveyCheckError?.message
+      });
+
+      if (surveyCheckError) {
+        console.error('Survey check error:', surveyCheckError);
+        setError(`Survey not found: ${surveyCheckError.message}`);
         return;
       }
+
+      if (!surveyCheck) {
+        setError('Survey not found');
+        return;
+      }
+
+      setSurveyData(surveyCheck);
+
+      if (!surveyCheck.is_active) {
+        setError('This survey is not currently active');
+        return;
+      }
+
+      // Check if user is the creator
+      if (surveyCheck.created_by === userId) {
+        setIsCreator(true);
+      }
+
+      // For non-test mode, allow any authenticated user to access active surveys
+      if (!isTest) {
+        setIsCreator(true); // Allow access for regular survey participation
+      }
+
+    } catch (err) {
+      console.error('Error checking survey creator:', err);
+      setError('Failed to load survey');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Alternative method to check survey without user restrictions
+  const checkSurveyDirectly = async (surveyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('surveys')
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Direct survey check error:', error);
+        setError(`Survey access error: ${error.message}`);
+        return;
+      }
+
+      setSurveyData(data);
 
       if (!data.is_active) {
         setError('This survey is not currently active');
         return;
       }
 
-      if (data.created_by === userId) {
+      // For test mode, check if user is creator
+      if (isTest && user?.id && data.created_by === user.id) {
+        setIsCreator(true);
+      } else if (!isTest) {
+        // For regular mode, allow any authenticated user
         setIsCreator(true);
       }
+
     } catch (err) {
-      console.error('Error checking survey creator:', err);
+      console.error('Error in direct survey check:', err);
       setError('Failed to load survey');
     } finally {
       setLoading(false);
@@ -116,31 +178,88 @@ export default function SurveyChat() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Survey Error</h1>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => window.history.back()}
-            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
-          >
-            Go Back
-          </button>
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-lg p-8 border border-gray-200 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-red-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Survey Access Error</h1>
+            <p className="text-gray-600 mb-4">{error}</p>
+            
+            {debugInfo && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-4 text-left text-sm">
+                <h3 className="font-semibold mb-2">Debug Information:</h3>
+                <pre className="whitespace-pre-wrap text-xs">
+                  {JSON.stringify(debugInfo, null, 2)}
+                </pre>
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <button
+                onClick={() => checkSurveyDirectly(surveyId!)}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                Try Direct Access
+              </button>
+              <button
+                onClick={() => window.history.back()}
+                className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Show auth form only if:
-  // 1. User is not authenticated AND it's not test mode, OR
-  // 2. It's test mode but user is not authenticated or not the survey creator
-  const shouldShowAuth = !user || (isTest && !isCreator);
+  // Show auth form if user is not authenticated
+  const shouldShowAuth = !user;
   
   if (shouldShowAuth) {
     return <SurveyAuth surveyId={surveyId} onAuthenticated={handleAuthenticated} />;
   }
 
-  // For test mode: if user is authenticated and is the creator, proceed to chat
-  // For regular mode: if user is authenticated, proceed to chat
+  // If user is authenticated but not authorized for test mode
+  if (isTest && !isCreator) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-lg p-8 border border-gray-200 text-center">
+            <div className="w-16 h-16 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-yellow-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Test Mode Access</h1>
+            <p className="text-gray-600 mb-4">
+              Test mode is only available to the survey creator.
+            </p>
+            {surveyData && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-4 text-left text-sm">
+                <p><strong>Survey:</strong> {surveyData.title}</p>
+                <p><strong>Your ID:</strong> {user?.id}</p>
+                <p><strong>Creator ID:</strong> {surveyData.created_by}</p>
+              </div>
+            )}
+            <button
+              onClick={() => window.location.href = `/survey/${surveyId}/chat`}
+              className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 mb-2"
+            >
+              Access Regular Survey
+            </button>
+            <button
+              onClick={() => window.history.back()}
+              className="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto p-4">
@@ -155,6 +274,15 @@ export default function SurveyChat() {
         </div>
 
         <div className="bg-white rounded-lg shadow-sm">
+          {surveyData && (
+            <div className="p-4 border-b border-gray-200 bg-blue-50">
+              <h2 className="font-semibold text-gray-900">{surveyData.title}</h2>
+              <p className="text-sm text-gray-600">
+                {isTest ? 'Test Mode' : 'Survey Participation'} • 
+                Status: {surveyData.is_active ? 'Active' : 'Inactive'}
+              </p>
+            </div>
+          )}
           <SurveyChatbot surveyId={surveyId} user={user} isTest={isTest} />
         </div>
       </div>
