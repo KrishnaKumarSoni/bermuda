@@ -3,6 +3,7 @@ import { Send, Loader2, MessageCircle } from 'lucide-react';
 import { 
   SurveyAssistant, 
   createSurveySession, 
+  forceDeleteTestSessions,
   getSurveySession, 
   saveChatMessage, 
   getChatHistory, 
@@ -58,6 +59,14 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
       let session;
       try {
         console.log(isTest ? '🆕 Creating fresh test session...' : '🔍 Getting or creating session...');
+        
+        // For test mode, force clean up any existing sessions first
+        if (isTest) {
+          await forceDeleteTestSessions(surveyId, user.id);
+          // Wait a bit more to ensure cleanup is complete
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
         session = await createSurveySession(surveyId, user.id, user.email, isTest);
         console.log('✅ Session ready:', session.id);
       } catch (error: any) {

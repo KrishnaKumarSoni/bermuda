@@ -631,25 +631,43 @@ export async function createSurveySession(
   userEmail: string,
   isTest: boolean = false
 ): Promise<SurveySession> {
-  // For test mode, always try to get or create a fresh session
+  // For test mode, always ensure we have a clean slate
   if (isTest) {
-    // First, try to get existing test session
-    const { data: existingSession } = await supabase
-      .from('survey_chat_sessions')
-      .select('*')
-      .eq('survey_id', surveyId)
-      .eq('user_id', userId)
-      .eq('is_test', true)
-      .single();
+    console.log('🧹 Cleaning up any existing test sessions...');
     
-    if (existingSession) {
-      console.log('Found existing test session, deleting it...');
-      // Delete the existing session and all related data
-      await supabase
-        .from('survey_chat_sessions')
-        .delete()
-        .eq('id', existingSession.id);
+    // Delete any existing test sessions for this user and survey (with retries)
+    let deleteAttempts = 0;
+    const maxDeleteAttempts = 3;
+    
+    while (deleteAttempts < maxDeleteAttempts) {
+      try {
+        const { error: deleteError } = await supabase
+          .from('survey_chat_sessions')
+          .delete()
+          .eq('survey_id', surveyId)
+          .eq('user_id', userId)
+          .eq('is_test', true);
+        
+        if (deleteError) {
+          console.warn(`Delete attempt ${deleteAttempts + 1} failed:`, deleteError);
+          if (deleteAttempts === maxDeleteAttempts - 1) {
+            console.error('Failed to delete existing test sessions after retries');
+          }
+        } else {
+          console.log('✅ Existing test sessions cleaned up successfully');
+        }
+        break;
+      } catch (error) {
+        console.warn(`Delete attempt ${deleteAttempts + 1} error:`, error);
+        deleteAttempts++;
+        if (deleteAttempts < maxDeleteAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 200 * deleteAttempts));
+        }
+      }
     }
+    
+    // Wait a bit to ensure deletion is processed
+    await new Promise(resolve => setTimeout(resolve, 300));
   } else {
     // For regular mode, check for existing session first
     const existingSession = await getSurveySession(surveyId, userId);
@@ -658,14 +676,14 @@ export async function createSurveySession(
     }
   }
 
-  // Create new session with retry logic
+  // Create new session with improved retry logic
   let attempts = 0;
-  const maxAttempts = 3;
+  const maxAttempts = 5;
   
   while (attempts < maxAttempts) {
     try {
-      const { data, error } = await supabase
-        .from('survey_chat_sessions')
+      console.log(`🔄 Creating session attempt ${attempts + 1}/${maxAttempts}...`);
+      
         .insert({
           survey_id: surveyId,
           user_id: userId,
@@ -678,26 +696,99 @@ export async function createSurveySession(
         .single();
 
       if (error) {
-        if (error.code === '23505' && attempts < maxAttempts - 1) {
-          // Unique constraint violation, wait a bit and try again
-          console.log(`Attempt ${attempts + 1}: Unique constraint violation, retrying...`);
-          await new Promise(resolve => setTimeout(resolve, 100 * (attempts + 1)));
-          attempts++;
-          continue;
+        console.error(`Attempt ${attempts + 1} failed:`, error);
+        
+        if (error.code === '23505') {
+          // Unique constraint violation
+          console.log('Unique constraint violation detected');
+          
+          if (isTest && attempts < maxAttempts - 1) {
+            // For test mode, try to delete and retry
+            console.log('Attempting to clean up conflicting session...');
+            await supabase
+              .from('survey_chat_sessions')
+              .delete()
+              .eq('survey_id', surveyId)
+              .eq('user_id', userId)
+              .eq('is_test', true);
+            
+            await new Promise(resolve => setTimeout(resolve, 500 * (attempts + 1)));
+            attempts++;
+            continue;
+          } else if (!isTest) {
+            // For regular mode, try to get the existing session
+            const existingSession = await getSurveySession(surveyId, userId);
+            if (existingSession) {
+              console.log('Found existing regular session, returning it');
+              return existingSession;
+            }
+          }
         }
-        throw error;
+        
+        if (attempts === maxAttempts - 1) {
+          throw error;
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 300 * (attempts + 1)));
+        attempts++;
+        continue;
       }
 
+      console.log('✅ Session created successfully:', data.id);
       return data;
+      
     } catch (error: any) {
+      console.error(`Attempt ${attempts + 1} exception:`, error);
+      
       if (attempts === maxAttempts - 1) {
         throw new Error(`Failed to create session after ${maxAttempts} attempts: ${error.message}`);
       }
+      
+      await new Promise(resolve => setTimeout(resolve, 300 * (attempts + 1)));
       attempts++;
     }
   }
 
   throw new Error('Failed to create session: Maximum attempts exceeded');
+}
+
+// Helper function to force delete test sessions
+export async function forceDeleteTestSessions(surveyId: string, userId: string): Promise<void> {
+  try {
+    // First delete all related data
+    const { data: sessions } = await supabase
+      .from('survey_chat_sessions')
+      .select('id')
+      .select('*')
+      .eq('survey_id', surveyId)
+      .eq('user_id', userId)
+      .eq('is_test', true);
+    
+    if (sessions && sessions.length > 0) {
+      const sessionIds = sessions.map(s => s.id);
+      
+      // Delete messages first
+      await supabase
+        .from('survey_chat_messages')
+        .delete()
+        .in('session_id', sessionIds);
+      
+      // Delete responses
+      await supabase
+        .from('survey_question_responses')
+        .delete()
+        .in('session_id', sessionIds);
+      
+      // Finally delete sessions
+      await supabase
+        .from('survey_chat_sessions')
+        .delete()
+        .in('id', sessionIds);
+    }
+  } catch (error) {
+    console.error('Error force deleting test sessions:', error);
+  }
 }
 
 export async function getSurveySession(
