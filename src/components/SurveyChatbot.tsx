@@ -9,16 +9,16 @@ import {
   getSurveyForChat,
   ChatMessage 
 } from '../lib/surveyAssistant';
-import { generateFingerprint } from '../lib/fingerprint';
 import { supabase } from '../lib/supabase';
 
 interface SurveyChatbotProps {
   surveyId: string;
+  user: any;
   isTest?: boolean;
   onClose?: () => void;
 }
 
-export default function SurveyChatbot({ surveyId, isTest = false, onClose }: SurveyChatbotProps) {
+export default function SurveyChatbot({ surveyId, user, isTest = false, onClose }: SurveyChatbotProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -47,13 +47,14 @@ export default function SurveyChatbot({ surveyId, isTest = false, onClose }: Sur
       setInitializing(true);
       setError('');
 
-      // Generate browser fingerprint
-      const fingerprint = generateFingerprint();
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
 
       // Get or create session
-      let session = await getSurveySession(surveyId, fingerprint);
+      let session = await getSurveySession(surveyId, user.id);
       if (!session) {
-        session = await createSurveySession(surveyId, fingerprint, isTest);
+        session = await createSurveySession(surveyId, user.id, user.email, isTest);
       }
       setSessionId(session.id);
 

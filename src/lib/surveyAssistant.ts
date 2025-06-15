@@ -9,7 +9,8 @@ const openai = new OpenAI({
 export interface SurveySession {
   id: string;
   survey_id: string;
-  respondent_fingerprint: string;
+  user_id: string;
+  respondent_email: string;
   assistant_id?: string;
   thread_id?: string;
   is_test: boolean;
@@ -494,18 +495,20 @@ Start by introducing yourself and the survey purpose, then begin asking question
 // Survey session management functions
 export async function createSurveySession(
   surveyId: string, 
-  fingerprint: string, 
+  userId: string,
+  userEmail: string,
   isTest: boolean = false
 ): Promise<SurveySession> {
   const { data, error } = await supabase
     .from('survey_chat_sessions')
     .upsert({
       survey_id: surveyId,
-      respondent_fingerprint: fingerprint,
+      user_id: userId,
+      respondent_email: userEmail,
       is_test: isTest,
       status: 'active'
     }, {
-      onConflict: 'survey_id,respondent_fingerprint'
+      onConflict: 'survey_id,user_id'
     })
     .select()
     .single();
@@ -519,13 +522,13 @@ export async function createSurveySession(
 
 export async function getSurveySession(
   surveyId: string, 
-  fingerprint: string
+  userId: string
 ): Promise<SurveySession | null> {
   const { data, error } = await supabase
     .from('survey_chat_sessions')
     .select('*')
     .eq('survey_id', surveyId)
-    .eq('respondent_fingerprint', fingerprint)
+    .eq('user_id', userId)
     .single();
 
   if (error && error.code !== 'PGRST116') {
