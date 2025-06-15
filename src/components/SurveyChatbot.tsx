@@ -54,7 +54,19 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
       // Get or create session
       let session = await getSurveySession(surveyId, user.id);
       if (!session) {
-        session = await createSurveySession(surveyId, user.id, user.email, isTest);
+        try {
+          session = await createSurveySession(surveyId, user.id, user.email, isTest);
+        } catch (error: any) {
+          // If session creation fails due to existing session, try to get it
+          if (error.message.includes('Failed to create session')) {
+            session = await getSurveySession(surveyId, user.id);
+            if (!session) {
+              throw error;
+            }
+          } else {
+            throw error;
+          }
+        }
       }
       setSessionId(session.id);
 
