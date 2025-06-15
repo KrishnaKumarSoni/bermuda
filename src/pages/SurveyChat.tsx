@@ -11,12 +11,19 @@ export default function SurveyChat() {
   const isTest = new URLSearchParams(window.location.search).get('test') === 'true';
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isCreator, setIsCreator] = useState(false);
 
   useEffect(() => {
     // Check if user is already authenticated
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      setLoading(false);
+      
+      // If it's test mode and user is authenticated, check if they're the survey creator
+      if (isTest && session?.user && surveyId) {
+        checkIfCreator(session.user.id, surveyId);
+      } else {
+        setLoading(false);
+      }
     });
 
     // Listen for auth changes
@@ -24,11 +31,34 @@ export default function SurveyChat() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      
+      // If it's test mode and user is authenticated, check if they're the survey creator
+      if (isTest && session?.user && surveyId) {
+        checkIfCreator(session.user.id, surveyId);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  const checkIfCreator = async (userId: string, surveyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('surveys')
+        .select('created_by')
+        .eq('id', surveyId)
+        .eq('created_by', userId)
+        .single();
+
+      if (!error && data) {
+        setIsCreator(true);
+      }
+    } catch (err) {
+      console.error('Error checking survey creator:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleAuthenticated = (authenticatedUser: any) => {
     setUser(authenticatedUser);
   };
@@ -57,7 +87,8 @@ export default function SurveyChat() {
     );
   }
 
-  if (!user) {
+  // Show auth form only if user is not authenticated, or if it's not test mode, or if user is not the creator
+  if (!user || (!isTest && !user) || (isTest && !isCreator && user)) {
     return <SurveyAuth surveyId={surveyId} onAuthenticated={handleAuthenticated} />;
   }
 
