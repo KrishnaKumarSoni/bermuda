@@ -80,7 +80,7 @@ export default function Layout({ children, user }: LayoutProps) {
       {/* Main content */}
       <div className="flex-1 lg:ml-0">
         {/* Top bar */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 lg:hidden">
+        <div className="fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200 px-6 py-4 lg:hidden">
           <div className="flex items-center justify-between">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -100,7 +100,7 @@ export default function Layout({ children, user }: LayoutProps) {
         </div>
 
         {/* Page content */}
-        <main className="flex-1">
+        <main className="flex-1 lg:pt-0 pt-20">
           {children}
         </main>
       </div>
