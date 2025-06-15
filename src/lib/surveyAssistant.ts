@@ -652,22 +652,49 @@ export async function createSurveySession(
     }
   }
 
-  // Create new session with upsert to handle any remaining duplicates
-  const { data, error } = await supabase
+  // Create new session - try insert first, then handle conflicts manually
+  let data, error;
+  
+  // First attempt: direct insert
+  const insertResult = await supabase
     .from('survey_chat_sessions')
-    .upsert({
+    .insert({
       survey_id: surveyId,
       user_id: userId,
       respondent_email: userEmail,
       is_test: isTest,
       status: 'active',
       started_at: new Date().toISOString()
-    }, {
-      onConflict: 'survey_id,user_id',
-      ignoreDuplicates: false
     })
     .select()
     .single();
+  
+  if (insertResult.error) {
+    // If insert failed due to conflict, try to get existing session
+    if (insertResult.error.code === '23505') { // unique_violation
+      console.log('Session already exists, fetching existing session...');
+      const existingResult = await supabase
+        .from('survey_chat_sessions')
+        .select('*')
+        .eq('survey_id', surveyId)
+        .eq('user_id', userId)
+        .eq('is_test', isTest)
+        .single();
+      
+      if (existingResult.error) {
+        throw new Error(`Failed to get existing session: ${existingResult.error.message}`);
+      }
+      
+      data = existingResult.data;
+      error = null;
+    } else {
+      data = null;
+      error = insertResult.error;
+    }
+  } else {
+    data = insertResult.data;
+    error = null;
+  }
 
   if (error) {
     throw new Error(`Failed to create session: ${error.message}`);
