@@ -26,6 +26,7 @@ export default function SurveyAuth({ surveyId, onAuthenticated }: SurveyAuthProp
         email: email.trim(),
         options: {
           shouldCreateUser: true,
+          emailRedirectTo: undefined, // Disable magic link
         }
       });
 
@@ -73,6 +74,7 @@ export default function SurveyAuth({ surveyId, onAuthenticated }: SurveyAuthProp
         email,
         options: {
           shouldCreateUser: true,
+          emailRedirectTo: undefined, // Disable magic link
         }
       });
 

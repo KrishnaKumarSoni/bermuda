@@ -87,8 +87,11 @@ export default function SurveyChat() {
     );
   }
 
-  // Show auth form only if user is not authenticated, or if it's not test mode, or if user is not the creator
-  if (!user || (!isTest && !user) || (isTest && !isCreator && user)) {
+  // Show auth form only if:
+  // 1. User is not authenticated, OR
+  // 2. It's NOT test mode (regular survey access), OR  
+  // 3. It's test mode but user is not the survey creator
+  if (!user || (!isTest) || (isTest && !isCreator)) {
     return <SurveyAuth surveyId={surveyId} onAuthenticated={handleAuthenticated} />;
   }
 
