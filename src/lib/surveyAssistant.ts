@@ -631,76 +631,73 @@ export async function createSurveySession(
   userEmail: string,
   isTest: boolean = false
 ): Promise<SurveySession> {
+  // For test mode, always try to get or create a fresh session
   if (isTest) {
-    // For test mode, always create a fresh session
-    // First, delete any existing test sessions for this user and survey
-    const { error: deleteError } = await supabase
+    // First, try to get existing test session
+    const { data: existingSession } = await supabase
       .from('survey_chat_sessions')
-      .delete()
+      .select('*')
       .eq('survey_id', surveyId)
       .eq('user_id', userId)
-      .eq('is_test', true);
+      .eq('is_test', true)
+      .single();
     
-    if (deleteError) {
-      console.warn('Warning: Failed to delete existing test sessions:', deleteError.message);
+    if (existingSession) {
+      console.log('Found existing test session, deleting it...');
+      // Delete the existing session and all related data
+      await supabase
+        .from('survey_chat_sessions')
+        .delete()
+        .eq('id', existingSession.id);
     }
   } else {
-    // For regular mode, check for existing session
+    // For regular mode, check for existing session first
     const existingSession = await getSurveySession(surveyId, userId);
     if (existingSession) {
       return existingSession;
     }
   }
 
-  // Create new session - try insert first, then handle conflicts manually
-  let data, error;
+  // Create new session with retry logic
+  let attempts = 0;
+  const maxAttempts = 3;
   
-  // First attempt: direct insert
-  const insertResult = await supabase
-    .from('survey_chat_sessions')
-    .insert({
-      survey_id: surveyId,
-      user_id: userId,
-      respondent_email: userEmail,
-      is_test: isTest,
-      status: 'active',
-      started_at: new Date().toISOString()
-    })
-    .select()
-    .single();
-  
-  if (insertResult.error) {
-    // If insert failed due to conflict, try to get existing session
-    if (insertResult.error.code === '23505') { // unique_violation
-      console.log('Session already exists, fetching existing session...');
-      const existingResult = await supabase
+  while (attempts < maxAttempts) {
+    try {
+      const { data, error } = await supabase
         .from('survey_chat_sessions')
-        .select('*')
-        .eq('survey_id', surveyId)
-        .eq('user_id', userId)
-        .eq('is_test', isTest)
+        .insert({
+          survey_id: surveyId,
+          user_id: userId,
+          respondent_email: userEmail,
+          is_test: isTest,
+          status: 'active',
+          started_at: new Date().toISOString()
+        })
+        .select()
         .single();
-      
-      if (existingResult.error) {
-        throw new Error(`Failed to get existing session: ${existingResult.error.message}`);
+
+      if (error) {
+        if (error.code === '23505' && attempts < maxAttempts - 1) {
+          // Unique constraint violation, wait a bit and try again
+          console.log(`Attempt ${attempts + 1}: Unique constraint violation, retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 100 * (attempts + 1)));
+          attempts++;
+          continue;
+        }
+        throw error;
       }
-      
-      data = existingResult.data;
-      error = null;
-    } else {
-      data = null;
-      error = insertResult.error;
+
+      return data;
+    } catch (error: any) {
+      if (attempts === maxAttempts - 1) {
+        throw new Error(`Failed to create session after ${maxAttempts} attempts: ${error.message}`);
+      }
+      attempts++;
     }
-  } else {
-    data = insertResult.data;
-    error = null;
   }
 
-  if (error) {
-    throw new Error(`Failed to create session: ${error.message}`);
-  }
-
-  return data;
+  throw new Error('Failed to create session: Maximum attempts exceeded');
 }
 
 export async function getSurveySession(
