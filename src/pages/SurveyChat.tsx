@@ -14,32 +14,44 @@ export default function SurveyChat() {
   const [isCreator, setIsCreator] = useState(false);
 
   useEffect(() => {
-    // Check if user is already authenticated
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    initializeAuth();
+  }, [surveyId, isTest]);
+
+  const initializeAuth = async () => {
+    try {
+      // Check if user is already authenticated
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
       
       // If it's test mode and user is authenticated, check if they're the survey creator
       if (isTest && session?.user && surveyId) {
-        checkIfCreator(session.user.id, surveyId);
+        await checkIfCreator(session.user.id, surveyId);
       } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error initializing auth:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
+      
+      // If it's test mode and user is authenticated, check if they're the survey creator
+      if (isTest && session?.user && surveyId) {
+        await checkIfCreator(session.user.id, surveyId);
+      } else if (!isTest || !session?.user) {
         setLoading(false);
       }
     });
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      
-      // If it's test mode and user is authenticated, check if they're the survey creator
-      if (isTest && session?.user && surveyId) {
-        checkIfCreator(session.user.id, surveyId);
-      }
-    });
-
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isTest, surveyId]);
 
   const checkIfCreator = async (userId: string, surveyId: string) => {
     try {
@@ -59,8 +71,10 @@ export default function SurveyChat() {
       setLoading(false);
     }
   };
+
   const handleAuthenticated = (authenticatedUser: any) => {
     setUser(authenticatedUser);
+    setLoading(false);
   };
 
   if (!surveyId) {
@@ -88,10 +102,22 @@ export default function SurveyChat() {
   }
 
   // Show auth form only if:
-  // 1. User is not authenticated, OR
-  // 2. It's NOT test mode (regular survey access), OR  
-  // 3. It's test mode but user is not the survey creator
-  if (!user || (!isTest) || (isTest && !isCreator)) {
+  // 1. User is not authenticated AND it's not test mode, OR
+  // 2. It's test mode but user is not authenticated or not the survey creator
+  const shouldShowAuth = !user && (!isTest || (isTest && !isCreator));
+  
+  if (shouldShowAuth) {
+    return <SurveyAuth surveyId={surveyId} onAuthenticated={handleAuthenticated} />;
+  }
+
+  // For test mode: if user is authenticated and is the creator, proceed to chat
+  // For regular mode: if user is authenticated, proceed to chat
+  const canAccessChat = user && (
+    !isTest || // Regular survey access
+    (isTest && isCreator) // Test mode and user is creator
+  );
+
+  if (!canAccessChat) {
     return <SurveyAuth surveyId={surveyId} onAuthenticated={handleAuthenticated} />;
   }
 
