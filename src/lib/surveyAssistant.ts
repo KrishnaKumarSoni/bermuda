@@ -230,29 +230,36 @@ Start by introducing yourself and the survey purpose, then begin asking question
       throw new Error('Assistant not initialized');
     }
 
-    console.log('🤖 Sending message to assistant:', { threadId, message, sessionId, assistantId: this.assistantId });
+    console.log('🤖 [SEND MESSAGE] Starting:', { 
+      threadId, 
+      message: message.substring(0, 50) + '...', 
+      sessionId, 
+      assistantId: this.assistantId 
+    });
 
     // Add user message to thread
     try {
+      console.log('📝 [ADD MESSAGE] Adding user message to thread...');
       await openai.beta.threads.messages.create(threadId, {
         role: "user",
         content: message
       });
-      console.log('✅ User message added to thread');
+      console.log('✅ [ADD MESSAGE] User message added successfully');
     } catch (error) {
-      console.error('❌ Failed to add user message to thread:', error);
+      console.error('❌ [ADD MESSAGE] Failed:', error);
       throw new Error(`Failed to add message to thread: ${error}`);
     }
 
     // Run the assistant
     let run;
     try {
+      console.log('🏃 [CREATE RUN] Creating assistant run...');
       run = await openai.beta.threads.runs.create(threadId, {
         assistant_id: this.assistantId
       });
-      console.log('✅ Assistant run created:', run.id);
+      console.log('✅ [CREATE RUN] Run created:', run.id, 'Status:', run.status);
     } catch (error) {
-      console.error('❌ Failed to create assistant run:', error);
+      console.error('❌ [CREATE RUN] Failed:', error);
       throw new Error(`Failed to create assistant run: ${error}`);
     }
 
@@ -261,50 +268,55 @@ Start by introducing yourself and the survey purpose, then begin asking question
     let attempts = 0;
     const maxAttempts = 60; // 60 seconds timeout
     
+    console.log('⏳ [WAIT LOOP] Starting status check loop...');
     while (attempts < maxAttempts) {
       try {
         runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
-        console.log(`🔄 Run status (attempt ${attempts + 1}):`, runStatus.status);
+        console.log(`🔄 [STATUS CHECK] Attempt ${attempts + 1}/${maxAttempts}: ${runStatus.status}`);
+        
+        if (runStatus.last_error) {
+          console.error('❌ [STATUS CHECK] Run has error:', runStatus.last_error);
+        }
       } catch (error) {
-        console.error('❌ Failed to retrieve run status:', error);
+        console.error('❌ [STATUS CHECK] Failed to retrieve status:', error);
         throw new Error(`Failed to retrieve run status: ${error}`);
       }
 
       if (runStatus.status === 'completed') {
-        console.log('✅ Assistant run completed');
+        console.log('✅ [COMPLETED] Assistant run completed successfully');
         break;
       }
 
       if (runStatus.status === 'failed') {
-        console.error('❌ Assistant run failed:', runStatus.last_error);
+        console.error('❌ [FAILED] Assistant run failed:', runStatus.last_error);
         throw new Error(`Assistant run failed: ${runStatus.last_error?.message || 'Unknown error'}`);
       }
 
       if (runStatus.status === 'cancelled') {
-        console.error('❌ Assistant run was cancelled');
+        console.error('❌ [CANCELLED] Assistant run was cancelled');
         throw new Error('Assistant run was cancelled');
       }
 
       if (runStatus.status === 'expired') {
-        console.error('❌ Assistant run expired');
+        console.error('❌ [EXPIRED] Assistant run expired');
         throw new Error('Assistant run expired');
       }
 
       if (runStatus.status === 'requires_action' && runStatus.required_action?.type === 'submit_tool_outputs') {
-        console.log('🔧 Function calls required:', runStatus.required_action.submit_tool_outputs.tool_calls.length);
+        console.log('🔧 [FUNCTION CALLS] Required:', runStatus.required_action.submit_tool_outputs.tool_calls.length);
         const toolOutputs = [];
         
         for (const toolCall of runStatus.required_action.submit_tool_outputs.tool_calls) {
-          console.log('🔧 Handling function call:', toolCall.function.name);
+          console.log('🔧 [FUNCTION CALL] Handling:', toolCall.function.name, 'Args:', toolCall.function.arguments);
           try {
             const output = await this.handleFunctionCall(toolCall, sessionId);
-            console.log('✅ Function call result:', output);
+            console.log('✅ [FUNCTION RESULT] Success:', output);
             toolOutputs.push({
               tool_call_id: toolCall.id,
               output: JSON.stringify(output)
             });
           } catch (error) {
-            console.error('❌ Function call failed:', error);
+            console.error('❌ [FUNCTION ERROR] Failed:', error);
             toolOutputs.push({
               tool_call_id: toolCall.id,
               output: JSON.stringify({ success: false, error: error.message })
@@ -313,46 +325,56 @@ Start by introducing yourself and the survey purpose, then begin asking question
         }
 
         try {
+          console.log('📤 [SUBMIT OUTPUTS] Submitting tool outputs...');
           await openai.beta.threads.runs.submitToolOutputs(threadId, run.id, {
             tool_outputs: toolOutputs
           });
-          console.log('✅ Tool outputs submitted');
+          console.log('✅ [SUBMIT OUTPUTS] Tool outputs submitted successfully');
         } catch (error) {
-          console.error('❌ Failed to submit tool outputs:', error);
+          console.error('❌ [SUBMIT OUTPUTS] Failed:', error);
           throw new Error(`Failed to submit tool outputs: ${error}`);
         }
       }
 
       if (runStatus.status === 'running' || runStatus.status === 'requires_action') {
+        console.log('⏳ [WAITING] Status is', runStatus.status, '- waiting 1 second...');
         await new Promise(resolve => setTimeout(resolve, 1000));
         attempts++;
       } else {
+        console.log('🛑 [UNEXPECTED STATUS] Breaking loop due to status:', runStatus.status);
         break;
       }
     }
 
     if (attempts >= maxAttempts) {
-      console.error('❌ Assistant run timed out');
+      console.error('❌ [TIMEOUT] Assistant run timed out after', maxAttempts, 'seconds');
       throw new Error('Assistant response timed out after 60 seconds');
     }
 
     // Get the assistant's response
     try {
+      console.log('📨 [GET MESSAGES] Retrieving messages from thread...');
       const messages = await openai.beta.threads.messages.list(threadId);
-      console.log('📨 Retrieved messages:', messages.data.length);
+      console.log('📨 [GET MESSAGES] Retrieved', messages.data.length, 'messages');
+      
+      // Log all messages for debugging
+      messages.data.forEach((msg, index) => {
+        console.log(`📨 [MESSAGE ${index}] Role: ${msg.role}, Content type: ${msg.content[0]?.type}, Content:`, 
+          msg.content[0]?.type === 'text' ? msg.content[0].text.value.substring(0, 100) + '...' : msg.content[0]);
+      });
       
       const lastMessage = messages.data[0];
       
       if (lastMessage && lastMessage.role === 'assistant' && lastMessage.content[0]?.type === 'text') {
         const response = lastMessage.content[0].text.value;
-        console.log('✅ Assistant response received:', response.substring(0, 100) + '...');
+        console.log('✅ [SUCCESS] Assistant response received:', response.substring(0, 100) + '...');
         return response;
       } else {
-        console.error('❌ No valid assistant response found');
+        console.error('❌ [NO RESPONSE] No valid assistant response found. Last message:', lastMessage);
         return "I apologize, but I'm having trouble processing your request right now. Could you please try again?";
       }
     } catch (error) {
-      console.error('❌ Failed to retrieve assistant response:', error);
+      console.error('❌ [GET MESSAGES ERROR] Failed to retrieve assistant response:', error);
       return "I apologize, but I encountered an issue retrieving my response. Could you please try again?";
     }
   }
@@ -360,59 +382,50 @@ Start by introducing yourself and the survey purpose, then begin asking question
   private async handleFunctionCall(toolCall: any, sessionId: string): Promise<any> {
     try {
       const { name, arguments: args } = toolCall.function;
-      console.log('🔧 [FUNCTION CALL] Name:', name, 'Args:', args);
+      console.log('🔧 Function call:', name, 'with args:', args);
       
       let parsedArgs;
       try {
         parsedArgs = JSON.parse(args);
-        console.log('✅ [PARSE ARGS] Successfully parsed arguments:', parsedArgs);
       } catch (error) {
-        console.error('❌ [PARSE ARGS] Failed to parse function arguments:', error);
+        console.error('❌ Failed to parse function arguments:', error);
         return { success: false, error: 'Invalid function arguments' };
       }
 
       switch (name) {
         case 'classify_answer':
-          console.log('🔍 [CLASSIFY] Calling classify_answer...');
           return await this.classifyAnswer(parsedArgs);
         
         case 'validate_response':
-          console.log('✅ [VALIDATE] Calling validate_response...');
           return await this.validateResponse(parsedArgs);
         
         case 'save_response':
-          console.log('💾 [SAVE] Calling save_response...');
           return await this.saveResponse({ ...parsedArgs, session_id: sessionId });
         
         case 'end_survey':
-          console.log('🏁 [END] Calling end_survey...');
           return await this.endSurvey({ ...parsedArgs, session_id: sessionId });
         
         default:
-          console.error('❌ [UNKNOWN FUNCTION] Unknown function:', name);
+          console.error('❌ Unknown function:', name);
           return { success: false, error: 'Unknown function' };
       }
     } catch (error) {
-      console.error('❌ [FUNCTION CALL ERROR] Error:', error);
+      console.error('❌ Function call error:', error);
       return { success: false, error: error.message };
     }
   }
 
   private async classifyAnswer(args: any): Promise<any> {
     try {
-      console.log('🔍 [CLASSIFY] Starting classification:', args);
+      console.log('🔍 Classifying answer:', args);
       const { question_type, user_response, options, rating_start, rating_end } = args;
 
       switch (question_type) {
         case 'mcq':
-          if (!options) {
-            console.error('❌ [CLASSIFY MCQ] No options provided');
-            return { success: false, error: 'No options provided' };
-          }
+          if (!options) return { success: false, error: 'No options provided' };
           
           // Use AI to match user response to closest option
           try {
-            console.log('🤖 [CLASSIFY MCQ] Using AI to match response to options...');
             const matchResponse = await openai.chat.completions.create({
               model: 'gpt-3.5-turbo',
               messages: [{
@@ -423,10 +436,8 @@ Start by introducing yourself and the survey purpose, then begin asking question
             });
             
             const match = matchResponse.choices[0]?.message?.content?.trim();
-            console.log('🤖 [CLASSIFY MCQ] AI match result:', match);
             const isValidMatch = match && match !== 'NO_MATCH' && options.includes(match);
             
-            console.log('✅ [CLASSIFY MCQ] Classification result:', { match, isValidMatch });
             return {
               success: true,
               classified_answer: {
@@ -437,7 +448,7 @@ Start by introducing yourself and the survey purpose, then begin asking question
               is_valid: isValidMatch
             };
           } catch (error) {
-            console.error('❌ [CLASSIFY MCQ] AI matching failed, using fallback:', error);
+            console.error('❌ AI matching failed, using fallback:', error);
             // Fallback to simple string matching
             const lowerResponse = user_response.toLowerCase();
             const matchedOption = options.find(option => 
@@ -445,7 +456,6 @@ Start by introducing yourself and the survey purpose, then begin asking question
               option.toLowerCase().includes(lowerResponse)
             );
             
-            console.log('🔄 [CLASSIFY MCQ] Fallback result:', matchedOption);
             return {
               success: true,
               classified_answer: {
@@ -459,7 +469,6 @@ Start by introducing yourself and the survey purpose, then begin asking question
 
         case 'rating':
           const numericValue = this.extractNumericRating(user_response, rating_start, rating_end);
-          console.log('🔢 [CLASSIFY RATING] Extracted value:', numericValue);
           return {
             success: true,
             classified_answer: {
@@ -472,7 +481,6 @@ Start by introducing yourself and the survey purpose, then begin asking question
 
         case 'yes_no':
           const booleanValue = this.extractBooleanResponse(user_response);
-          console.log('✅❌ [CLASSIFY YES_NO] Extracted value:', booleanValue);
           return {
             success: true,
             classified_answer: {
@@ -484,7 +492,6 @@ Start by introducing yourself and the survey purpose, then begin asking question
           };
 
         case 'text':
-          console.log('📝 [CLASSIFY TEXT] Processing text response');
           return {
             success: true,
             classified_answer: {
@@ -496,11 +503,10 @@ Start by introducing yourself and the survey purpose, then begin asking question
           };
 
         default:
-          console.error('❌ [CLASSIFY] Unknown question type:', question_type);
           return { success: false, error: 'Unknown question type' };
       }
     } catch (error) {
-      console.error('❌ [CLASSIFY ERROR] Classification error:', error);
+      console.error('❌ Classification error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -613,46 +619,6 @@ Start by introducing yourself and the survey purpose, then begin asking question
       console.error('❌ Error in endSurvey:', error);
       return { success: false, error: 'Failed to end survey' };
     }
-  }
-
-  private extractNumericRating(response: string, min: number, max: number): number | null {
-    // Extract numbers from response
-    const numbers = response.match(/\d+/g);
-    if (numbers) {
-      const num = parseInt(numbers[0]);
-      if (num >= min && num <= max) return num;
-    }
-
-    // Handle word-based ratings
-    const lowerResponse = response.toLowerCase();
-    const range = max - min;
-    
-    if (lowerResponse.includes('excellent') || lowerResponse.includes('perfect')) return max;
-    if (lowerResponse.includes('very good') || lowerResponse.includes('great')) return Math.round(min + range * 0.8);
-    if (lowerResponse.includes('good') || lowerResponse.includes('satisfied')) return Math.round(min + range * 0.6);
-    if (lowerResponse.includes('okay') || lowerResponse.includes('average')) return Math.round(min + range * 0.5);
-    if (lowerResponse.includes('poor') || lowerResponse.includes('bad')) return Math.round(min + range * 0.2);
-    if (lowerResponse.includes('terrible') || lowerResponse.includes('awful')) return min;
-
-    return null;
-  }
-
-  private extractBooleanResponse(response: string): boolean | null {
-    const lowerResponse = response.toLowerCase();
-    
-    if (lowerResponse.includes('yes') || lowerResponse.includes('yeah') || 
-        lowerResponse.includes('yep') || lowerResponse.includes('true') ||
-        lowerResponse.includes('correct') || lowerResponse.includes('right')) {
-      return true;
-    }
-    
-    if (lowerResponse.includes('no') || lowerResponse.includes('nope') || 
-        lowerResponse.includes('false') || lowerResponse.includes('wrong') ||
-        lowerResponse.includes('incorrect')) {
-      return false;
-    }
-    
-    return null;
   }
 }
 
