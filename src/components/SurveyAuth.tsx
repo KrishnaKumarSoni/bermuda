@@ -19,7 +19,7 @@ export default function SurveyAuth({ surveyId, onAuthenticated }: SurveyAuthProp
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/survey/${surveyId}/chat${window.location.search}`,
+          redirectTo: `https://remarkable-meerkat-0de532.netlify.app/survey/${surveyId}/chat${window.location.search}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
