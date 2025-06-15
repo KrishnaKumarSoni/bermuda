@@ -16,10 +16,14 @@ export default function SurveyAuth({ surveyId, onAuthenticated }: SurveyAuthProp
     setError('');
 
     try {
+      // Get the current URL to construct the redirect
+      const currentUrl = window.location.origin;
+      const redirectUrl = `${currentUrl}/survey/${surveyId}/chat${window.location.search}`;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `https://remarkable-meerkat-0de532.netlify.app/survey/${surveyId}/chat${window.location.search}`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -89,27 +93,19 @@ export default function SurveyAuth({ surveyId, onAuthenticated }: SurveyAuthProp
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">or</span>
+                <span className="px-2 bg-white text-gray-500">Why do I need to sign in?</span>
               </div>
             </div>
 
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <>
-                  <span>Sign in to Continue</span>
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Authentication Required</p>
+                  <p>We require Google sign-in to ensure survey integrity and prevent duplicate responses.</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="mt-6 text-center">
