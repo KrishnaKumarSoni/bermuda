@@ -55,40 +55,36 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
 
       console.log('👤 User authenticated:', user.id, user.email);
 
-      // Get or create session
-      let session = await getSurveySession(surveyId, user.id);
-      console.log('📋 Existing session:', session?.id);
-      
-      if (!session) {
-        try {
-          console.log('🆕 Creating new session...');
-          session = await createSurveySession(surveyId, user.id, user.email, isTest);
-          console.log('✅ Session created:', session.id);
-        } catch (error: any) {
-          console.error('❌ Session creation failed:', error);
-          // If session creation fails due to existing session, try to get it
-          if (error.message.includes('Failed to create session')) {
-            session = await getSurveySession(surveyId, user.id);
-            if (!session) {
-              throw error;
-            }
-            console.log('✅ Retrieved existing session:', session.id);
-          } else {
+      // Create session (fresh for test mode, existing for regular mode)
+      let session;
+      try {
+        console.log(isTest ? '🆕 Creating fresh test session...' : '🔍 Getting or creating session...');
+        session = await createSurveySession(surveyId, user.id, user.email, isTest);
+        console.log('✅ Session ready:', session.id);
+      } catch (error: any) {
+        console.error('❌ Session creation failed:', error);
+        // If session creation fails due to existing session, try to get it (only for non-test mode)
+        if (!isTest && error.message.includes('Failed to create session')) {
+          session = await getSurveySession(surveyId, user.id);
+          if (!session) {
             throw error;
           }
+          console.log('✅ Retrieved existing session:', session.id);
+        } else {
+          throw error;
         }
       }
       setSessionId(session.id);
 
-      // Load chat history
+      // Load chat history (should be empty for fresh test sessions)
       console.log('📜 Loading chat history...');
       const history = await getChatHistory(session.id);
       console.log('📜 Chat history loaded:', history.length, 'messages');
       setMessages(history);
 
-      // Initialize assistant if needed
-      if (!session.assistant_id || !session.thread_id) {
-        console.log('🤖 Initializing new assistant...');
+      // For test mode, always initialize fresh assistant. For regular mode, check if assistant exists
+      if (isTest || !session.assistant_id || !session.thread_id) {
+        console.log(isTest ? '🤖 Initializing fresh test assistant...' : '🤖 Initializing new assistant...');
         const surveyData = await getSurveyForChat(surveyId);
         console.log('📊 Survey data loaded:', surveyData.survey.title);
         
@@ -98,16 +94,18 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
         const threadId = await assistant.createThread();
         console.log('🧵 Thread created:', threadId);
 
-        // Update session with assistant details
-        await updateSessionAssistant(session.id, assistantId, threadId);
-        console.log('✅ Session updated with assistant details');
+        // Update session with assistant details (only for non-test or new sessions)
+        if (!isTest || !session.assistant_id) {
+          await updateSessionAssistant(session.id, assistantId, threadId);
+          console.log('✅ Session updated with assistant details');
+        }
         
         assistantRef.current = assistant;
         threadIdRef.current = threadId;
 
         // Send initial message if no history
         if (history.length === 0) {
-          console.log('💬 Sending initial message...');
+          console.log(isTest ? '💬 Sending fresh initial message...' : '💬 Sending initial message...');
           await sendInitialMessage(assistant, threadId, session.id);
         }
       } else {

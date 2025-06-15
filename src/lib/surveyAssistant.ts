@@ -631,10 +631,21 @@ export async function createSurveySession(
   userEmail: string,
   isTest: boolean = false
 ): Promise<SurveySession> {
-  // First try to get existing session
-  const existingSession = await getSurveySession(surveyId, userId);
-  if (existingSession) {
-    return existingSession;
+  // For test mode, always create a fresh session
+  if (isTest) {
+    // Delete any existing test sessions for this user and survey
+    await supabase
+      .from('survey_chat_sessions')
+      .delete()
+      .eq('survey_id', surveyId)
+      .eq('user_id', userId)
+      .eq('is_test', true);
+  } else {
+    // For regular mode, check for existing session
+    const existingSession = await getSurveySession(surveyId, userId);
+    if (existingSession) {
+      return existingSession;
+    }
   }
 
   // Create new session
