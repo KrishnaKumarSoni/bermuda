@@ -499,6 +499,13 @@ export async function createSurveySession(
   userEmail: string,
   isTest: boolean = false
 ): Promise<SurveySession> {
+  // First try to get existing session
+  const existingSession = await getSurveySession(surveyId, userId);
+  if (existingSession) {
+    return existingSession;
+  }
+
+  // Create new session
   const { data, error } = await supabase
     .from('survey_chat_sessions')
     .insert({
@@ -512,13 +519,6 @@ export async function createSurveySession(
     .single();
 
   if (error) {
-    // If session already exists, try to get it instead
-    if (error.code === '23505') { // Unique constraint violation
-      const existingSession = await getSurveySession(surveyId, userId);
-      if (existingSession) {
-        return existingSession;
-      }
-    }
     throw new Error(`Failed to create session: ${error.message}`);
   }
 
