@@ -12,6 +12,7 @@ export default function SurveyChat() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     initializeAuth();
@@ -57,16 +58,27 @@ export default function SurveyChat() {
     try {
       const { data, error } = await supabase
         .from('surveys')
-        .select('created_by')
+        .select('created_by, is_active')
         .eq('id', surveyId)
-        .eq('created_by', userId)
         .single();
 
-      if (!error && data) {
+      if (error) {
+        console.error('Survey not found:', error);
+        setError('Survey not found or not accessible');
+        return;
+      }
+
+      if (!data.is_active) {
+        setError('This survey is not currently active');
+        return;
+      }
+
+      if (data.created_by === userId) {
         setIsCreator(true);
       }
     } catch (err) {
       console.error('Error checking survey creator:', err);
+      setError('Failed to load survey');
     } finally {
       setLoading(false);
     }
@@ -101,10 +113,27 @@ export default function SurveyChat() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Survey Error</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.history.back()}
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Show auth form only if:
   // 1. User is not authenticated AND it's not test mode, OR
   // 2. It's test mode but user is not authenticated or not the survey creator
-  const shouldShowAuth = !user && (!isTest || (isTest && !isCreator));
+  const shouldShowAuth = !user || (isTest && !isCreator);
   
   if (shouldShowAuth) {
     return <SurveyAuth surveyId={surveyId} onAuthenticated={handleAuthenticated} />;
@@ -112,15 +141,6 @@ export default function SurveyChat() {
 
   // For test mode: if user is authenticated and is the creator, proceed to chat
   // For regular mode: if user is authenticated, proceed to chat
-  const canAccessChat = user && (
-    !isTest || // Regular survey access
-    (isTest && isCreator) // Test mode and user is creator
-  );
-
-  if (!canAccessChat) {
-    return <SurveyAuth surveyId={surveyId} onAuthenticated={handleAuthenticated} />;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto p-4">

@@ -10,7 +10,7 @@ import AddQuestionModal from '../components/AddQuestionModal'
 import DemographicsSection, { defaultDemographics } from '../components/DemographicsSection'
 import ProfileSection, { defaultProfileInfo } from '../components/ProfileSection'
 import { generateSurveyQuestions, SurveyQuestion } from '../lib/openai'
-import { createSurvey, getSurveyById, Survey } from '../lib/surveys'
+import { createSurvey, updateSurvey, getSurveyById, Survey } from '../lib/surveys'
 import { useEffect } from 'react'
 
 interface CreateSurveyProps {
@@ -155,17 +155,23 @@ export default function CreateSurvey({ user }: CreateSurveyProps) {
     setError('')
 
     try {
-      await createSurvey({
+      const surveyData = {
         title: title.trim(),
         context,
         questions,
         demographics: demographics.map(d => ({ id: d.id, enabled: d.enabled })),
         profileInfo: profileInfo.map(p => ({ id: p.id, enabled: p.enabled })),
-      })
+      }
+
+      if (isEditing && id) {
+        await updateSurvey(id, surveyData)
+      } else {
+        await createSurvey(surveyData)
+      }
       
       navigate('/dashboard')
     } catch (err: any) {
-      setError(err.message || 'Failed to create survey. Please try again.')
+      setError(err.message || `Failed to ${isEditing ? 'update' : 'create'} survey. Please try again.`)
     } finally {
       setSaving(false)
     }

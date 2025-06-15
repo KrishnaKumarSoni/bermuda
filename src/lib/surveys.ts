@@ -103,6 +103,117 @@ export async function createSurvey(data: CreateSurveyData): Promise<Survey> {
   return survey
 }
 
+export async function updateSurvey(surveyId: string, data: CreateSurveyData): Promise<Survey> {
+  const user = await supabase.auth.getUser()
+  if (!user.data.user) {
+    throw new Error('User not authenticated')
+  }
+
+  // Update the survey
+  const { data: survey, error: surveyError } = await supabase
+    .from('surveys')
+    .update({
+      title: data.title,
+      context: data.context,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', surveyId)
+    .eq('created_by', user.data.user.id)
+    .select()
+    .single()
+
+  if (surveyError) {
+    throw new Error(`Failed to update survey: ${surveyError.message}`)
+  }
+
+  // Delete existing questions
+  const { error: deleteQuestionsError } = await supabase
+    .from('survey_questions')
+    .delete()
+    .eq('survey_id', surveyId)
+
+  if (deleteQuestionsError) {
+    throw new Error(`Failed to delete existing questions: ${deleteQuestionsError.message}`)
+  }
+
+  // Create new questions
+  const questionsToInsert = data.questions.map((question, index) => ({
+    survey_id: surveyId,
+    question_text: question.question,
+    question_type: question.type,
+    question_order: index + 1,
+    options: question.type === 'mcq' ? question.options : null,
+    rating_start: question.type === 'rating' ? question.ratingStart : null,
+    rating_end: question.type === 'rating' ? question.ratingEnd : null,
+  }))
+
+  const { error: questionsError } = await supabase
+    .from('survey_questions')
+    .insert(questionsToInsert)
+
+  if (questionsError) {
+    throw new Error(`Failed to create questions: ${questionsError.message}`)
+  }
+
+  // Delete existing demographics
+  const { error: deleteDemographicsError } = await supabase
+    .from('survey_demographics')
+    .delete()
+    .eq('survey_id', surveyId)
+
+  if (deleteDemographicsError) {
+    throw new Error(`Failed to delete existing demographics: ${deleteDemographicsError.message}`)
+  }
+
+  // Create new demographics
+  const enabledDemographics = data.demographics.filter(d => d.enabled)
+  if (enabledDemographics.length > 0) {
+    const demographicsToInsert = enabledDemographics.map(demo => ({
+      survey_id: surveyId,
+      demographic_type: demo.id,
+      is_enabled: true,
+    }))
+
+    const { error: demographicsError } = await supabase
+      .from('survey_demographics')
+      .insert(demographicsToInsert)
+
+    if (demographicsError) {
+      throw new Error(`Failed to create demographics: ${demographicsError.message}`)
+    }
+  }
+
+  // Delete existing profile info
+  const { error: deleteProfileError } = await supabase
+    .from('survey_profile_info')
+    .delete()
+    .eq('survey_id', surveyId)
+
+  if (deleteProfileError) {
+    throw new Error(`Failed to delete existing profile info: ${deleteProfileError.message}`)
+  }
+
+  // Create new profile info
+  const enabledProfileInfo = data.profileInfo.filter(p => p.enabled)
+  if (enabledProfileInfo.length > 0) {
+    const profileInfoToInsert = enabledProfileInfo.map(profile => ({
+      survey_id: surveyId,
+      profile_type: profile.id,
+      is_enabled: true,
+    }))
+
+    const { error: profileError } = await supabase
+      .from('survey_profile_info')
+      .insert(profileInfoToInsert)
+
+    if (profileError) {
+      throw new Error(`Failed to create profile info: ${profileError.message}`)
+    }
+  }
+
+  return survey
+}
+
 export async function getUserSurveys(): Promise<Survey[]> {
   const user = await supabase.auth.getUser()
   if (!user.data.user) {
