@@ -164,6 +164,9 @@ export class SurveyAssistant {
   async createAssistant(surveyData: any): Promise<string> {
     const { survey, questions, demographics, profileInfo } = surveyData;
     
+    console.log('🤖 Creating assistant for survey:', survey.title);
+    console.log('📊 Survey has:', questions.length, 'questions,', demographics.length, 'demographics,', profileInfo.length, 'profile items');
+    
     const instructions = `You are a professional survey interviewer conducting a research study. Your goal is to collect responses to survey questions in a natural, conversational manner.
 
 SURVEY CONTEXT: ${survey.context}
@@ -192,15 +195,34 @@ INSTRUCTIONS:
 
 Start by introducing yourself and the survey purpose, then begin asking questions naturally.`;
 
-    const assistant = await openai.beta.assistants.create({
-      name: `Survey Assistant - ${survey.title}`,
-      instructions,
-      model: "gpt-4-1106-preview",
-      tools: ASSISTANT_FUNCTIONS
-    });
+    try {
+      console.log('🔧 Creating OpenAI assistant...');
+      const assistant = await openai.beta.assistants.create({
+        name: `Survey Assistant - ${survey.title}`,
+        instructions,
+        model: "gpt-4-1106-preview",
+        tools: ASSISTANT_FUNCTIONS
+      });
+      
+      console.log('✅ Assistant created successfully:', assistant.id);
+      this.assistantId = assistant.id;
+      return assistant.id;
+    } catch (error) {
+      console.error('❌ Failed to create assistant:', error);
+      throw new Error(`Failed to create assistant: ${error}`);
+    }
+  }
 
-    this.assistantId = assistant.id;
-    return assistant.id;
+  async createThread(): Promise<string> {
+    try {
+      console.log('🧵 Creating OpenAI thread...');
+      const thread = await openai.beta.threads.create();
+      console.log('✅ Thread created successfully:', thread.id);
+      return thread.id;
+    } catch (error) {
+      console.error('❌ Failed to create thread:', error);
+      throw new Error(`Failed to create thread: ${error}`);
+    }
   }
 
   async createThread(): Promise<string> {

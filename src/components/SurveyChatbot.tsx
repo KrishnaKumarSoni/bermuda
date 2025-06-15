@@ -45,6 +45,7 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
 
   const initializeChatbot = async () => {
     try {
+      console.log('🚀 Initializing chatbot for survey:', surveyId);
       setInitializing(true);
       setError('');
 
@@ -52,18 +53,26 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
         throw new Error('User not authenticated');
       }
 
+      console.log('👤 User authenticated:', user.id, user.email);
+
       // Get or create session
       let session = await getSurveySession(surveyId, user.id);
+      console.log('📋 Existing session:', session?.id);
+      
       if (!session) {
         try {
+          console.log('🆕 Creating new session...');
           session = await createSurveySession(surveyId, user.id, user.email, isTest);
+          console.log('✅ Session created:', session.id);
         } catch (error: any) {
+          console.error('❌ Session creation failed:', error);
           // If session creation fails due to existing session, try to get it
           if (error.message.includes('Failed to create session')) {
             session = await getSurveySession(surveyId, user.id);
             if (!session) {
               throw error;
             }
+            console.log('✅ Retrieved existing session:', session.id);
           } else {
             throw error;
           }
@@ -72,37 +81,48 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
       setSessionId(session.id);
 
       // Load chat history
+      console.log('📜 Loading chat history...');
       const history = await getChatHistory(session.id);
+      console.log('📜 Chat history loaded:', history.length, 'messages');
       setMessages(history);
 
       // Initialize assistant if needed
       if (!session.assistant_id || !session.thread_id) {
+        console.log('🤖 Initializing new assistant...');
         const surveyData = await getSurveyForChat(surveyId);
+        console.log('📊 Survey data loaded:', surveyData.survey.title);
         
         const assistant = new SurveyAssistant();
         const assistantId = await assistant.createAssistant(surveyData);
+        console.log('🤖 Assistant created:', assistantId);
         const threadId = await assistant.createThread();
+        console.log('🧵 Thread created:', threadId);
 
         // Update session with assistant details
         await updateSessionAssistant(session.id, assistantId, threadId);
+        console.log('✅ Session updated with assistant details');
         
         assistantRef.current = assistant;
         threadIdRef.current = threadId;
 
         // Send initial message if no history
         if (history.length === 0) {
+          console.log('💬 Sending initial message...');
           await sendInitialMessage(assistant, threadId, session.id);
         }
       } else {
+        console.log('🔄 Restoring existing assistant...');
         // Restore existing assistant
         const surveyData = await getSurveyForChat(surveyId);
         const assistant = new SurveyAssistant();
         await assistant.createAssistant(surveyData); // This sets up the assistant with the same instructions
+        console.log('✅ Assistant restored');
         
         assistantRef.current = assistant;
         threadIdRef.current = session.thread_id;
       }
 
+      console.log('✅ Chatbot initialization complete');
     } catch (err: any) {
       console.error('Failed to initialize chatbot:', err);
       setError(err.message || 'Failed to initialize chat');
@@ -124,17 +144,17 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
 
   const sendInitialMessage = async (assistant: SurveyAssistant, threadId: string, sessionId: string) => {
     try {
-      const response = await assistant.sendMessage(threadId, "Hello! Please introduce yourself and start the survey.", sessionId);
+      console.log('💬 Sending initial greeting...');
+      const response = await assistant.sendMessage(threadId, "Hello! I'm ready to start the survey.", sessionId);
+      console.log('✅ Initial response received');
       
       const assistantMessage = await saveChatMessage(sessionId, 'assistant', response);
       setMessages(prev => [...prev, assistantMessage]);
     } catch (err) {
       console.error('Failed to send initial message:', err);
-      // Add a fallback message if the initial AI message fails
-      const fallbackMessage = await saveChatMessage(
-        sessionId, 
-        'assistant', 
-        "Hello! Welcome to this survey. I'm here to help you through the questions. Let's get started! What's your name?"
+      // Add a fallback message if AI fails
+      const fallbackMessage = await saveChatMessage(sessionId, 'assistant', 
+        "Hello! Welcome to this survey. I'm here to help guide you through the questions. Let's get started! What would you like to know about this survey?"
       );
       setMessages(prev => [...prev, fallbackMessage]);
     }
@@ -144,6 +164,7 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
     if (!inputMessage.trim() || loading || !assistantRef.current) return;
 
     const userMessage = inputMessage.trim();
+    console.log('📤 Sending user message:', userMessage);
     setInputMessage('');
     setLoading(true);
 
@@ -151,30 +172,28 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
       // Save user message
       const userChatMessage = await saveChatMessage(sessionId, 'user', userMessage);
       setMessages(prev => [...prev, userChatMessage]);
+      console.log('✅ User message saved');
 
       // Get assistant response
+      console.log('🤖 Getting assistant response...');
       const response = await assistantRef.current.sendMessage(
         threadIdRef.current, 
         userMessage, 
         sessionId
       );
+      console.log('✅ Assistant response received');
 
       // Save assistant response
       const assistantMessage = await saveChatMessage(sessionId, 'assistant', response);
       setMessages(prev => [...prev, assistantMessage]);
+      console.log('✅ Assistant message saved');
 
     } catch (err: any) {
       console.error('Failed to send message:', err);
       
-      // Add user message even if assistant fails
-      const userChatMessage = await saveChatMessage(sessionId, 'user', userMessage);
-      setMessages(prev => [...prev, userChatMessage]);
-      
-      // Add error message from assistant
-      const errorMessage = await saveChatMessage(
-        sessionId, 
-        'assistant', 
-        "I'm having trouble processing your response right now. Could you please try again? If the issue persists, please rephrase your answer."
+      // Add error message to chat instead of showing error state
+      const errorMessage = await saveChatMessage(sessionId, 'assistant', 
+        "I apologize, but I'm experiencing some technical difficulties. Could you please rephrase your response or try again?"
       );
       setMessages(prev => [...prev, errorMessage]);
     } finally {
