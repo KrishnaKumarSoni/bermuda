@@ -5,6 +5,8 @@ import { supabase } from './lib/supabase'
 import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
 import CreateSurvey from './pages/CreateSurvey'
+import SurveyChat from './pages/SurveyChat'
+import SurveyAnalytics from './pages/SurveyAnalytics'
 
 function App() {
   const [user, setUser] = useState<any>(null)
@@ -55,6 +57,14 @@ function App() {
         <Route 
           path="/create-survey/:id" 
           element={user ? <CreateSurvey user={user} /> : <Navigate to="/" />} 
+        />
+        <Route 
+          path="/survey/:surveyId/chat" 
+          element={<SurveyChat />} 
+        />
+        <Route 
+          path="/survey/:surveyId/analytics" 
+          element={user ? <SurveyAnalytics user={user} /> : <Navigate to="/" />} 
         />
       </Routes>
     </Router>

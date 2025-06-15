@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { FileText, Users, Calendar, Edit, Trash2, Share, BarChart3, Play } from 'lucide-react'
 import { Survey, updateSurveyStatus, deleteSurvey } from '../lib/surveys'
+import { useNavigate } from 'react-router-dom'
 
 interface SurveyCardProps {
   survey: Survey
@@ -11,6 +12,7 @@ interface SurveyCardProps {
 
 export default function SurveyCard({ survey, onEdit, onDelete, onStatusChange }: SurveyCardProps) {
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const handleStatusToggle = async () => {
     setLoading(true)
@@ -36,6 +38,24 @@ export default function SurveyCard({ survey, onEdit, onDelete, onStatusChange }:
         setLoading(false)
       }
     }
+  }
+
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}/survey/${survey.id}/chat`
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      alert('Survey link copied to clipboard!')
+    }).catch(() => {
+      prompt('Copy this survey link:', shareUrl)
+    })
+  }
+
+  const handleTest = () => {
+    const testUrl = `/survey/${survey.id}/chat?test=true`
+    window.open(testUrl, '_blank')
+  }
+
+  const handleAnalytics = () => {
+    navigate(`/survey/${survey.id}/analytics`)
   }
 
   const formatDate = (dateString: string) => {
@@ -112,7 +132,7 @@ export default function SurveyCard({ survey, onEdit, onDelete, onStatusChange }:
           </button>
           
           <button
-            onClick={() => {/* TODO: Add share functionality */}}
+            onClick={handleShare}
             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
             title="Share Survey"
           >
@@ -120,7 +140,7 @@ export default function SurveyCard({ survey, onEdit, onDelete, onStatusChange }:
           </button>
           
           <button
-            onClick={() => {/* TODO: Add analytics functionality */}}
+            onClick={handleAnalytics}
             className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
             title="View Analytics"
           >
@@ -128,7 +148,7 @@ export default function SurveyCard({ survey, onEdit, onDelete, onStatusChange }:
           </button>
           
           <button
-            onClick={() => {/* TODO: Add test functionality */}}
+            onClick={handleTest}
             className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
             title="Test Survey"
           >
