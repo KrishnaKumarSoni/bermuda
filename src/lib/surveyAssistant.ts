@@ -684,6 +684,8 @@ export async function createSurveySession(
     try {
       console.log(`🔄 Creating session attempt ${attempts + 1}/${maxAttempts}...`);
       
+      const { data, error } = await supabase
+        .from('survey_chat_sessions')
         .insert({
           survey_id: surveyId,
           user_id: userId,
