@@ -124,12 +124,19 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
 
   const sendInitialMessage = async (assistant: SurveyAssistant, threadId: string, sessionId: string) => {
     try {
-      const response = await assistant.sendMessage(threadId, "Hello! I'm ready to start the survey.", sessionId);
+      const response = await assistant.sendMessage(threadId, "Hello! Please introduce yourself and start the survey.", sessionId);
       
       const assistantMessage = await saveChatMessage(sessionId, 'assistant', response);
       setMessages(prev => [...prev, assistantMessage]);
     } catch (err) {
       console.error('Failed to send initial message:', err);
+      // Add a fallback message if the initial AI message fails
+      const fallbackMessage = await saveChatMessage(
+        sessionId, 
+        'assistant', 
+        "Hello! Welcome to this survey. I'm here to help you through the questions. Let's get started! What's your name?"
+      );
+      setMessages(prev => [...prev, fallbackMessage]);
     }
   };
 
@@ -158,7 +165,18 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
 
     } catch (err: any) {
       console.error('Failed to send message:', err);
-      setError(err.message || 'Failed to send message');
+      
+      // Add user message even if assistant fails
+      const userChatMessage = await saveChatMessage(sessionId, 'user', userMessage);
+      setMessages(prev => [...prev, userChatMessage]);
+      
+      // Add error message from assistant
+      const errorMessage = await saveChatMessage(
+        sessionId, 
+        'assistant', 
+        "I'm having trouble processing your response right now. Could you please try again? If the issue persists, please rephrase your answer."
+      );
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setLoading(false);
     }
