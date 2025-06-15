@@ -631,15 +631,19 @@ export async function createSurveySession(
   userEmail: string,
   isTest: boolean = false
 ): Promise<SurveySession> {
-  // For test mode, always create a fresh session
   if (isTest) {
-    // Delete any existing test sessions for this user and survey
-    await supabase
+    // For test mode, always create a fresh session
+    // First, delete any existing test sessions for this user and survey
+    const { error: deleteError } = await supabase
       .from('survey_chat_sessions')
       .delete()
       .eq('survey_id', surveyId)
       .eq('user_id', userId)
       .eq('is_test', true);
+    
+    if (deleteError) {
+      console.warn('Warning: Failed to delete existing test sessions:', deleteError.message);
+    }
   } else {
     // For regular mode, check for existing session
     const existingSession = await getSurveySession(surveyId, userId);
@@ -648,15 +652,19 @@ export async function createSurveySession(
     }
   }
 
-  // Create new session
+  // Create new session with upsert to handle any remaining duplicates
   const { data, error } = await supabase
     .from('survey_chat_sessions')
-    .insert({
+    .upsert({
       survey_id: surveyId,
       user_id: userId,
       respondent_email: userEmail,
       is_test: isTest,
-      status: 'active'
+      status: 'active',
+      started_at: new Date().toISOString()
+    }, {
+      onConflict: 'survey_id,user_id',
+      ignoreDuplicates: false
     })
     .select()
     .single();
