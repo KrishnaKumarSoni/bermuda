@@ -225,11 +225,6 @@ Start by introducing yourself and the survey purpose, then begin asking question
     }
   }
 
-  async createThread(): Promise<string> {
-    const thread = await openai.beta.threads.create();
-    return thread.id;
-  }
-
   async sendMessage(threadId: string, message: string, sessionId: string): Promise<string> {
     if (!this.assistantId) {
       throw new Error('Assistant not initialized');
@@ -365,50 +360,59 @@ Start by introducing yourself and the survey purpose, then begin asking question
   private async handleFunctionCall(toolCall: any, sessionId: string): Promise<any> {
     try {
       const { name, arguments: args } = toolCall.function;
-      console.log('🔧 Function call:', name, 'with args:', args);
+      console.log('🔧 [FUNCTION CALL] Name:', name, 'Args:', args);
       
       let parsedArgs;
       try {
         parsedArgs = JSON.parse(args);
+        console.log('✅ [PARSE ARGS] Successfully parsed arguments:', parsedArgs);
       } catch (error) {
-        console.error('❌ Failed to parse function arguments:', error);
+        console.error('❌ [PARSE ARGS] Failed to parse function arguments:', error);
         return { success: false, error: 'Invalid function arguments' };
       }
 
       switch (name) {
         case 'classify_answer':
+          console.log('🔍 [CLASSIFY] Calling classify_answer...');
           return await this.classifyAnswer(parsedArgs);
         
         case 'validate_response':
+          console.log('✅ [VALIDATE] Calling validate_response...');
           return await this.validateResponse(parsedArgs);
         
         case 'save_response':
+          console.log('💾 [SAVE] Calling save_response...');
           return await this.saveResponse({ ...parsedArgs, session_id: sessionId });
         
         case 'end_survey':
+          console.log('🏁 [END] Calling end_survey...');
           return await this.endSurvey({ ...parsedArgs, session_id: sessionId });
         
         default:
-          console.error('❌ Unknown function:', name);
+          console.error('❌ [UNKNOWN FUNCTION] Unknown function:', name);
           return { success: false, error: 'Unknown function' };
       }
     } catch (error) {
-      console.error('❌ Function call error:', error);
+      console.error('❌ [FUNCTION CALL ERROR] Error:', error);
       return { success: false, error: error.message };
     }
   }
 
   private async classifyAnswer(args: any): Promise<any> {
     try {
-      console.log('🔍 Classifying answer:', args);
+      console.log('🔍 [CLASSIFY] Starting classification:', args);
       const { question_type, user_response, options, rating_start, rating_end } = args;
 
       switch (question_type) {
         case 'mcq':
-          if (!options) return { success: false, error: 'No options provided' };
+          if (!options) {
+            console.error('❌ [CLASSIFY MCQ] No options provided');
+            return { success: false, error: 'No options provided' };
+          }
           
           // Use AI to match user response to closest option
           try {
+            console.log('🤖 [CLASSIFY MCQ] Using AI to match response to options...');
             const matchResponse = await openai.chat.completions.create({
               model: 'gpt-3.5-turbo',
               messages: [{
@@ -419,8 +423,10 @@ Start by introducing yourself and the survey purpose, then begin asking question
             });
             
             const match = matchResponse.choices[0]?.message?.content?.trim();
+            console.log('🤖 [CLASSIFY MCQ] AI match result:', match);
             const isValidMatch = match && match !== 'NO_MATCH' && options.includes(match);
             
+            console.log('✅ [CLASSIFY MCQ] Classification result:', { match, isValidMatch });
             return {
               success: true,
               classified_answer: {
@@ -431,7 +437,7 @@ Start by introducing yourself and the survey purpose, then begin asking question
               is_valid: isValidMatch
             };
           } catch (error) {
-            console.error('❌ AI matching failed, using fallback:', error);
+            console.error('❌ [CLASSIFY MCQ] AI matching failed, using fallback:', error);
             // Fallback to simple string matching
             const lowerResponse = user_response.toLowerCase();
             const matchedOption = options.find(option => 
@@ -439,6 +445,7 @@ Start by introducing yourself and the survey purpose, then begin asking question
               option.toLowerCase().includes(lowerResponse)
             );
             
+            console.log('🔄 [CLASSIFY MCQ] Fallback result:', matchedOption);
             return {
               success: true,
               classified_answer: {
@@ -452,6 +459,7 @@ Start by introducing yourself and the survey purpose, then begin asking question
 
         case 'rating':
           const numericValue = this.extractNumericRating(user_response, rating_start, rating_end);
+          console.log('🔢 [CLASSIFY RATING] Extracted value:', numericValue);
           return {
             success: true,
             classified_answer: {
@@ -464,6 +472,7 @@ Start by introducing yourself and the survey purpose, then begin asking question
 
         case 'yes_no':
           const booleanValue = this.extractBooleanResponse(user_response);
+          console.log('✅❌ [CLASSIFY YES_NO] Extracted value:', booleanValue);
           return {
             success: true,
             classified_answer: {
@@ -475,6 +484,7 @@ Start by introducing yourself and the survey purpose, then begin asking question
           };
 
         case 'text':
+          console.log('📝 [CLASSIFY TEXT] Processing text response');
           return {
             success: true,
             classified_answer: {
@@ -486,10 +496,11 @@ Start by introducing yourself and the survey purpose, then begin asking question
           };
 
         default:
+          console.error('❌ [CLASSIFY] Unknown question type:', question_type);
           return { success: false, error: 'Unknown question type' };
       }
     } catch (error) {
-      console.error('❌ Classification error:', error);
+      console.error('❌ [CLASSIFY ERROR] Classification error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -602,122 +613,6 @@ Start by introducing yourself and the survey purpose, then begin asking question
       console.error('❌ Error in endSurvey:', error);
       return { success: false, error: 'Failed to end survey' };
     }
-          toolOutputs.push({
-            tool_call_id: toolCall.id,
-            output: JSON.stringify(output)
-          });
-        }
-
-        await openai.beta.threads.runs.submitToolOutputs(threadId, run.id, {
-          tool_outputs: toolOutputs
-        });
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
-    }
-
-    // Get the assistant's response
-    const messages = await openai.beta.threads.messages.list(threadId);
-    const lastMessage = messages.data[0];
-    
-    if (lastMessage.role === 'assistant' && lastMessage.content[0].type === 'text') {
-      return lastMessage.content[0].text.value;
-    }
-
-    return "I apologize, but I encountered an issue. Could you please try again?";
-  }
-
-  private async handleFunctionCall(toolCall: any, sessionId: string): Promise<any> {
-    const { name, arguments: args } = toolCall.function;
-    const parsedArgs = JSON.parse(args);
-
-    switch (name) {
-      case 'classify_answer':
-        return await this.classifyAnswer(parsedArgs);
-      
-      case 'validate_response':
-        return await this.validateResponse(parsedArgs);
-      
-      case 'save_response':
-        return await this.saveResponse({ ...parsedArgs, session_id: sessionId });
-      
-      case 'end_survey':
-        return await this.endSurvey({ ...parsedArgs, session_id: sessionId });
-      
-      default:
-        return { success: false, error: 'Unknown function' };
-    }
-  }
-
-  private async classifyAnswer(args: any): Promise<any> {
-    const { question_type, user_response, options, rating_start, rating_end } = args;
-
-    switch (question_type) {
-      case 'mcq':
-        if (!options) return { success: false, error: 'No options provided' };
-        
-        // Use AI to match user response to closest option
-        const matchResponse = await openai.chat.completions.create({
-          model: 'gpt-3.5-turbo',
-          messages: [{
-            role: 'user',
-            content: `Match this response "${user_response}" to the closest option from: ${options.join(', ')}. Return only the exact option text, or "NO_MATCH" if no reasonable match exists.`
-          }],
-          temperature: 0
-        });
-        
-        const match = matchResponse.choices[0]?.message?.content?.trim();
-        const isValidMatch = match && match !== 'NO_MATCH' && options.includes(match);
-        
-        return {
-          success: true,
-          classified_answer: {
-            type: 'mcq',
-            selected_option: isValidMatch ? match : null,
-            original_response: user_response
-          },
-          is_valid: isValidMatch
-        };
-
-      case 'rating':
-        const numericValue = this.extractNumericRating(user_response, rating_start, rating_end);
-        return {
-          success: true,
-          classified_answer: {
-            type: 'rating',
-            rating_value: numericValue,
-            original_response: user_response
-          },
-          is_valid: numericValue !== null && numericValue >= rating_start && numericValue <= rating_end
-        };
-
-      case 'yes_no':
-        const booleanValue = this.extractBooleanResponse(user_response);
-        return {
-          success: true,
-          classified_answer: {
-            type: 'yes_no',
-            boolean_value: booleanValue,
-            original_response: user_response
-          },
-          is_valid: booleanValue !== null
-        };
-
-      case 'text':
-        return {
-          success: true,
-          classified_answer: {
-            type: 'text',
-            text_value: user_response.trim(),
-            original_response: user_response
-          },
-          is_valid: user_response.trim().length > 0
-        };
-
-      default:
-        return { success: false, error: 'Unknown question type' };
-    }
   }
 
   private extractNumericRating(response: string, min: number, max: number): number | null {
@@ -758,106 +653,6 @@ Start by introducing yourself and the survey purpose, then begin asking question
     }
     
     return null;
-  }
-
-  private async validateResponse(args: any): Promise<any> {
-    const { response, validation_type } = args;
-
-    switch (validation_type) {
-      case 'email':
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return {
-          success: true,
-          is_valid: emailRegex.test(response),
-          message: emailRegex.test(response) ? 'Valid email' : 'Please provide a valid email address'
-        };
-
-      case 'phone':
-        const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-        const cleanPhone = response.replace(/[\s\-\(\)]/g, '');
-        return {
-          success: true,
-          is_valid: phoneRegex.test(cleanPhone) && cleanPhone.length >= 10,
-          message: phoneRegex.test(cleanPhone) && cleanPhone.length >= 10 ? 'Valid phone number' : 'Please provide a valid phone number'
-        };
-
-      case 'url':
-        try {
-          new URL(response);
-          return {
-            success: true,
-            is_valid: true,
-            message: 'Valid URL'
-          };
-        } catch {
-          return {
-            success: true,
-            is_valid: false,
-            message: 'Please provide a valid URL (including http:// or https://)'
-          };
-        }
-
-      default:
-        return { success: false, error: 'Unknown validation type' };
-    }
-  }
-
-  private async saveResponse(args: any): Promise<any> {
-    try {
-      const { session_id, question_id, response_text, classified_answer, is_valid } = args;
-
-      const { data, error } = await supabase
-        .from('survey_question_responses')
-        .upsert({
-          session_id,
-          question_id,
-          response_text,
-          classified_answer,
-          is_valid,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'session_id,question_id'
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error saving response:', error);
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, response_id: data.id };
-    } catch (error) {
-      console.error('Error in saveResponse:', error);
-      return { success: false, error: 'Failed to save response' };
-    }
-  }
-
-  private async endSurvey(args: any): Promise<any> {
-    try {
-      const { session_id, reason } = args;
-      
-      const status = reason === 'completed' ? 'completed' : 
-                    reason === 'user_requested' ? 'abandoned' : 'abandoned';
-
-      const { error } = await supabase
-        .from('survey_chat_sessions')
-        .update({
-          status,
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', session_id);
-
-      if (error) {
-        console.error('Error ending survey:', error);
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, status };
-    } catch (error) {
-      console.error('Error in endSurvey:', error);
-      return { success: false, error: 'Failed to end survey' };
-    }
   }
 }
 

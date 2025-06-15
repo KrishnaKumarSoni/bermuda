@@ -164,40 +164,45 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
     if (!inputMessage.trim() || loading || !assistantRef.current) return;
 
     const userMessage = inputMessage.trim();
-    console.log('📤 Sending user message:', userMessage);
+    console.log('📤 [USER MESSAGE] Sending:', userMessage);
     setInputMessage('');
     setLoading(true);
 
     try {
       // Save user message
+      console.log('💾 [SAVE USER] Saving user message to database...');
       const userChatMessage = await saveChatMessage(sessionId, 'user', userMessage);
       setMessages(prev => [...prev, userChatMessage]);
-      console.log('✅ User message saved');
+      console.log('✅ [SAVE USER] User message saved successfully');
 
       // Get assistant response
-      console.log('🤖 Getting assistant response...');
+      console.log('🤖 [GET RESPONSE] Getting assistant response...');
       const response = await assistantRef.current.sendMessage(
         threadIdRef.current, 
         userMessage, 
         sessionId
       );
-      console.log('✅ Assistant response received');
+      console.log('✅ [GET RESPONSE] Assistant response received:', response.substring(0, 50) + '...');
 
       // Save assistant response
+      console.log('💾 [SAVE ASSISTANT] Saving assistant message to database...');
       const assistantMessage = await saveChatMessage(sessionId, 'assistant', response);
       setMessages(prev => [...prev, assistantMessage]);
-      console.log('✅ Assistant message saved');
+      console.log('✅ [SAVE ASSISTANT] Assistant message saved successfully');
 
     } catch (err: any) {
-      console.error('Failed to send message:', err);
+      console.error('❌ [SEND MESSAGE ERROR] Failed to send message:', err);
       
       // Add error message to chat instead of showing error state
+      console.log('💾 [SAVE ERROR] Saving error message to chat...');
       const errorMessage = await saveChatMessage(sessionId, 'assistant', 
         "I apologize, but I'm experiencing some technical difficulties. Could you please rephrase your response or try again?"
       );
       setMessages(prev => [...prev, errorMessage]);
+      console.log('✅ [SAVE ERROR] Error message saved to chat');
     } finally {
       setLoading(false);
+      console.log('🏁 [SEND MESSAGE] Message sending process completed');
     }
   };
 
