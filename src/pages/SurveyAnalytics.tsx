@@ -64,7 +64,7 @@ export default function SurveyAnalytics({ user }: SurveyAnalyticsProps) {
         .from('survey_question_responses')
         .select(`
           *,
-          survey_questions(question_text, question_type),
+          survey_questions(*),
           survey_chat_sessions(respondent_fingerprint, is_test)
         `)
         .in('session_id', sessions?.map(s => s.id) || []);
@@ -251,7 +251,7 @@ export default function SurveyAnalytics({ user }: SurveyAnalyticsProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium text-gray-900">
-                          Session {session.respondent_fingerprint.slice(0, 8)}...
+                          {session.respondent_email || `User ${session.user_id?.slice(0, 8)}...`}
                         </p>
                         <p className="text-sm text-gray-600">
                           {new Date(session.started_at).toLocaleDateString()}
