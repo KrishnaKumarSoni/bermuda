@@ -363,14 +363,16 @@ Start by introducing yourself and the survey purpose, then begin asking question
           msg.content[0]?.type === 'text' ? msg.content[0].text.value.substring(0, 100) + '...' : msg.content[0]);
       });
       
-      const lastMessage = messages.data[0];
+      // Find the most recent assistant message
+      const assistantMessage = messages.data.find(msg => msg.role === 'assistant');
       
-      if (lastMessage && lastMessage.role === 'assistant' && lastMessage.content[0]?.type === 'text') {
-        const response = lastMessage.content[0].text.value;
+      if (assistantMessage && assistantMessage.content[0]?.type === 'text') {
+        const response = assistantMessage.content[0].text.value;
         console.log('✅ [SUCCESS] Assistant response received:', response.substring(0, 100) + '...');
         return response;
       } else {
-        console.error('❌ [NO RESPONSE] No valid assistant response found. Last message:', lastMessage);
+        console.error('❌ [NO RESPONSE] No valid assistant response found. Assistant message:', assistantMessage);
+        console.error('❌ [DEBUG] All messages:', messages.data.map(m => ({ role: m.role, content_type: m.content[0]?.type })));
         return "I apologize, but I'm having trouble processing your request right now. Could you please try again?";
       }
     } catch (error) {
