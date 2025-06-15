@@ -62,16 +62,7 @@ export default function SurveyChatbot({ surveyId, user, isTest = false, onClose 
         console.log('✅ Session ready:', session.id);
       } catch (error: any) {
         console.error('❌ Session creation failed:', error);
-        // If session creation fails due to existing session, try to get it (only for non-test mode)
-        if (!isTest && error.message.includes('Failed to create session')) {
-          session = await getSurveySession(surveyId, user.id);
-          if (!session) {
-            throw error;
-          }
-          console.log('✅ Retrieved existing session:', session.id);
-        } else {
-          throw error;
-        }
+        throw error;
       }
       setSessionId(session.id);
 
