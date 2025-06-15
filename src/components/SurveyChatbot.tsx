@@ -13,7 +13,6 @@ import { supabase } from '../lib/supabase';
 
 interface SurveyChatbotProps {
   surveyId: string;
-  user?: any;
   user: any;
   isTest?: boolean;
   onClose?: () => void;
