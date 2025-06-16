@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { Menu, X, LogOut, User, Settings, BarChart3 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 
 interface LayoutProps {
@@ -13,8 +12,8 @@ export default function Layout({ children, user }: LayoutProps) {
   const navigate = useNavigate()
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    navigate('/')
+    // Temporarily disabled for testing
+    console.log('Sign out clicked (disabled for testing)')
   }
 
   return (
