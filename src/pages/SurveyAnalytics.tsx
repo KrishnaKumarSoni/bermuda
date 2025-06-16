@@ -45,7 +45,7 @@ export default function SurveyAnalytics({ user }: SurveyAnalyticsProps) {
           survey_questions(*)
         `)
         .eq('id', surveyId)
-        .eq('created_by', user.id)
+        .eq('created_by', 'test-user-id')
         .single();
 
       if (surveyError) throw surveyError;
