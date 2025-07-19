@@ -6,198 +6,103 @@ A conversational alternative to Google Forms that leverages AI to auto-generate 
 
 - **AI-Powered Form Creation**: Transform any text dump into structured forms using GPT-4o-mini
 - **Human-like Chat Interface**: Respondents interact through natural conversation
-- **Anonymous by Default**: No registration required for form respondents
-- **Real-time Data Collection**: Structured data extraction from chat transcripts
-- **Responsive Design**: Works on all devices with mobile-first design
+- **Five Question Types**: text, multiple_choice, yes_no, number, rating
+- **Real-time AI Inference**: Chain-of-thought prompting with few-shot examples
+- **Firebase Integration**: Secure data storage and user authentication
+- **Vercel Deployment**: Serverless deployment with global CDN
 
-## Tech Stack
+## Architecture
 
-- **Frontend**: Vanilla JavaScript, Tailwind CSS, Firebase Auth
-- **Backend**: Python Flask, LangChain
-- **Database**: Firebase Firestore & Realtime Database
-- **AI**: OpenAI GPT-4o-mini via LangChain
+### Backend (Python Flask)
+- **Form Inference API**: `/api/infer` - AI-powered form generation
+- **Form Management**: Save, retrieve, and manage forms
+- **OpenAI Integration**: GPT-4o-mini with optimized prompting
+- **Firebase Integration**: Firestore for data persistence
 
-## Getting Started
+### Frontend (React TypeScript)
+- **Form Creator Interface**: Text-to-form conversion
+- **Form Editor**: Drag-and-drop form customization
+- **Respondent Chat**: Conversational form completion
+- **Real-time Validation**: Instant feedback and error handling
+
+## Quick Start
 
 ### Prerequisites
-
 - Python 3.8+
-- Node.js (for serving frontend)
-- Firebase project with Firestore and Authentication enabled
+- Node.js 16+
 - OpenAI API key
+- Firebase project
 
-### Installation
+### Local Development
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd bermuda-01
-   ```
-
-2. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API keys and configuration
-   ```
-
-3. **Install backend dependencies**
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   ```
-
-4. **Configure Firebase**
-   - Place your Firebase Admin SDK JSON file as `firebase-adminsdk.json` in the root directory
-   - Update Firebase configuration in `frontend/index.html`
-
-5. **Start the backend server**
-   ```bash
-   cd backend
-   python run.py
-   ```
-
-6. **Serve the frontend**
-   ```bash
-   cd frontend
-   # Using Python's built-in server
-   python -m http.server 8000
-   # Or using Node.js
-   npx serve .
-   ```
-
-7. **Open your browser**
-   ```
-   http://localhost:8000
-   ```
-
-## Project Structure
-
-```
-bermuda-01/
-├── frontend/
-│   └── index.html          # Complete frontend application
-├── backend/
-│   ├── app.py              # Flask application
-│   ├── run.py              # Development server
-│   └── requirements.txt    # Python dependencies
-├── firebase-adminsdk.json  # Firebase service account key
-├── .env                    # Environment variables
-└── README.md
-```
-
-## API Endpoints
-
-### Authentication Required
-- `POST /api/infer` - Generate form from text dump
-- `POST /api/save-form` - Save form to database
-- `GET /api/forms` - Get user's forms
-- `GET /api/forms/{id}/responses` - Get form responses
-
-### Anonymous Access
-- `GET /api/forms/{id}` - Get form metadata
-- `POST /api/chat-message` - Process chat messages
-
-## Usage
-
-### Creating a Form
-
-1. **Sign in** with Google account
-2. **Paste your content** - meeting notes, requirements, survey questions
-3. **AI generates form** - questions are automatically inferred with types
-4. **Edit as needed** - adjust questions, types, and demographics
-5. **Save and share** - get a unique link to share with respondents
-
-### Form Types Supported
-
-- **Text**: Open-ended responses
-- **Multiple Choice**: Predefined options
-- **Yes/No**: Binary choices
-- **Number**: Numeric inputs
-- **Rating**: 1-5 scale ratings
-
-### Demographics (Optional)
-
-- Age Range
-- Gender
-- Location
-- Education Level
-- Income Bracket
-- Occupation
-- Ethnicity
-
-## Development
-
-### Running Tests
-
+1. **Clone and Setup**
 ```bash
-# Backend tests
-cd backend
-python -m pytest tests/
-
-# Frontend can be tested manually or with browser automation
+git clone <repository>
+cd bermuda
+pip install -r requirements.txt
+npm install
 ```
 
-### Environment Variables
-
+2. **Environment Variables**
 ```bash
+# .env
 OPENAI_API_KEY=your_openai_api_key
-FLASK_ENV=development
-FLASK_DEBUG=True
-FIREBASE_SERVICE_ACCOUNT_PATH=firebase-adminsdk.json
-FIREBASE_PROJECT_ID=your_firebase_project_id
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_CLIENT_EMAIL=your_service_account_email
+FIREBASE_PRIVATE_KEY=your_private_key
 ```
 
-### Firebase Configuration
+3. **Start Services**
+```bash
+# Backend
+python backend/app_no_auth.py
 
-Update the Firebase config in `frontend/index.html`:
-
-```javascript
-const firebaseConfig = {
-    apiKey: "your_api_key",
-    authDomain: "your_project.firebaseapp.com",
-    projectId: "your_project_id",
-    storageBucket: "your_project.appspot.com",
-    messagingSenderId: "your_sender_id",
-    appId: "your_app_id"
-};
+# Frontend  
+npm run dev
 ```
 
-## Security Features
+### API Testing
 
-- Firebase Authentication for creators
-- Anonymous access for respondents
-- Device fingerprinting for abuse prevention
-- Rate limiting on API endpoints
-- Secure token verification
+Test form inference:
+```bash
+curl -X POST http://localhost:5000/api/infer \
+  -H "Content-Type: application/json" \
+  -d '{"dump": "Customer survey about pizza preferences, delivery speed ratings, and recommendations"}'
+```
 
 ## Deployment
 
-### Backend (Flask)
+### Vercel (Recommended)
 
+1. **Install Vercel CLI**
 ```bash
-# Using Gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-
-# Using Docker
-docker build -t bermuda-backend .
-docker run -p 5000:5000 bermuda-backend
+npm i -g vercel
 ```
 
-### Frontend
+2. **Deploy**
+```bash
+vercel --prod
+```
 
-Deploy static files to any CDN or hosting service:
-- Netlify
-- Vercel
-- Firebase Hosting
-- AWS S3 + CloudFront
+3. **Configure Environment Variables**
+- Go to Vercel Dashboard → Project Settings → Environment Variables
+- Add all required environment variables
+- Set Function Max Duration to 60 seconds
 
-## Contributing
+## Technical Details
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+### AI Inference Pipeline
+1. **Input Validation**: 20-5000 character text dumps
+2. **Prompt Engineering**: Chain-of-thought with few-shot examples
+3. **Response Processing**: JSON extraction and validation
+4. **Question Enhancement**: Auto-complete options for choice questions
+
+### Question Types
+- **text**: Open-ended text input
+- **multiple_choice**: Predefined options (2-7 choices)
+- **yes_no**: Binary choice ["Yes", "No"]
+- **number**: Numeric input validation
+- **rating**: 1-5 scale ["1", "2", "3", "4", "5"]
 
 ## License
 
