@@ -8,12 +8,9 @@ import requests
 app = Flask(__name__)
 CORS(app)
 
-# Optimize for Vercel cold starts
-app.config['JSON_SORT_KEYS'] = False
-
-@app.route('/api/infer', methods=['POST', 'OPTIONS'])
-def infer_form():
-    """Main form inference endpoint using proven requests approach"""
+@app.route('/api/simple', methods=['POST', 'OPTIONS'])
+def simple_infer():
+    """Simple direct OpenAI API call using requests"""
     # Handle CORS preflight
     if request.method == 'OPTIONS':
         return '', 200
@@ -72,7 +69,7 @@ Output (JSON only):"""
             'max_tokens': 1000
         }
         
-        # Use requests with timeout optimized for Vercel
+        # Use requests with shorter timeout for Vercel
         response = requests.post(
             'https://api.openai.com/v1/chat/completions',
             headers=headers,
