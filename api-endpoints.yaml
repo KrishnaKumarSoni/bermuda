@@ -1,0 +1,97 @@
+api-endpoints:
+  overview: "This document defines all backend API endpoints for Bermuda using Flask, including routes, methods, request/response formats, authentication, and error handling to enable AI-assisted implementation."
+
+  general-setup:
+    framework: "Python Flask with CORS enabled for frontend"
+    base-url: "/api"
+    authentication: "Firebase token verification for creator endpoints; anonymous for respondent ones"
+    error-handling: "Standard JSON errors with status codes (e.g., 400 for validation, 500 for server); rate limiting at 100 requests/min per IP"
+    logging: "Log all requests/responses; errors to console for MVP"
+
+  creator-endpoints:
+    infer:
+      route: "/api/infer"
+      method: POST
+      description: "Infers form structure from text dump"
+      auth: "Required (Firebase token in header)"
+      request-body:
+        dump: string  # Required, max 5000 chars
+      response:
+        success: "200 with JSON: {'title': str, 'questions': array-of-objects, 'demographics': array-of-objects (predefined with inferred types)}"
+        error: "400: {'error': 'Invalid dump - too short'}"
+      processing: "Call Langchain inference chain; timeout after 10s"
+      
+    save-form:
+      route: "/api/save-form"
+      method: POST
+      description: "Saves edited form to Firebase"
+      auth: "Required"
+      request-body:
+        title: string
+        questions: array-of-objects  # With text, type, options, enabled
+        demographics: array-of-objects  # Enabled presets
+      response:
+        success: "200: {'form_id': str, 'message': 'Form saved'}"
+        error: "400: {'error': 'No enabled questions'}"
+      validations: "At least one enabled question; valid types/options"
+      processing: "Generate form_id (UUID); store in Firestore /forms"
+
+    get-forms:
+      route: "/api/forms"
+      method: GET
+      description: "Lists creator's saved forms"
+      auth: "Required"
+      query-params: none
+      response: "200: array of form objects (id, title, created_at, response_count)"
+      
+    get-responses:
+      route: "/api/forms/{form_id}/responses"
+      method: GET
+      description: "Fetches responses for a form"
+      auth: "Required (must be creator)"
+      query-params:
+        partial: boolean  # Optional filter
+      response: "200: array of response objects (session_id, data, timestamp, partial, device_id for flagging)"
+      processing: "Query Firestore subcollection; include CSV export option via separate param"
+
+  respondent-endpoints:
+    get-form-metadata:
+      route: "/api/forms/{form_id}"
+      method: GET
+      description: "Fetches form details for chat (anonymous)"
+      auth: "None"
+      response: "200: {'title': str, 'questions': array (enabled only), 'demographics': array (enabled)}"
+      error: "404: {'error': 'Form not found'}"
+      
+    chat-message:
+      route: "/api/chat-message"
+      method: POST
+      description: "Processes user message and generates bot response"
+      auth: "None"
+      request-body:
+        session_id: string
+        form_id: string
+        message: string
+        device_id: string  # Silent security field
+        location: object  # Silent
+      response: "200: {'response': str, 'tag': str (e.g., [END])}"
+      processing: "Append to Realtime DB; call ConversationChain; if every 5 msgs, trigger extraction"
+      
+    extract-data:
+      route: "/api/extract"  # Internal or triggered
+      method: POST
+      description: "Extracts structured data from transcript (called internally)"
+      auth: "None (backend only)"
+      request-body:
+        session_id: string
+        transcript: array
+        questions_json: object
+      response: "200: extracted JSON with partial flag"
+      processing: "Call ExtractionChain; save to Firestore responses"
+
+  error-codes:
+    400: "Bad request (validation failures)"
+    401: "Unauthorized (missing/invalid token)"
+    404: "Not found (invalid form_id)"
+    429: "Too many requests (rate limit)"
+    500: "Server error (log and retry LLM if applicable)"

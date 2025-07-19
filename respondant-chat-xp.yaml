@@ -1,0 +1,125 @@
+respondent-chat-experience:
+  overview: "This document defines the complete respondent experience in Bermuda, from accessing the form link through completing the chat and data submission. It covers the anonymous chat interface, bot behavior, data collection mechanics, and all edge cases to enable AI-assisted development."
+
+  user-persona:
+    description: "Respondents are end-users who receive a shared form link and interact via chat. They may be anonymous and expect a natural, human-like conversation without feeling like they're talking to a bot."
+    technical-level: "Any level. No login required, just basic web browsing skills."
+    goals:
+      - "Provide responses naturally through conversation in under 5 minutes for a typical form"
+      - "Feel engaged and not pressured, with the ability to skip or clarify answers"
+      - "Complete the form without knowing it's an AI (human-like responses only)"
+
+  access-and-setup:
+    entry-point: "Shared link format: bermuda.app/form/{form_id}"
+    initial-load:
+      - "Browser loads simple chat interface without authentication"
+      - "Frontend JS generates unique session_id (UUID) for this chat instance"
+      - "Silently collect device_id using FingerprintJS (browser/OS/screen hash for security, anti-abuse, and duplicate detection)"
+      - "Silently collect coarse location using browser Geolocation API (if permitted) or fallback to IP-based service like ipapi.co (country/city only, for security without user disclosure)"
+      - "Send device_id and location to backend via POST to attach to session in Firebase"
+      - "Fetch form metadata (title, questions, demographics) from backend"
+      - "If form_id invalid, show friendly error page: 'This form does not exist. Please check the link.'"
+    ui-layout:
+      - "Full-screen chat window with scrolling message list"
+      - "Bot messages on left (blue bubbles), user on right (gray bubbles)"
+      - "Input box at bottom with 'Send' button (enter key also sends)"
+      - "No headers or footers to keep immersion high"
+      - "Loading indicator on first load: 'Connecting to chat...'"
+    mobile-optimization: "Responsive design; virtual keyboard handling to avoid UI overlap"
+
+  chat-flow:
+    initial-greeting:
+      - "Bot starts with natural message based on form title, e.g., 'Hey! Let's chat about your coffee preferences. What's your favorite type?'"
+      - "Greeting weaves in first enabled question naturally"
+      
+    message-exchange:
+      - "User types and sends message (max 1000 characters per message)"
+      - "Frontend sends to backend /chat_message endpoint with session_id and message"
+      - "Backend appends to Firebase Realtime DB for sync"
+      - "Backend invokes Langchain ConversationChain with memory (last 10 messages) and full prompt"
+      - "Bot response generated: Natural, empathetic, using emojis and slang, one question/follow-up at a time"
+      - "Response time: Aim for under 2 seconds; show typing indicator if longer"
+      - "Append bot response to chat UI and Realtime DB"
+      
+    data-collection-mechanics:
+      - "Bot collects enabled questions and demographics sequentially but flexibly (handles out-of-order or pre-answers)"
+      - "Questions asked openly without bias (never list options, e.g., for multiple_choice: 'What's your favorite?' not 'Choose from A/B/C')"
+      - "Follow-ups: If vague, probe naturally (max 2 per question, e.g., 'You said sometimes - like daily or weekly?')"
+      - "Type-specific handling (via prompt CoT): Text (verbatim), Multiple_Choice/Yes_No/Rating (bucketize free response to options, no-fit to 'other'), Number (parse to numeric)"
+      - "Demographics: Asked at end if enabled, naturally (e.g., 'Before we wrap, mind sharing your age range?')"
+      - "Mandatoriness: Default mandatory, but allow skips if insisted (e.g., 'Skip' → 'No worries, skipping that!')"
+      
+    chat-completion:
+      - "When all data collected (detected via prompt CoT), bot says friendly thanks and adds [END] tag"
+      - "UI shows 'Chat complete - thanks!' and disables input"
+      - "Trigger full extraction and save to Firestore"
+
+    periodic-saves:
+      - "Every 5 total messages (user + bot), frontend triggers backend extraction for partial save"
+      - "Partial flag set to true; includes all collected data so far"
+      - "Why 5: Balances data preservation against performance overhead"
+
+  bot-behavior:
+    human-like-style:
+      - "Always casual, engaging: Use contractions, questions like a friend (e.g., 'Cool, tell me more!')"
+      - "Vary phrasing to avoid repetition"
+      
+    off-topic-handling:
+      - "If message unrelated to form (gibberish, random topics, general AI requests), respond ONLY with 'bananas' + gentle redirect (e.g., 'bananas... anyway, back to your preferences?')"
+      - "After 3 consecutive off-topics, force [END] and save partial"
+      
+    question-types-integration:
+      - "Text: Extract open response verbatim"
+      - "Multiple_Choice: Bucketize semantically (e.g., 'capp' → closest option or 'other')"
+      - "Yes_No: Map to Yes/No/Unsure (e.g., 'kinda' → Unsure)"
+      - "Number: Parse natural language (e.g., 'a few' → 3)"
+      - "Rating: Map to 1-5 (e.g., 'great' → 5)"
+      - "No upfront options disclosure to prevent bias"
+
+  edge-cases-and-errors:
+    abrupt-closure:
+      - "If tab closed or inactivity >5 minutes (JS timer), trigger partial extraction and save"
+      - "On reopen same link, start new session (no resume for MVP)"
+      
+    conflicts-reanswers:
+      - "Detect in prompt CoT; clarify (e.g., 'Earlier you said latte - now espresso?') and use latest"
+      
+    skips-insistence:
+      - "If user says 'skip' or equivalent, acknowledge and mark as skipped, move on (no more than 1 follow-up)"
+      
+    pre-answers-multi-dumps:
+      - "Parse in CoT; extract to relevant questions and skip asking (e.g., 'Latte daily no allergies' covers 3 questions)"
+      
+    vague-no-fit:
+      - "Follow-up once; if still no fit, map to 'other' or 'unclear' in extraction"
+      
+    invalid-types:
+      - "Follow-up for clarification (e.g., non-number for number type: 'Needs a number - try again?')"
+      
+    long-loops:
+      - "If >30 total messages or >2 follow-ups per question, force [END] via prompt"
+      
+    network-issues:
+      - "JS retries sends 3x; if fails, cache message locally and sync on reconnect"
+      - "Show 'Connection lost - reconnecting...' banner"
+      
+    off-topic-persistence:
+      - "Escalate to [END] after 3 'bananas' responses"
+      
+    multi-device:
+      - "New session_id per open; treat as separate responses"
+      
+    hallucinations-prevention:
+      - "Prompt self-critique; backend retries if response invalid (e.g., no [END] when expected)"
+      
+    language-support:
+      - "LLM auto-detects and responds in user's language"
+      
+    accessibility:
+      - "ARIA labels on chat elements; screen-reader friendly (e.g., announce new messages)"
+
+  success-metrics:
+    completion-rate: "At least 80% of started chats reach [END]"
+    response-time: "Average bot response under 2 seconds"
+    user-satisfaction: "Natural feel - less than 10% off-topic escalations"
+    data-quality: "Extraction accuracy >90% for bucketizing/transformation"

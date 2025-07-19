@@ -1,0 +1,160 @@
+form-creator-experience:
+  overview: "This document defines the complete form creation experience in Bermuda, from initial login through sharing the form link. Every interaction, validation, and edge case is specified to enable AI-assisted development."
+
+  user-persona:
+    description: "Form creators are individuals who need to quickly create conversational forms from unstructured text. They value speed and simplicity over complex features."
+    technical-level: "Basic to intermediate. They can copy-paste text and understand simple UI controls, but should not need to write code or understand technical concepts."
+    goals:
+      - "Convert their existing text dumps (meeting notes, email content, requirements docs) into forms in under 2 minutes"
+      - "Share forms easily without complex setup"
+      - "View responses in a simple, exportable format"
+
+  authentication:
+    entry-point: "Landing page at bermuda.app with a single 'Sign in with Google' button prominently displayed"
+    flow:
+      - "User clicks 'Sign in with Google' button"
+      - "Firebase Auth handles OAuth flow in popup window"
+      - "On success, redirect to dashboard at bermuda.app/dashboard"
+      - "If first-time user, create profile document in Firestore with just email and unique user ID"
+    error-handling:
+      - "If Google auth fails, show inline error: 'Could not sign in. Please try again.'"
+      - "If popup blocked, show message: 'Please allow popups for Bermuda to sign in'"
+    post-auth: "User sees dashboard with 'Create New Form' button and list of existing forms (if any)"
+
+  form-creation-flow:
+    step-1-text-dump:
+      ui-element: "Large text area (minimum 6 rows) with placeholder text: 'Paste your form context here - meeting notes, requirements, survey questions, anything!'"
+      helper-text: "Below text area: 'Example: Customer feedback survey about new coffee flavors: taste preferences, frequency of visits, favorite time of day, any allergies'"
+      submit-button: "Blue 'Create Form' button below text area, disabled until at least 20 characters entered"
+      validations:
+        - "Minimum 20 characters to prevent accidental submissions"
+        - "Maximum 5000 characters to prevent token overflow"
+        - "If limits exceeded, show inline red text with character count"
+      processing:
+        - "On submit, show loading spinner with text 'Analyzing your content...'"
+        - "Send POST request to /api/infer endpoint with dump text"
+        - "If inference fails after 10 seconds, show error: 'Could not process your text. Please try again with clearer content.'"
+
+    step-2-form-editing:
+      initial-display: "Form builder UI appears with inferred content, all editable"
+      
+      title-section:
+        element: "Large text input at top with inferred title"
+        placeholder: "Form Title"
+        validation: "Required, max 200 characters"
+        
+      questions-section:
+        header: "Questions section with count badge (e.g., 'Questions (5)')"
+        question-card-structure:
+          - "Each question in a bordered card with gray background"
+          - "Toggle switch on right side (green when enabled, gray when disabled)"
+          - "Question text in editable input field"
+          - "Type dropdown below text: [Text, Multiple Choice, Yes/No, Number, Rating (1-5)]"
+          - "If Multiple Choice selected, show additional input: 'Options (comma-separated)' with example 'e.g., Daily, Weekly, Monthly, Never'"
+          - "Drag handle on left for reordering (MVP: skip reordering, just display in order)"
+          
+        question-validations:
+          - "Question text required if enabled"
+          - "Multiple choice must have at least 2 options"
+          - "Options auto-trim whitespace and remove empty values"
+          - "Duplicate options shown with yellow warning but allowed"
+          
+        add-question-button: "Small '+ Add Question' link at bottom of questions list"
+        
+      demographics-section:
+        header: "Demographics section with subtitle '(Optional segmentation data)'"
+        preset-demographics:
+          - "Age Range - Multiple choice with preset options: Under 18, 18-24, 25-34, 35-44, 45-54, 55+, Prefer not to say"
+          - "Gender - Multiple choice: Male, Female, Non-binary, Other, Prefer not to say"
+          - "Location - Text input (open field)"
+          - "Education Level - Multiple choice: High school or less, Some college, Bachelor's degree, Master's degree, Doctoral degree, Other"
+          - "Income Bracket - Multiple choice: Under $25k, $25k-$50k, $50k-$100k, $100k+, Prefer not to say"
+          - "Occupation - Text input (open field)"
+          - "Ethnicity - Multiple choice: Asian, Black or African American, Hispanic or Latino, White, Other, Prefer not to say"
+          
+        display: "Each demographic as a row with checkbox on left, name in middle, type indicator on right"
+        behavior: "Checking box enables that demographic question in the form"
+        
+      action-buttons:
+        preview-button:
+          text: "Preview"
+          behavior: "Opens modal showing chat interface simulation with first question"
+          validation: "Disabled if no questions enabled"
+          
+        save-button:
+          text: "Save Form"
+          behavior: "Validates all fields, saves to Firebase, generates shareable link"
+          validation-rules:
+            - "At least one question must be enabled"
+            - "All enabled questions must have text"
+            - "Multiple choice questions must have valid options"
+          success-behavior: "Shows green toast: 'Form saved!' and enables Share button"
+          error-messages:
+            - "No questions enabled: 'Please enable at least one question'"
+            - "Empty question text: 'Please fill in all enabled questions'"
+            - "Invalid options: 'Please add options for multiple choice questions'"
+            
+        share-button:
+          text: "Share"
+          initial-state: "Disabled until form saved"
+          behavior: "Shows modal with copyable link and QR code"
+          link-format: "bermuda.app/form/{form_id}"
+          copy-action: "Click to copy shows 'Copied!' for 2 seconds"
+
+  dashboard-view:
+    layout: "Simple list view of created forms"
+    
+    empty-state:
+      message: "No forms yet. Create your first form to get started!"
+      cta: "Large 'Create New Form' button"
+      
+    form-list:
+      display-per-form:
+        - "Form title as clickable link"
+        - "Created date in gray text"
+        - "Response count badge (e.g., '12 responses')"
+        - "Three action buttons: View Responses, Copy Link, Delete"
+        
+      sorting: "Most recent first, no other sorting options for MVP"
+      pagination: "Show all for MVP, no pagination"
+      
+    actions:
+      view-responses:
+        behavior: "Navigate to /form/{form_id}/responses page"
+        display: "Table view with columns for each question, rows for each response"
+        export: "Download CSV button at top right"
+        
+      copy-link:
+        behavior: "Copy shareable link to clipboard"
+        feedback: "Show 'Link copied!' toast for 2 seconds"
+        
+      delete:
+        behavior: "Show confirmation modal: 'Delete this form and all responses? This cannot be undone.'"
+        on-confirm: "Soft delete (mark as deleted, don't show in UI)"
+
+  edge-cases-and-errors:
+    network-errors:
+      behavior: "All network operations show inline error below relevant UI element"
+      retry: "Include 'Try again' link in error message"
+      
+    validation-feedback:
+      principle: "Show validation errors inline, never in popups"
+      timing: "Validate on blur for text inputs, immediately for dropdowns"
+      
+    browser-compatibility:
+      unsupported-browser: "Show banner: 'Bermuda works best in Chrome, Firefox, or Safari'"
+      mobile-experience: "Fully responsive, but show hint: 'For best experience creating forms, use a desktop'"
+      
+    form-limits:
+      max-questions: "50 questions per form (show warning at 40)"
+      max-options-per-question: "20 options for multiple choice"
+      max-form-name-length: "200 characters"
+      
+    concurrent-editing:
+      behavior: "Forms are immutable after first save"
+      message-if-attempted: "To make changes, please create a new form"
+
+  success-metrics:
+    time-to-create: "User should be able to create and share a form in under 2 minutes"
+    inference-accuracy: "Inferred questions should require minimal editing in 90% of cases"
+    error-rate: "Less than 5% of form creation attempts should result in errors"

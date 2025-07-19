@@ -1,0 +1,57 @@
+product-overview:
+  overview: "This document provides a high-level overview of the Bermuda product, including vision, key features, user value propositions, and MVP scope to guide overall development."
+
+  product-vision:
+    description: "Bermuda is a conversational alternative to Google Forms, where creators paste unstructured text dumps to auto-generate forms, and respondents answer via natural, human-like chatbots. It leverages LLMs for inference, conversation, and data extraction to make form creation and completion feel effortless and engaging."
+    unique-value-proposition:
+      - "Rapid form creation from any text dump using AI inference, reducing setup time from minutes to seconds"
+      - "Human-like chat experience for respondents, increasing completion rates by making surveys feel like conversations"
+      - "Anonymous responses with robust data extraction, ensuring high-quality structured output from unstructured inputs"
+      - "MVP focus on core flows without unnecessary features, emphasizing reliability and LLM-powered robustness"
+
+  target-users:
+    creators:
+      description: "Individuals or teams needing quick surveys, feedback forms, or data collection (e.g., marketers, researchers, product managers)"
+      pain-points-addressed: "Tedious manual form building; low response rates from rigid forms"
+      
+    respondents:
+      description: "Anonymous users receiving links (e.g., customers, survey participants)"
+      pain-points-addressed: "Boring, robotic forms; preference for natural interaction"
+
+  key-features-mvp:
+    form-creation:
+      - "Text dump inference to generate title, questions, types (text, multiple_choice, yes_no, number, rating)"
+      - "Editable UI with toggles for questions and predefined demographics"
+      - "Preview, save, and share via unique link"
+      
+    respondent-experience:
+      - "Anonymous chat access with human-like bot (natural language, follow-ups, no bias in questioning)"
+      - "LLM-driven data collection with type-specific bucketizing and transformation"
+      - "Partial saves for incomplete chats"
+      
+    data-handling:
+      - "Extraction of structured responses from chat transcripts"
+      - "Silent security collection (device_id, location) for anti-abuse"
+      - "Simple dashboard for viewing and exporting responses"
+      
+    technical-highlights:
+      - "LLM leverage: GPT-4o-mini for all AI tasks with engineered prompts (CoT, few-shots)"
+      - "Langchain for conversational agent (single chain with memory)"
+      - "Firebase for auth, storage, real-time sync"
+
+  mvp-scope-limitations:
+    inclusions: "Only essential features: Creation, chatting, basic dashboard; 5 question types; predefined demographics"
+    exclusions: "No advanced analytics, multi-user collaboration, custom themes, email sharing, persistent chat resumes, or complex conditionals"
+    why-mvp: "Focus on core value (AI-powered forms) to validate quickly; expand based on feedback"
+
+  success-metrics:
+    user-adoption: "100 forms created in first month post-launch"
+    completion-rate: "80% of started chats fully completed"
+    data-accuracy: "90% accuracy in LLM inference and extraction"
+    performance: "End-to-end response time under 2 seconds; zero data loss"
+
+  risks-and-mitigations:
+    llm-unreliability: "Rigorous prompt testing with 50+ examples; fallback retries"
+    privacy-concerns: "Anonymous by default; device/location internal-only for security"
+    scalability: "Firebase handles initial load; monitor and scale as needed"
+    development: "Phased build with early testing of LLM components"

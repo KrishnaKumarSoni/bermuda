@@ -1,0 +1,173 @@
+data-models-and-storage:
+  overview: "This document defines the complete data models, storage structure, and handling logic for Bermuda using Firebase. It includes schemas for forms, responses, chats, and all related fields, ensuring data integrity, anonymity, and security features."
+
+  database-setup:
+    firebase-project: "Single Firebase project with Firestore for persistent data and Realtime Database for live chat syncing"
+    security-rules:
+      - "Authenticated users can read/write own forms"
+      - "Anonymous reads for form metadata via public links"
+      - "No direct client writes to responses - all via backend"
+    indexing: "Composite indexes on form_id + timestamp for responses querying"
+    costs-considerations: "Use free tier for MVP; monitor writes for partial saves"
+
+  forms-collection:
+    path: "Firestore collection: /forms"
+    document-structure:
+      form_id:
+        type: string
+        description: "Unique UUID generated on save"
+        required: true
+        
+      creator_id:
+        type: string
+        description: "Firebase user ID of the creator"
+        required: true
+        
+      title:
+        type: string
+        description: "Editable form title, max 200 characters"
+        required: true
+        
+      questions:
+        type: array-of-objects
+        description: "List of inferred/edited questions"
+        object-fields:
+          text:
+            type: string
+            description: "Question text, required if enabled"
+          type:
+            type: string
+            description: "One of: text, multiple_choice, yes_no, number, rating"
+          options:
+            type: array-of-strings
+            description: "For multiple_choice/yes_no/rating; comma-separated in UI, stored as array"
+          enabled:
+            type: boolean
+            description: "Toggle switch state; default true"
+        validations: "At least one enabled question required for save"
+        
+      demographics:
+        type: array-of-objects
+        description: "Toggleable predefined demographics"
+        object-fields:
+          name:
+            type: string
+            description: "E.g., 'Age Range'"
+          type:
+            type: string
+            description: "Text or multiple_choice"
+          options:
+            type: array-of-strings
+            description: "Preset for multiple_choice (e.g., age ranges)"
+          enabled:
+            type: boolean
+            description: "Whether to include in chat"
+        validations: "Optional; can all be disabled"
+        
+      created_at:
+        type: timestamp
+        description: "Auto-set on save"
+        
+      updated_at:
+        type: timestamp
+        description: "Auto-update on any changes (MVP: forms immutable post-save)"
+
+  responses-collection:
+    path: "Firestore subcollection: /forms/{form_id}/responses"
+    document-structure:
+      session_id:
+        type: string
+        description: "Unique UUID per chat instance for anonymous tagging and grouping"
+        required: true
+        
+      timestamp:
+        type: timestamp
+        description: "When chat started"
+        required: true
+        
+      data:
+        type: object
+        description: "Extracted structured responses"
+        subfields:
+          questions:
+            type: object
+            description: "Key: question_text, Value: transformed/bucketized answer (e.g., {'Favorite': 'Latte'})"
+          demographics:
+            type: object
+            description: "Similar to questions, for enabled demographics"
+        
+      transcript:
+        type: array-of-objects
+        description: "Full chat history for auditing"
+        object-fields:
+          role: string  # user or bot
+          text: string
+          timestamp: timestamp
+        
+      partial:
+        type: boolean
+        description: "True if saved midway (every 5 messages or timeout); false on [END]"
+        required: true
+        
+      status:
+        type: string
+        description: "Complete, Partial, Abandoned, Skipped (for partial skips)"
+        
+      device_id:
+        type: string
+        description: "Hashed device fingerprint (FingerprintJS) for security (anti-dupe/abuse detection), collected silently"
+        required: true
+        
+      location:
+        type: object
+        description: "Coarse location for security, collected silently"
+        subfields:
+          country: string
+          city: string  # Optional if unavailable
+        
+      notes:
+        type: array-of-strings
+        description: "Extraction notes (e.g., 'Conflict resolved', 'Bucketized to other')"
+
+  chats-collection:
+    path: "Realtime Database: /chats/{session_id}"
+    structure:
+      form_id:
+        type: string
+        description: "Links to form"
+        
+      messages:
+        type: array-of-objects
+        description: "Live syncing of chat for real-time UI"
+        object-fields:
+          role: string  # user or bot
+          text: string
+          timestamp: timestamp
+        
+      active:
+        type: boolean
+        description: "True while chat ongoing; false on [END]"
+
+  data-handling-logic:
+    storage-flow:
+      - "Chats: Real-time appends for live sync"
+      - "Responses: Write on partial/full extraction; update if conflicts resolved later (MVP: no updates post-save)"
+      
+    transformation-extraction:
+      - "Triggered by backend on every 5 messages, [END], or timeout"
+      - "Uses LLM chain to map chat to structured data with type-specific rules (bucketizing for choice types, parsing for others)"
+      - "Anonymity: No PII unless in demographics; device_id/location internal only"
+      
+    querying:
+      - "Dashboard: Query by form_id, sort by timestamp"
+      - "Duplicate flagging: Group by device_id + form_id"
+      
+    retention:
+      - "Delete on form delete (cascade)"
+      - "No auto-purge for MVP"
+
+  edge-cases:
+    data-loss-prevention: "Partial saves ensure no total loss on abandon"
+    concurrency: "Realtime DB handles multiple messages without locks"
+    size-limits: "Max 100 messages per transcript"
+    security: "Device_id/location encrypted; used only for flagging (e.g., >5 submissions/device flags as suspicious)"

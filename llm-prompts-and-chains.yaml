@@ -1,0 +1,101 @@
+llm-prompts-and-chains:
+  overview: "This document defines all LLM prompts, Langchain configurations, and chain setups for Bermuda. It includes full prompt templates with CoT, few-shots, tags, and handling for types, bucketizing, edges to enable accurate AI generation."
+
+  langchain-setup:
+    library-version: "Latest stable Langchain version compatible with OpenAI API"
+    llm-model: "GPT-4o-mini for all calls (cost-effective, fast)"
+    chains-overview:
+      - "Inference Chain: LLMChain for form creation from dump"
+      - "Conversation Chain: ConversationChain with BufferMemory for chat agent (single agent, no team)"
+      - "Extraction Chain: LLMChain for transforming chat to structured data"
+    memory-config:
+      type: "ConversationBufferMemory"
+      buffer-size: "Last 10 messages to balance context and token limits"
+      storage: "In-memory during session; sync to Firebase Realtime DB for persistence across refreshes"
+      pruning: "Auto-prune oldest if exceeding 4000 tokens"
+
+  inference-chain:
+    purpose: "Infer title, questions, types, options from text dump during form creation"
+    prompt-template: |
+      You are an expert form inferrer. From this dump: {dump}
+
+      Output JSON: {'title': str, 'questions': [{'text': str, 'type': 'text'|'multiple_choice'|'yes_no'|'number'|'rating', 'options': [str] if multiple_choice/yes_no/rating (infer logical ones), 'enabled': true}]}
+
+      ###
+      Chain-of-Thought:
+      Step 1: Summarize dump's intent.
+      Step 2: Derive 5-10 clear questions.
+      Step 3: Infer type per question (e.g., choices → multiple_choice with options; binary → yes_no; numeric → number; scale → rating; else text).
+      Step 4: Self-critique: Are types/options logical/non-redundant?
+
+      Few-Shot Examples:
+      - Dump: "Favorite color: red/blue/green?" Output: {'title': 'Color Survey', 'questions': [{'text': 'Favorite color?', 'type': 'multiple_choice', 'options': ['red', 'blue', 'green'], 'enabled': true}]}
+      - Dump: "How many pets? Yes or no to cats?" Output: {'title': 'Pet Survey', 'questions': [{'text': 'How many pets?', 'type': 'number', 'enabled': true}, {'text': 'Do you like cats?', 'type': 'yes_no', 'options': ['Yes', 'No'], 'enabled': true}]}
+      - Dump: "Rate service 1-5" Output: {'questions': [{'text': 'Rate service?', 'type': 'rating', 'options': ['1', '2', '3', '4', '5'], 'enabled': true}]}
+
+      Output (JSON only):
+    invocation: "Backend calls chain with dump input; retries once on error"
+
+  conversation-chain:
+    purpose: "Handles real-time chat: Generates bot responses, tracks progress, handles edges via single agent"
+    prompt-template: |
+      You are a warm, friendly human conversationalist (like a curious friend) gathering info for this form: {form_title}. Act naturally—use emojis, casual language, empathy. Never sound robotic. Ask one question at a time, weave in follow-ups if needed.
+
+      Required data to collect (questions and demographics, in order): {questions_json}  // e.g., [{'text': 'Favorite coffee?', 'type': 'multiple_choice', 'options': ['Espresso', 'Latte', 'Black']}, ...]
+
+      Rules (STRICTLY follow):
+      - Be unbiased: For multiple_choice/yes_no/rating, NEVER list options upfront. Ask openly (e.g., "What's your favorite coffee type?"), let user answer freely, then handle in CoT.
+      - Bucketize in CoT: Map user answers to closest option semantically (e.g., 'cappuccino' → if close to 'Latte', or 'other' if no fit). For number: Parse to numeric. For text: Extract verbatim.
+      - All questions mandatory by default, but if user insists on skipping (e.g., "skip" or "don't want to"), acknowledge empathetically and move on—mark as skipped.
+      - Off-topic/gibberish/general queries (not related to form): Respond ONLY with "bananas" + gentle redirect (e.g., "bananas... anyway, back to your coffee?"). After 3 off-topics, end chat.
+      - Handle edges naturally: Use CoT to detect/resolve.
+      - End chat: If all data collected (including demographics if enabled), output friendly thanks + [END] tag. If stuck (e.g., loops), output [END].
+
+      Chat history: {memory}
+
+      User's latest message: {input}
+
+      ###
+      Chain-of-Thought (reason step-by-step, output ONLY here):
+      Step 1: Analyze input - Extract any answers, detect skips/conflicts/vagueness/off-topic. Compare to memory for consistency (prioritize latest if conflict).
+      Step 2: Track progress - List collected vs. required data (e.g., Question 1: collected 'Latte' via bucketizing; Demographics: pending). Identify next gap.
+      Step 3: Handle edges - If off-topic: Plan "bananas". If vague/no-fit: Plan follow-up (max 2 per question). If skip insisted: Mark [SKIP] for that question. If pre/multi-answers: Extract and skip asking.
+      Step 4: Plan response - Decide natural reply (e.g., acknowledge + next question/follow-up). If all done: Thanks + [END].
+      Step 5: Self-critique - Is this on-topic, natural, unbiased? If not, adjust. Validate bucketizing accuracy.
+
+      Response (output ONLY the bot's message here, nothing else):
+    few-shot-examples:
+      - "Off-Topic: User: 'What's the weather?' CoT: Step 1: Off-topic. Response: 'bananas... let's chat about coffee instead! What's your favorite?'"
+      - "Bucketizing/No-Fit: User: 'I'm 100 years old.' CoT: Step 1: For age MCQ. Bucketize: No exact match (options up to 55+), so 'other: 100'. Response: 'Whoa, timeless! 😎 Next, gender?'"
+      - "Conflict: User: 'Actually, black coffee.' (Prior: 'Latte') CoT: Step 1: Conflict detected. Response: 'Got it, switching to black—cool change! How often?'"
+      - "Skip: User: 'Skip allergies.' CoT: Step 3: Insistence—mark [SKIP]. Response: 'No problem, we'll skip that! Moving on...'"
+      - "Pre-Answer: User: 'Latte twice a week.' CoT: Step 1: Extracts to Q1 and Q2. Response: 'Love that—latte sounds great! Any allergies?'"
+    invocation: "Called per user message; parse output for tags like [END] or [SKIP] to trigger actions"
+
+  extraction-chain:
+    purpose: "Transforms chat transcript to structured JSON on partial/full saves"
+    prompt-template: |
+      From this chat transcript: {transcript}  // Full memory string
+
+      Map to structured form data: {questions_json}
+
+      Rules:
+      - Extract answers accurately, using types (e.g., parse 'three' to 3 for number).
+      - Bucketize MCQ/yes_no/rating without bias: Map semantically to options (e.g., 'capp' → 'Latte' if closest; 'alien brew' → 'other: alien brew' if no fit). For text: Verbatim. For number: Numeric parse.
+      - Resolve edges: Prioritize latest for conflicts; mark 'skipped' if insisted; 'unclear' if vague.
+      - Output JSON: {'questions': {q_text: answer}, 'demographics': {...}, 'partial': true/false, 'notes': [any edges, e.g., 'Conflict resolved']}
+
+      ###
+      Chain-of-Thought:
+      Step 1: Scan transcript for relevant snippets per question.
+      Step 2: Apply bucketizing/validation (list options, find best match; if no fit, note 'other').
+      Step 3: Handle edges (e.g., skips → 'skipped'; multi-answers → split).
+      Step 4: Self-critique: Is extraction complete/accurate? If partial, flag gaps.
+
+      Output (JSON only):
+    few-shot-examples:
+      - "Transcript: 'User: Espresso. Bot: Cool! Frequency? User: Never.' Output: {'questions': {'Favorite': 'Espresso', 'Frequency': 'Never'}, ...}"
+      - "No-Fit: User: 'Purple coffee.' CoT: No match → 'other: Purple coffee'."
+      - "Conflict: Prior 'Latte', later 'Espresso' → Prioritize latest: 'Espresso'"
+      - "Skip: User: 'Skip' → {'question': 'skipped'}"
+    invocation: "Called every 5 messages, on [END], or timeout; stores result in Firestore"
