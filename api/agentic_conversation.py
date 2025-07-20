@@ -153,23 +153,49 @@ class AgenticConversationManager:
             # Create conversation prompt
             HumanMessage = _langchain_cache['HumanMessage']
             
-            context_prompt = f"""You're having a casual chat about "{form_title}".
+            # Build questions JSON for the prompt
+            questions_json = []
+            for q in form_data.get('questions', []):
+                if q.get('enabled', True):
+                    q_dict = {
+                        'text': q.get('text', ''),
+                        'type': q.get('type', 'text')
+                    }
+                    if 'options' in q:
+                        q_dict['options'] = q.get('options', [])
+                    questions_json.append(q_dict)
+            
+            # Build memory string
+            memory_text = ""
+            for msg in conversation_history[-10:]:
+                role = "Bot" if msg.get('role') == 'assistant' else "User"
+                memory_text += f"{role}: {msg.get('text', '')}\n"
+            
+            context_prompt = f"""You are a warm, friendly human conversationalist (like a curious friend) gathering info for this form: {form_title}. Act naturally—use emojis, casual language, empathy. Never sound robotic. Ask one question at a time, weave in follow-ups if needed.
 
-ANALYSIS:
-- Question Progress: {progress}
-- Last Response: {completeness}
+Required data to collect (questions and demographics, in order): {questions_json}
 
-PERSONALITY: Super casual, short responses (1-2 sentences max). Use lowercase.
+Rules (STRICTLY follow):
+- Be unbiased: For multiple_choice/yes_no/rating, NEVER list options upfront. Ask openly (e.g., "What's your favorite coffee type?"), let user answer freely, then handle in CoT.
+- Bucketize in CoT: Map user answers to closest option semantically (e.g., 'cappuccino' → if close to 'Latte', or 'other' if no fit). For number: Parse to numeric. For text: Extract verbatim.
+- All questions mandatory by default, but if user insists on skipping (e.g., "skip" or "don't want to"), acknowledge empathetically and move on—mark as skipped.
+- Off-topic/gibberish/general queries (not related to form): Respond ONLY with "bananas" + gentle redirect (e.g., "bananas... anyway, back to your coffee?"). After 3 off-topics, end chat.
+- Handle edges naturally: Use CoT to detect/resolve.
+- End chat: If all data collected (including demographics if enabled), output friendly thanks + [END] tag. If stuck (e.g., loops), output [END].
 
-RULES:
-- If INCOMPLETE response: ask "go on..." or "anything else?"
-- If COMPLETE response and questions remaining: acknowledge briefly, ask next question
-- If most questions answered: move toward completion
-- Be like texting a friend: "nice!", "got it!", "cool!"
+Chat history: {memory_text}
 
-User said: "{user_message}"
+User's latest message: {user_message}
 
-Respond casually:"""
+###
+Chain-of-Thought (reason step-by-step, output ONLY here):
+Step 1: Analyze input - Extract any answers, detect skips/conflicts/vagueness/off-topic. Compare to memory for consistency (prioritize latest if conflict).
+Step 2: Track progress - List collected vs. required data (e.g., Question 1: collected 'Latte' via bucketizing; Demographics: pending). Identify next gap.
+Step 3: Handle edges - If off-topic: Plan "bananas". If vague/no-fit: Plan follow-up (max 2 per question). If skip insisted: Mark [SKIP] for that question. If pre/multi-answers: Extract and skip asking.
+Step 4: Plan response - Decide natural reply (e.g., acknowledge + next question/follow-up). If all done: Thanks + [END].
+Step 5: Self-critique - Is this on-topic, natural, unbiased? If not, adjust. Validate bucketizing accuracy.
+
+Response (output ONLY the bot's message here, nothing else):"""
             
             # Get response
             response = self.llm.invoke([HumanMessage(content=context_prompt)])
@@ -188,71 +214,123 @@ Respond casually:"""
             return self._fallback_response(user_message, conversation_history, form_data)
     
     def _fallback_response(self, user_message: str, conversation_history: List[Dict], form_data: Dict) -> Tuple[str, bool]:
-        """Enhanced fallback that asks proper survey questions"""
+        """Enhanced fallback following YAML specifications"""
+        
+        form_title = form_data.get('title', 'survey')
         
         # Check if this is off-topic first
-        form_title = form_data.get('title', 'survey')
         if self._is_off_topic(user_message, form_title):
-            return "bananas... anyway, back to the survey?", False
+            return f"bananas... anyway, back to {form_title.lower()}? 😊", False
         
         # Get enabled questions
         questions = form_data.get('questions', [])
         enabled_questions = [q for q in questions if q.get('enabled', True)]
         
         if not enabled_questions:
-            return "thanks for chatting!", True
+            return "thanks for chatting! [END]", True
         
-        # Analyze which questions have been asked/answered
-        conversation_text = " ".join([msg.get('text', '') for msg in conversation_history])
+        # Analyze conversation progress
+        conversation_text = " ".join([msg.get('text', '') for msg in conversation_history if msg.get('role') == 'user'])
         
-        # Find first unanswered question
+        # Track which questions have been addressed
+        answered_questions = set()
         for i, question in enumerate(enabled_questions):
+            question_text = question.get('text', '').lower()
+            question_keywords = [word for word in question_text.split()[:4] if len(word) > 2]
+            
+            # Check if this question was discussed (simple keyword matching)
+            if any(keyword in conversation_text.lower() for keyword in question_keywords):
+                answered_questions.add(i)
+        
+        # Find next unanswered question
+        next_question_idx = None
+        for i, question in enumerate(enabled_questions):
+            if i not in answered_questions:
+                next_question_idx = i
+                break
+        
+        if next_question_idx is not None:
+            question = enabled_questions[next_question_idx]
             question_text = question.get('text', '')
-            question_keywords = question_text.lower().split()[:3]
             
-            # Check if this question was already discussed
-            already_asked = any(keyword in conversation_text.lower() for keyword in question_keywords if len(keyword) > 2)
-            
-            if not already_asked:
-                # Ask this question naturally
-                if i == 0:  # First question
-                    return f"hey! quick chat about {form_title.lower()}? {question_text.lower()}", False
-                else:
-                    return f"cool! so {question_text.lower()}", False
+            # Format question naturally without revealing options
+            if next_question_idx == 0 and len(conversation_history) < 2:
+                # First interaction
+                return f"hey! quick chat about {form_title.lower()}? {question_text} 😊", False
+            else:
+                # Subsequent questions - acknowledge and ask next
+                acknowledges = ["cool!", "nice!", "got it!", "awesome!"]
+                ack = acknowledges[next_question_idx % len(acknowledges)]
+                return f"{ack} {question_text}", False
         
-        # All questions seem covered, check completeness of current response
+        # All questions addressed - check if we should end
+        if len(conversation_history) >= len(enabled_questions) * 2:
+            return "awesome, thanks so much! 😊 [END]", True
+        
+        # Handle incomplete responses or follow-ups
         completeness = analyze_response_completeness(user_message)
-        
         if completeness == "INCOMPLETE":
-            return "tell me more...", False
-        elif len(conversation_history) < 4:  # Still early in conversation
-            return "anything else you'd like to share?", False
+            return "tell me more... 🤔", False
         else:
-            return "awesome, thanks!", True
+            return "anything else you'd like to share?", False
     
     def _is_off_topic(self, message: str, form_title: str) -> bool:
-        """Simple off-topic detection - be permissive for survey responses"""
+        """LLM-based off-topic detection following YAML specifications"""
         message_lower = message.lower().strip()
         
+        # Quick checks for obviously valid responses
         if len(message_lower) < 2:
             return True
             
         if (message_lower.isdigit() or 
-            message_lower in ['yes', 'no', 'maybe', 'sure', 'ok', 'good', 'bad']):
+            message_lower in ['yes', 'no', 'maybe', 'sure', 'ok', 'good', 'bad', 'great']):
             return False
-            
-        # Check for survey-related content - be permissive
-        survey_keywords = ['pizza', 'food', 'like', 'love', 'prefer', 'favorite', 'think', 'feel', 'opinion', 'pineapple', 'bananas']
+        
+        # Use LLM for sophisticated detection if available
+        if self.api_key and self.llm:
+            try:
+                off_topic_prompt = f"""Is this user message off-topic for a survey about "{form_title}"?
+
+User message: "{message}"
+
+Context: This is a conversational survey collecting opinions and preferences about {form_title}.
+
+Consider these as ON-TOPIC:
+- Direct answers to survey questions
+- Opinions, preferences, ratings related to the topic
+- Clarifications or corrections to previous answers
+- Questions about the survey itself
+- Single word answers that could be valid responses
+
+Consider these as OFF-TOPIC:
+- General conversation unrelated to {form_title}
+- Questions about weather, math, current events
+- Random gibberish or spam
+- Technical questions about other topics
+
+Answer only "YES" if clearly off-topic, "NO" if related to the survey topic."""
+
+                HumanMessage = _langchain_cache['HumanMessage']
+                response = self.llm.invoke([HumanMessage(content=off_topic_prompt)])
+                result = response.content.strip().upper()
+                return result.startswith('YES')
+                
+            except Exception as e:
+                print(f"LLM off-topic detection error: {e}")
+                # Fall back to keyword-based detection
+        
+        # Fallback: be permissive for survey-related content
+        survey_keywords = ['pizza', 'food', 'like', 'love', 'prefer', 'favorite', 'think', 'feel', 'opinion']
         if any(keyword in message_lower for keyword in survey_keywords):
             return False
             
-        # Allow single word food items that could be toppings/preferences
+        # Allow single word answers that could be valid
         if len(message_lower.split()) == 1 and len(message_lower) > 2:
             return False
         
-        # Only flag obvious spam/off-topic
-        spam_indicators = ['weather today', 'what\'s 2+2', 'crypto price', 'stock market', 'asdfgh']
-        return any(indicator in message_lower for indicator in spam_indicators)
+        # Flag obvious off-topic patterns
+        off_topic_patterns = ['weather', 'what\'s 2+2', '2+2', 'crypto', 'stock market', 'what are you']
+        return any(pattern in message_lower for pattern in off_topic_patterns)
     
     def infer_form_structure(self, text_dump: str) -> Dict:
         """Use LangChain for form inference"""
@@ -325,32 +403,31 @@ JSON:"""
         ])
         
         prompt = PromptTemplate(
-            input_variables=["conversation", "questions"],
-            template="""Extract answers from this conversation. Return JSON only.
+            input_variables=["transcript", "questions_json"],
+            template="""From this chat transcript: {transcript}
 
-Questions to extract:
-{questions}
+Map to structured form data: {questions_json}
 
-Conversation:
-{conversation}
+Rules:
+- Extract answers accurately, using types (e.g., parse 'three' to 3 for number).
+- Bucketize MCQ/yes_no/rating without bias: Map semantically to options (e.g., 'capp' → 'Latte' if closest; 'alien brew' → 'other: alien brew' if no fit). For text: Verbatim. For number: Numeric parse.
+- Resolve edges: Prioritize latest for conflicts; mark 'skipped' if insisted; 'unclear' if vague.
+- Output JSON: {{'questions': {{q_text: answer}}, 'demographics': {{}}, 'partial': true/false, 'notes': [any edges, e.g., 'Conflict resolved']}}
 
-Extract what you can, use "not provided" for missing answers.
+###
+Chain-of-Thought:
+Step 1: Scan transcript for relevant snippets per question.
+Step 2: Apply bucketizing/validation (list options, find best match; if no fit, note 'other').
+Step 3: Handle edges (e.g., skips → 'skipped'; multi-answers → split).
+Step 4: Self-critique: Is extraction complete/accurate? If partial, flag gaps.
 
-JSON format:
-{{
-    "questions": {{"Question text": "extracted answer"}},
-    "demographics": {{"field": "value"}},
-    "completion_status": "complete|partial",
-    "extraction_notes": ["any issues"]
-}}
-
-JSON:"""
+Output (JSON only):"""
         )
         
         chain = LLMChain(llm=self.llm, prompt=prompt)
         
         try:
-            result = chain.run(conversation=conversation_text, questions=questions_text)
+            result = chain.run(transcript=conversation_text, questions_json=questions_text)
             result = result.strip()
             if result.startswith('```json'):
                 result = result.split('```json')[1].split('```')[0]
