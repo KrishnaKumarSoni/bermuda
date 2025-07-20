@@ -17,6 +17,7 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 from conversation import create_conversation_manager
 from agentic_conversation import create_agentic_conversation_manager
+from langchain_manager import get_langchain_manager
 from firebase_integration import firebase_manager
 
 app = Flask(__name__)
@@ -39,6 +40,7 @@ except Exception:
 # Global conversation managers for inference
 conversation_manager = create_conversation_manager()
 agentic_manager = create_agentic_conversation_manager()
+langchain_manager = get_langchain_manager()
 
 def verify_auth_token(request):
     """
@@ -105,9 +107,13 @@ def infer_form():
         if len(dump) > 5000:
             return jsonify({'error': 'Invalid dump - too long (max 5000 characters)'}), 400
         
-        # Use agentic conversation manager for inference
+        # Use LangChain manager for inference (with fallback to agentic)
         try:
-            inferred_data = agentic_manager.infer_form_structure(dump)
+            inferred_data = langchain_manager.infer_form_structure(dump)
+            
+            # Fallback to agentic manager if LangChain fails
+            if not inferred_data or not inferred_data.get('questions'):
+                inferred_data = agentic_manager.infer_form_structure(dump)
             
             # Add predefined demographics
             demographics = [

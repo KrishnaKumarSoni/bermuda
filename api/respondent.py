@@ -23,6 +23,7 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 from conversation import create_conversation_manager
 from agentic_conversation import create_agentic_conversation_manager
+from langchain_manager import get_langchain_manager
 from firebase_integration import firebase_manager
 
 app = Flask(__name__)
@@ -31,6 +32,7 @@ CORS(app)
 # Global conversation managers
 conversation_manager = create_conversation_manager()
 agentic_manager = create_agentic_conversation_manager()
+langchain_manager = get_langchain_manager()
 
 # In-memory storage for sessions (use Firebase Realtime DB in production)
 active_sessions: Dict[str, Dict] = {}
@@ -267,14 +269,39 @@ def chat_message():
             # Reset off-topic counter on valid message
             off_topic_counters[session_id] = 0
             
-            # Get bot response using agentic conversation manager
-            bot_response, is_completed = agentic_manager.get_bot_response(
-                user_message=user_message,
-                conversation_history=history,
-                form_data=form_data,
-                demographics=form_data.get('demographics', []),
-                session_id=session_id
-            )
+            # Get bot response using LangChain manager (with fallback to agentic)
+            try:
+                # Prepare questions JSON for LangChain
+                questions = form_data.get('questions', [])
+                enabled_questions = [q for q in questions if q.get('enabled', True)]
+                questions_json = json.dumps(enabled_questions)
+                
+                bot_response, is_completed = langchain_manager.get_bot_response(
+                    user_message=user_message,
+                    session_id=session_id,
+                    form_title=form_data.get('title', 'Survey'),
+                    questions_json=questions_json
+                )
+                
+                # Fallback to agentic manager if LangChain fails
+                if not bot_response or bot_response.startswith("thanks for sharing"):
+                    bot_response, is_completed = agentic_manager.get_bot_response(
+                        user_message=user_message,
+                        conversation_history=history,
+                        form_data=form_data,
+                        demographics=form_data.get('demographics', []),
+                        session_id=session_id
+                    )
+            except Exception as e:
+                print(f"LangChain conversation error: {e}")
+                # Fallback to agentic manager
+                bot_response, is_completed = agentic_manager.get_bot_response(
+                    user_message=user_message,
+                    conversation_history=history,
+                    form_data=form_data,
+                    demographics=form_data.get('demographics', []),
+                    session_id=session_id
+                )
         
         # Add messages to conversation history
         timestamp = datetime.now(timezone.utc).isoformat()
@@ -306,12 +333,37 @@ def chat_message():
         
         if should_extract:
             try:
-                # Extract structured data using agentic manager
-                extracted_data = agentic_manager.extract_structured_data(
-                    transcript=history,
-                    form_data=form_data,
-                    demographics=form_data.get('demographics', [])
-                )
+                # Extract structured data using LangChain manager (with fallback)
+                try:
+                    # Prepare questions JSON for LangChain
+                    questions = form_data.get('questions', [])
+                    enabled_questions = [q for q in questions if q.get('enabled', True)]
+                    questions_json = json.dumps(enabled_questions)
+                    
+                    extracted_data = langchain_manager.extract_structured_data(
+                        transcript=history,
+                        questions_json=questions_json
+                    )
+                    
+                    # Fallback to agentic manager if LangChain extraction is poor
+                    if not extracted_data.get('questions') or extracted_data.get('partial', True):
+                        fallback_data = agentic_manager.extract_structured_data(
+                            transcript=history,
+                            form_data=form_data,
+                            demographics=form_data.get('demographics', [])
+                        )
+                        # Use fallback if it has more data
+                        if len(fallback_data.get('questions', {})) > len(extracted_data.get('questions', {})):
+                            extracted_data = fallback_data
+                            
+                except Exception as e:
+                    print(f"LangChain extraction error: {e}")
+                    # Fallback to agentic manager
+                    extracted_data = agentic_manager.extract_structured_data(
+                        transcript=history,
+                        form_data=form_data,
+                        demographics=form_data.get('demographics', [])
+                    )
                 
                 # Save to Firebase
                 save_response_to_firebase(form_id, session_id, extracted_data)
@@ -380,12 +432,36 @@ def extract_data():
             'demographics': questions_json.get('demographics', [])
         }
         
-        # Extract structured data using agentic manager
-        extracted_data = agentic_manager.extract_structured_data(
-            transcript=transcript,
-            form_data=form_data,
-            demographics=form_data.get('demographics', [])
-        )
+        # Extract structured data using LangChain manager (with fallback)
+        try:
+            # Prepare questions JSON for LangChain
+            questions = questions_json.get('questions', [])
+            questions_json_str = json.dumps(questions)
+            
+            extracted_data = langchain_manager.extract_structured_data(
+                transcript=transcript,
+                questions_json=questions_json_str
+            )
+            
+            # Fallback to agentic manager if LangChain extraction is poor
+            if not extracted_data.get('questions') or extracted_data.get('partial', True):
+                fallback_data = agentic_manager.extract_structured_data(
+                    transcript=transcript,
+                    form_data=form_data,
+                    demographics=form_data.get('demographics', [])
+                )
+                # Use fallback if it has more data
+                if len(fallback_data.get('questions', {})) > len(extracted_data.get('questions', {})):
+                    extracted_data = fallback_data
+                    
+        except Exception as e:
+            print(f"LangChain extraction error: {e}")
+            # Fallback to agentic manager
+            extracted_data = agentic_manager.extract_structured_data(
+                transcript=transcript,
+                form_data=form_data,
+                demographics=form_data.get('demographics', [])
+            )
         
         return jsonify(extracted_data), 200
         
