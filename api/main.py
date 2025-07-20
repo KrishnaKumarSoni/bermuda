@@ -59,9 +59,13 @@ def api(req: https_fn.Request) -> https_fn.Response:
             return https_fn.Response("", status=204, headers=headers)
         
         # Route to appropriate app
-        if path.startswith('/api/infer') or path.startswith('/api/forms') or path.startswith('/api/save-form'):
+        if path.startswith('/api/infer') or path.startswith('/api/save-form'):
+            target_app = creator_app
+        elif path.startswith('/api/forms') and '/responses' in path:
+            # Form responses endpoint goes to creator app
             target_app = creator_app
         else:
+            # All other endpoints (chat, extract, debug, health, anonymous form access) go to respondent app
             target_app = respondent_app
             
         # Create Flask test client and make request
