@@ -1,3 +1,4 @@
+
 respondent-chat-experience:
   overview: "This document defines the complete respondent experience in Bermuda, from accessing the form link through completing the chat and data submission. It covers the anonymous chat interface, bot behavior, data collection mechanics, and all edge cases to enable AI-assisted development."
 

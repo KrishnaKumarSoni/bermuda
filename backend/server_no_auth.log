@@ -479,3 +479,114 @@ AttributeError: type object 'datetime.datetime' has no attribute 'UTC'
 127.0.0.1 - - [18/Jul/2025 23:19:51] "GET /api/forms HTTP/1.1" 200 -
 127.0.0.1 - - [18/Jul/2025 23:43:14] "POST /api/infer HTTP/1.1" 200 -
 127.0.0.1 - - [19/Jul/2025 10:52:02] "POST /api/infer HTTP/1.1" 200 -
+ * Detected change in '/Users/admin/Desktop/Dev/bermuda-01/backend/app.py', reloading
+🚀 Starting Bermuda backend server (NO AUTH - TESTING ONLY)
+📧 OpenAI API Key: ✓ Set
+🔥 Firebase Project ID: bermuda-01
+🌐 Server will be available at: http://localhost:5000
+⚠️  Authentication bypassed for testing
+==================================================
+✅ Form saved with ID: 036b9627-d164-4368-88bc-a3a75c519901
+🚀 Processing dump: Customer survey about food delivery service. Ask about favorite cuisine types, delivery speed satisf...
+📤 LLM Response: {
+  "title": "Food Delivery Service Survey",
+  "questions": [
+    {
+      "text": "What are your favorite cuisine types?",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "text": "How satisfied are you with the delivery speed?",
+      "type": "rating",
+      "options": ["1", "2", "3", "4", "5"],
+      "enabled": true
+    },
+    {
+      "text": "Would you recommend our service to friends?",
+      "type": "yes_no",
+      "options": ["Yes", "No"],
+      "enabled": true
+    },
+    {
+      "text": "How often do you order from us?",
+      "type": "multiple_choice",
+      "options": ["Weekly", "Monthly", "Rarely"],
+      "enabled": true
+    }
+  ]
+}
+✅ Returning form data: {'title': 'Food Delivery Service Survey', 'questions': [{'text': 'What are your favorite cuisine types?', 'type': 'text', 'enabled': True}, {'text': 'How satisfied are you with the delivery speed?', 'type': 'rating', 'enabled': True, 'options': ['1', '2', '3', '4', '5']}, {'text': 'Would you recommend our service to friends?', 'type': 'yes_no', 'enabled': True, 'options': ['Yes', 'No']}, {'text': 'How often do you order from us?', 'type': 'multiple_choice', 'enabled': True, 'options': ['Weekly', 'Monthly', 'Rarely']}]}
+🚀 Processing dump: Short test: pizza toppings survey...
+📤 LLM Response: {
+  "title": "Pizza Toppings Survey",
+  "questions": [
+    {
+      "text": "What is your favorite pizza topping?",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "text": "Which toppings do you dislike?",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "text": "Do you prefer vegetarian toppings?",
+      "type": "yes_no",
+      "options": ["Yes", "No"],
+      "enabled": true
+    },
+    {
+      "text": "How many different toppings do you usually choose?",
+      "type": "number",
+      "enabled": true
+    },
+    {
+      "text": "Rate your overall satisfaction with pizza toppings (1-5)",
+      "type": "rating",
+      "options": ["1", "2", "3", "4", "5"],
+      "enabled": true
+    },
+    {
+      "text": "What is your favorite type of cheese on pizza?",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "text": "Do you prefer spicy toppings?",
+      "type": "yes_no",
+      "options": ["Yes", "No"],
+      "enabled": true
+    },
+    {
+      "text": "Which meat toppings do you enjoy?",
+      "type": "text",
+      "enabled": true
+    }
+  ]
+}
+✅ Returning form data: {'title': 'Pizza Toppings Survey', 'questions': [{'text': 'What is your favorite pizza topping?', 'type': 'text', 'enabled': True}, {'text': 'Which toppings do you dislike?', 'type': 'text', 'enabled': True}, {'text': 'Do you prefer vegetarian toppings?', 'type': 'yes_no', 'enabled': True, 'options': ['Yes', 'No']}, {'text': 'How many different toppings do you usually choose?', 'type': 'number', 'enabled': True}, {'text': 'Rate your overall satisfaction with pizza toppings (1-5)', 'type': 'rating', 'enabled': True, 'options': ['1', '2', '3', '4', '5']}, {'text': 'What is your favorite type of cheese on pizza?', 'type': 'text', 'enabled': True}, {'text': 'Do you prefer spicy toppings?', 'type': 'yes_no', 'enabled': True, 'options': ['Yes', 'No']}, {'text': 'Which meat toppings do you enjoy?', 'type': 'text', 'enabled': True}]}
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 398-433-975
+ * Detected change in '/Users/admin/Desktop/Dev/bermuda-01/backend/app.py', reloading
+🚀 Starting Bermuda backend server (NO AUTH - TESTING ONLY)
+📧 OpenAI API Key: ✓ Set
+🔥 Firebase Project ID: bermuda-01
+🌐 Server will be available at: http://localhost:5000
+⚠️  Authentication bypassed for testing
+==================================================
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 398-433-975
+ * Detected change in '/Users/admin/Desktop/Dev/bermuda-01/backend/minimal_app.py', reloading
+🚀 Starting Bermuda backend server (NO AUTH - TESTING ONLY)
+📧 OpenAI API Key: ✓ Set
+🔥 Firebase Project ID: bermuda-01
+🌐 Server will be available at: http://localhost:5000
+⚠️  Authentication bypassed for testing
+==================================================
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 398-433-975

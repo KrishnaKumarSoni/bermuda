@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Form - Bermuda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'plus-jakarta': ['Plus Jakarta Sans', 'sans-serif'],
+                        'inter-tight': ['Inter Tight', 'sans-serif']
+                    },
+                    colors: {
+                        'primary': '#CC5500',
+                        'secondary': '#FFDAB9'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .btn-primary {
+            background-color: #CC5500;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.75rem 1.5rem;
+            font-family: 'Inter Tight', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background-color: #E07A00;
+        }
+        .input-field {
+            background-color: white;
+            border: 1px solid #CC5500;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            font-family: 'Inter Tight', sans-serif;
+            font-size: 1.125rem;
+        }
+    </style>
+</head>
+<body class="bg-white font-inter-tight">
+    <div class="min-h-screen bg-white">
+        <div class="container mx-auto px-4 py-8 max-w-2xl">
+            <div class="bg-secondary border border-primary rounded-lg p-6 mb-6">
+                <h1 class="font-plus-jakarta text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                    Pizza Preferences Survey
+                </h1>
+                <p class="text-gray-600">
+                    Chat with our bot to complete this form. Just answer naturally!
+                </p>
+            </div>
+            
+            <div id="chat-messages" class="space-y-4 mb-6 min-h-[400px] max-h-[500px] overflow-y-auto bg-gray-50 p-4 rounded-lg">
+                <div class="flex justify-start">
+                    <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-secondary text-gray-800 mr-8">
+                        <p class="text-sm font-medium text-gray-600 mb-1">Bot</p>
+                        <p>Hey there! 👋 Ready to chat about "Pizza Preferences Survey"? I'll ask you some questions - just answer naturally like we're having a conversation. What's your favorite pizza topping?</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white border border-primary rounded-lg p-4">
+                <div class="flex gap-2">
+                    <input type="text" 
+                           id="chat-input" 
+                           class="input-field flex-1" 
+                           placeholder="Type your message..."
+                           maxlength="1000">
+                    <button id="send-message" class="btn-primary">
+                        Send
+                    </button>
+                </div>
+                <div id="chat-error" class="text-red-500 text-sm mt-2 hidden"></div>
+            </div>
+            
+            <div id="chat-loading" class="hidden text-center py-4">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                <p class="text-gray-500 text-sm">Bot is typing...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chatSessionId = 'demo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        function addChatMessage(role, text) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            messageDiv.innerHTML = `
+                <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                    role === 'user' 
+                        ? 'bg-primary text-white ml-8' 
+                        : 'bg-secondary text-gray-800 mr-8'
+                }">
+                    <p class="text-sm font-medium ${role === 'user' ? 'text-gray-200' : 'text-gray-600'} mb-1">
+                        ${role === 'user' ? 'You' : 'Bot'}
+                    </p>
+                    <p>${text}</p>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        async function sendUserMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addChatMessage('user', message);
+            input.value = '';
+            
+            // Show loading
+            document.getElementById('chat-loading').classList.remove('hidden');
+            document.getElementById('chat-error').classList.add('hidden');
+            
+            try {
+                // Send to API
+                const response = await fetch('/api/chat-message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: chatSessionId,
+                        form_id: 'test-form-123', // Use the working form ID
+                        message: message
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to send message');
+                }
+                
+                const data = await response.json();
+                
+                // Add bot response
+                addChatMessage('assistant', data.response);
+                
+                // Check if conversation is complete
+                if (data.tag === '[END]') {
+                    input.disabled = true;
+                    document.getElementById('send-message').disabled = true;
+                    addChatMessage('assistant', 'Thanks for completing the survey! 🎉');
+                }
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                document.getElementById('chat-error').textContent = 'Could not send message. Please try again.';
+                document.getElementById('chat-error').classList.remove('hidden');
+            } finally {
+                document.getElementById('chat-loading').classList.add('hidden');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('send-message').addEventListener('click', sendUserMessage);
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendUserMessage();
+            }
+        });
+
+        // Focus on input
+        document.getElementById('chat-input').focus();
+    </script>
+</body>
+</html>

@@ -4,7 +4,7 @@ from flask_cors import CORS
 import os
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
@@ -132,8 +132,8 @@ def save_form():
                 'title': form_data['title'].strip(),
                 'questions': form_data['questions'],
                 'demographics': form_data.get('demographics', []),
-                'created_at': datetime.utcnow(),
-                'updated_at': datetime.utcnow()
+                'created_at': datetime.now(timezone.utc),
+                'updated_at': datetime.now(timezone.utc)
             }
             db.collection('forms').document(form_id).set(form_doc)
         
@@ -165,7 +165,7 @@ def get_forms():
             {
                 'id': 'form-1',
                 'title': 'Customer Feedback Survey',
-                'created_at': datetime.utcnow(),
+                'created_at': datetime.now(timezone.utc),
                 'response_count': 5
             }
         ]

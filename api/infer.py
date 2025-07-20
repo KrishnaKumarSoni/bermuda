@@ -5,6 +5,20 @@ import os
 import re
 import requests
 
+# Load .env file for local development
+try:
+    from pathlib import Path
+    env_path = Path(__file__).parent.parent / '.env'
+    if env_path.exists():
+        with open(env_path) as f:
+            for line in f:
+                if line.strip() and not line.startswith('#') and '=' in line:
+                    key, value = line.strip().split('=', 1)
+                    if key not in os.environ:
+                        os.environ[key] = value
+except Exception:
+    pass  # Silently continue if .env loading fails
+
 app = Flask(__name__)
 CORS(app)
 

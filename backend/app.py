@@ -8,7 +8,7 @@ from langchain_core.output_parsers import StrOutputParser
 import os
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 from typing import Dict, List, Any
 from dotenv import load_dotenv
@@ -228,8 +228,8 @@ def save_form():
             'title': form_data['title'].strip(),
             'questions': form_data['questions'],
             'demographics': form_data.get('demographics', []),
-            'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
+            'created_at': datetime.now(timezone.utc),
+            'updated_at': datetime.now(timezone.utc)
         }
         
         # Save to Firestore /forms collection

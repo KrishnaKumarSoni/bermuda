@@ -2,44 +2,70 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/*.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb"
-      }
+      "src": "api/respondent.py",
+      "use": "@vercel/python"
     },
     {
-      "src": "frontend/index.html", 
+      "src": "api/conversation.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "api/firebase_integration.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "api/infer.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/landing.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/index.html",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/simple",
-      "dest": "/api/simple.py"
+      "src": "/api/forms/([^/]+)",
+      "dest": "/api/respondent.py"
     },
     {
-      "src": "/api/infer-async",
-      "dest": "/api/infer-async.py"
+      "src": "/api/chat-message",
+      "dest": "/api/respondent.py"
     },
     {
-      "src": "/api/status/([^/]+)",
-      "dest": "/api/infer-async.py"
+      "src": "/api/extract",
+      "dest": "/api/respondent.py"
+    },
+    {
+      "src": "/api/debug/(.*)",
+      "dest": "/api/respondent.py"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/respondent.py"
     },
     {
       "src": "/api/infer",
       "dest": "/api/infer.py"
     },
     {
-      "src": "/form/(.*)",
-      "dest": "frontend/index.html"
+      "src": "/dashboard",
+      "dest": "/frontend/index.html"
     },
     {
-      "src": "/(.*)",
-      "dest": "frontend/index.html"
+      "src": "/app",
+      "dest": "/frontend/index.html"
+    },
+    {
+      "src": "/form/(.*)",
+      "dest": "/frontend/index.html"
+    },
+    {
+      "src": "/",
+      "dest": "/frontend/landing.html"
     }
-  ],
-  "env": {
-    "PYTHONPATH": "$PYTHONPATH:./api"
-  }
+  ]
 }
