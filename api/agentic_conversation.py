@@ -113,32 +113,18 @@ class AgenticConversationManager:
         return api_key.strip().replace('\n', '').replace('\r', '')
     
     def _setup_llm(self):
-        """Setup LangChain LLM"""
-        global _langchain_cache
-        if self.api_key and not _langchain_cache:
-            _langchain_cache = get_langchain_imports()
-        
-        if self.api_key and _langchain_cache:
-            try:
-                ChatOpenAI = _langchain_cache['ChatOpenAI']
-                self.llm = ChatOpenAI(
-                    model="gpt-4o-mini",
-                    temperature=0.7,
-                    openai_api_key=self.api_key,
-                    max_tokens=150
-                )
-            except Exception as e:
-                print(f"LLM setup error: {e}")
-                self.llm = None
+        """Setup LLM - use direct OpenAI instead of LangChain in production"""
+        # Skip LangChain setup in Firebase environment to avoid import issues
+        self.llm = None
+        print("Using direct OpenAI API calls instead of LangChain")
     
     def get_bot_response(self, user_message: str, conversation_history: List[Dict], 
                         form_data: Dict, demographics: List[Dict] = None, 
                         session_id: str = None) -> Tuple[str, bool]:
         """Get intelligent response using LangChain"""
         
-        if not self.llm or not _langchain_cache:
-            # Enhanced fallback without LangChain
-            return self._fallback_response(user_message, conversation_history, form_data)
+        # Always use fallback response for Firebase deployment
+        return self._fallback_response(user_message, conversation_history, form_data)
         
         try:
             # Analyze context
@@ -286,9 +272,10 @@ Response (output ONLY the bot's message here, nothing else):"""
             message_lower in ['yes', 'no', 'maybe', 'sure', 'ok', 'good', 'bad', 'great']):
             return False
         
-        # Use LLM for sophisticated detection if available
-        if self.api_key and self.llm:
+        # Use direct OpenAI API for sophisticated detection if available
+        if self.api_key:
             try:
+                import requests
                 off_topic_prompt = f"""Is this user message off-topic for a survey about "{form_title}"?
 
 User message: "{message}"
@@ -310,13 +297,27 @@ Consider these as OFF-TOPIC:
 
 Answer only "YES" if clearly off-topic, "NO" if related to the survey topic."""
 
-                HumanMessage = _langchain_cache['HumanMessage']
-                response = self.llm.invoke([HumanMessage(content=off_topic_prompt)])
-                result = response.content.strip().upper()
-                return result.startswith('YES')
+                response = requests.post(
+                    'https://api.openai.com/v1/chat/completions',
+                    headers={
+                        'Authorization': f'Bearer {self.api_key}',
+                        'Content-Type': 'application/json'
+                    },
+                    json={
+                        'model': 'gpt-4o-mini',
+                        'messages': [{'role': 'user', 'content': off_topic_prompt}],
+                        'temperature': 0.1,
+                        'max_tokens': 5
+                    },
+                    timeout=5
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()['choices'][0]['message']['content'].strip().upper()
+                    return result.startswith('YES')
                 
             except Exception as e:
-                print(f"LLM off-topic detection error: {e}")
+                print(f"OpenAI off-topic detection error: {e}")
                 # Fall back to keyword-based detection
         
         # Fallback: be permissive for survey-related content
