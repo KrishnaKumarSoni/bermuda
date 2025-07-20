@@ -446,38 +446,101 @@ Output (JSON only):"""
             }
     
     def _fallback_extraction(self, transcript: List[Dict], form_data: Dict, demographics: List[Dict] = None) -> Dict:
-        """Simple extraction without LangChain"""
+        """LLM-based extraction using direct OpenAI API calls"""
         questions = form_data.get('questions', [])
         enabled_questions = [q for q in questions if q.get('enabled', True)]
         
-        # Build conversation text from transcript
+        # Format transcript for LLM
+        conversation_text = ""
+        for msg in transcript:
+            role = "User" if msg.get('role') == 'user' else "Bot"
+            conversation_text += f"{role}: {msg.get('text', '')}\n"
+        
+        # Format questions for LLM
+        questions_text = ""
+        for q in enabled_questions:
+            q_type = q.get('type', 'text')
+            q_text = q.get('text', '')
+            options = q.get('options', [])
+            if options:
+                questions_text += f"- {q_text} (type: {q_type}, options: {', '.join(options)})\n"
+            else:
+                questions_text += f"- {q_text} (type: {q_type})\n"
+        
+        # Use LLM for extraction if available
+        if self.api_key:
+            try:
+                import requests
+                extraction_prompt = f"""From this chat transcript: {conversation_text}
+
+Map to structured form data: {questions_text}
+
+Rules:
+- Extract answers accurately, using types (e.g., parse 'three' to 3 for number).
+- Bucketize MCQ/yes_no/rating without bias: Map semantically to options (e.g., 'capp' → 'Latte' if closest; 'alien brew' → 'other: alien brew' if no fit). For text: Verbatim. For number: Numeric parse.
+- Resolve edges: Prioritize latest for conflicts; mark 'skipped' if insisted; 'unclear' if vague.
+- Output JSON: {{"questions": {{"question_text": "extracted_answer"}}, "demographics": {{}}, "completion_status": "complete|partial", "extraction_notes": ["any issues"]}}
+
+###
+Chain-of-Thought:
+Step 1: Scan transcript for relevant snippets per question.
+Step 2: Apply bucketizing/validation (list options, find best match; if no fit, note 'other').
+Step 3: Handle edges (e.g., skips → 'skipped'; multi-answers → split).
+Step 4: Self-critique: Is extraction complete/accurate? If partial, flag gaps.
+
+Output (JSON only):"""
+
+                response = requests.post(
+                    'https://api.openai.com/v1/chat/completions',
+                    headers={
+                        'Authorization': f'Bearer {self.api_key}',
+                        'Content-Type': 'application/json'
+                    },
+                    json={
+                        'model': 'gpt-4o-mini',
+                        'messages': [{'role': 'user', 'content': extraction_prompt}],
+                        'temperature': 0.3,
+                        'max_tokens': 800
+                    },
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()['choices'][0]['message']['content'].strip()
+                    
+                    # Clean and parse JSON
+                    if result.startswith('```json'):
+                        result = result.replace('```json', '').replace('```', '').strip()
+                    elif result.startswith('```'):
+                        result = result.replace('```', '').strip()
+                    
+                    try:
+                        import json
+                        extracted_data = json.loads(result)
+                        return extracted_data
+                    except json.JSONDecodeError:
+                        print(f"LLM extraction JSON parse error: {result}")
+                        # Fall back to simple extraction
+                
+            except Exception as e:
+                print(f"LLM extraction error: {e}")
+                # Fall back to simple extraction
+        
+        # Fallback: Simple keyword-based extraction
         user_messages = [msg.get('text', '') for msg in transcript if msg.get('role') == 'user']
         conversation_text = " ".join(user_messages).lower()
         
         extracted_questions = {}
         
-        for question in enabled_questions:
+        for i, question in enumerate(enabled_questions):
             question_text = question.get('text', '')
             question_type = question.get('type', 'text')
-            
-            # Simple keyword-based extraction
             answer = None
             
             if question_type == 'text':
-                # For text questions, find the most relevant user response
-                question_keywords = question_text.lower().split()[:4]
-                # Look for responses that come after this question is asked
-                for i, msg in enumerate(user_messages):
-                    # Check if the message contains relevant keywords or is positioned correctly
-                    if any(keyword in msg.lower() for keyword in question_keywords if len(keyword) > 2):
-                        answer = msg.strip()
-                        break
-                    # Also check if it's the first substantial answer
-                    elif i == 0 and len(msg.strip()) > 3:
-                        answer = msg.strip()
-                        break
-                if not answer and user_messages:
-                    answer = user_messages[0]  # Use first response for first question
+                # Use positional matching for text questions
+                if i < len(user_messages):
+                    answer = user_messages[i].strip()
                     
             elif question_type == 'multiple_choice':
                 options = question.get('options', [])
@@ -493,32 +556,29 @@ Output (JSON only):"""
                     answer = 'No'
                     
             elif question_type == 'rating':
-                # Look for numbers 1-5
                 import re
                 numbers = re.findall(r'\b[1-5]\b', conversation_text)
                 if numbers:
-                    answer = int(numbers[-1])  # Use last rating found
+                    answer = int(numbers[-1])
                     
             elif question_type == 'number':
-                # Extract any numbers
                 import re
                 numbers = re.findall(r'\d+', conversation_text)
                 if numbers:
-                    answer = int(numbers[-1])  # Use last number found
+                    answer = int(numbers[-1])
             
             if answer:
                 extracted_questions[question_text] = answer
         
-        # Determine completion status
         total_questions = len(enabled_questions)
         answered_questions = len(extracted_questions)
         completion_status = "complete" if answered_questions >= total_questions * 0.8 else "partial"
         
         return {
             "questions": extracted_questions,
-            "demographics": {},  # Could add demographics extraction here
+            "demographics": {},
             "completion_status": completion_status,
-            "extraction_notes": [f"Fallback extraction: {answered_questions}/{total_questions} questions extracted"]
+            "extraction_notes": [f"Simple extraction: {answered_questions}/{total_questions} questions extracted"]
         }
 
 
