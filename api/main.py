@@ -5,6 +5,7 @@ Firebase Functions entry point for Bermuda API
 from firebase_functions import https_fn, options, params
 import json
 import os
+import traceback
 
 # Firebase will be initialized by firebase_integration.py
 
@@ -22,7 +23,7 @@ try:
 except Exception:
     pass  # Silently continue if .env loading fails
 
-# Import our existing Flask apps
+# Import our existing Flask apps with error handling
 import sys
 sys.path.append(os.path.dirname(__file__))
 
@@ -47,6 +48,7 @@ def api(req: https_fn.Request) -> https_fn.Response:
     """
     try:
         path = req.path
+        print(f"🚀 API Request: {req.method} {path}")
         
         # Handle preflight CORS requests
         if req.method == "OPTIONS":
@@ -56,28 +58,45 @@ def api(req: https_fn.Request) -> https_fn.Response:
                 "Access-Control-Allow-Headers": "Authorization, Content-Type",
                 "Access-Control-Max-Age": "3600"
             }
+            print(f"✅ CORS preflight handled for {path}")
             return https_fn.Response("", status=204, headers=headers)
         
-        # Route to appropriate app
-        if path.startswith('/api/infer') or path.startswith('/api/save-form'):
+        # Route to appropriate app (Firebase strips /api prefix)
+        if path.startswith('/infer') or path.startswith('/save-form') or path.startswith('/api/infer') or path.startswith('/api/save-form'):
             target_app = creator_app
-        elif path.startswith('/api/forms') and '/responses' in path:
+            print(f"📝 Routing to creator app: {path}")
+        elif (path.startswith('/forms') or path.startswith('/api/forms')) and '/responses' in path:
             # Form responses endpoint goes to creator app
             target_app = creator_app
+            print(f"📊 Routing to creator app (responses): {path}")
         else:
             # All other endpoints (chat, extract, debug, health, anonymous form access) go to respondent app
             target_app = respondent_app
+            print(f"💬 Routing to respondent app: {path}")
+            
+        if not target_app:
+            print(f"❌ Target app is None for path: {path}")
+            return https_fn.Response(
+                json.dumps({"error": "App not available"}),
+                status=500,
+                headers={"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+            )
             
         # Create Flask test client and make request
         with target_app.test_client() as client:
+            # Fix path mapping - Firebase strips /api but Flask apps expect it
+            flask_path = f"/api{path}" if not path.startswith('/api') else path
+            print(f"🔍 Making Flask request to path: {flask_path} (original: {path})")
+            
             # Convert Firebase request to Flask request format
             flask_response = client.open(
-                path=path,
+                path=flask_path,
                 method=req.method,
                 data=req.get_data(),
                 headers=dict(req.headers),
                 content_type=req.headers.get('content-type', 'application/json')
             )
+            print(f"📋 Flask response status: {flask_response.status_code}")
             
             # Convert Flask response to Firebase response
             response_headers = dict(flask_response.headers)
