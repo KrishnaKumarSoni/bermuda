@@ -465,13 +465,19 @@ Output (JSON only):"""
             
             if question_type == 'text':
                 # For text questions, find the most relevant user response
-                question_keywords = question_text.lower().split()[:3]
-                for msg in user_messages:
+                question_keywords = question_text.lower().split()[:4]
+                # Look for responses that come after this question is asked
+                for i, msg in enumerate(user_messages):
+                    # Check if the message contains relevant keywords or is positioned correctly
                     if any(keyword in msg.lower() for keyword in question_keywords if len(keyword) > 2):
                         answer = msg.strip()
                         break
+                    # Also check if it's the first substantial answer
+                    elif i == 0 and len(msg.strip()) > 3:
+                        answer = msg.strip()
+                        break
                 if not answer and user_messages:
-                    answer = user_messages[-1]  # Use last response if no match
+                    answer = user_messages[0]  # Use first response for first question
                     
             elif question_type == 'multiple_choice':
                 options = question.get('options', [])
