@@ -21,7 +21,7 @@ CORS(app)
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 # Initialize Firebase
-firebase_cred_path = os.path.join(os.path.dirname(__file__), '..', 'firebase-adminsdk.json')
+firebase_cred_path = os.path.join(os.path.dirname(__file__), '..', 'bermuda-01-firebase-adminsdk-fbsvc-1c104795e6.json')
 cred = credentials.Certificate(firebase_cred_path)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
