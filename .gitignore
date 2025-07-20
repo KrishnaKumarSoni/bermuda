@@ -29,6 +29,7 @@ dist-ssr
 .env.production
 .env.test
 firebase-adminsdk.json
+*firebase-adminsdk*.json
 *.json
 
 # Vercel
