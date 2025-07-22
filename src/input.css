@@ -71,4 +71,44 @@
   .toggle-switch.active .toggle-switch-thumb {
     @apply translate-x-5 shadow-xl;
   }
+
+  /* Modern Form Builder Styles */
+  .step-indicator {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .step-indicator.active {
+    @apply transform scale-105;
+  }
+
+  .step-indicator.completed {
+    @apply opacity-90;
+  }
+
+  .example-topic:hover {
+    @apply shadow-sm;
+  }
+
+  .drag-handle:hover {
+    @apply text-primary-500;
+  }
+
+  /* Enhanced button variants */
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 bg-transparent hover:bg-primary-50 active:bg-primary-100 text-primary-600 border-2 border-primary-300 hover:border-primary-400 active:border-primary-500 font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 focus:ring-4 focus:ring-primary-100 outline-none;
+  }
+
+  .btn-text {
+    @apply inline-flex items-center justify-center gap-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 active:bg-primary-100 font-medium py-2 px-3 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 focus:ring-4 focus:ring-primary-100 outline-none;
+  }
+
+  /* Progress animations */
+  @keyframes progressFill {
+    0% { width: 0%; }
+    100% { width: 100%; }
+  }
+
+  .progress-animate {
+    animation: progressFill 0.8s ease-out;
+  }
 }

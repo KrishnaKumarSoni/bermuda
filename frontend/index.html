@@ -171,91 +171,283 @@
 
     <!-- Create Form Page -->
     <div id="createFormPage" class="hidden space-y-8">
-        <div class="flex items-center space-x-4">
-            <button id="backToDashboard" class="btn-ghost">
-                <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>
-                Back
-            </button>
-            <div>
-                <h1 class="text-3xl font-heading font-bold text-gray-900">Create New Form</h1>
-                <p class="text-gray-600 mt-1">Start with a text description or create from scratch</p>
-            </div>
-        </div>
-
-        <!-- Form Creation Steps -->
-        <div class="grid lg:grid-cols-2 gap-8">
-            <!-- Text Dump Input -->
-            <div class="card p-8">
-                <div class="flex items-center mb-6">
-                    <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center mr-3 text-sm font-semibold">1</div>
-                    <h2 class="text-xl font-heading font-semibold text-gray-900">Describe Your Survey</h2>
-                </div>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            What do you want to learn? (Paste any text, notes, or ideas)
-                        </label>
-                        <textarea 
-                            id="textDump" 
-                            class="input-primary h-40 resize-none"
-                            placeholder="Example: I want to understand our customers' coffee preferences. What types do they like? How often do they drink coffee? What factors influence their choice - price, taste, convenience? Are they interested in sustainable options?"></textarea>
-                    </div>
-                    <button id="inferFormBtn" class="btn-primary w-full">
-                        <i data-lucide="wand-2" class="w-5 h-5 mr-2"></i>
-                        Generate Form with AI
-                    </button>
+        <!-- Header with Progress -->
+        <div class="space-y-6">
+            <div class="flex items-center space-x-4">
+                <button id="backToDashboard" class="btn-ghost">
+                    <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>
+                    Back
+                </button>
+                <div class="flex-1">
+                    <h1 class="text-3xl font-heading font-bold text-gray-900">Create New Form</h1>
+                    <p class="text-gray-600 mt-1">Transform your ideas into engaging conversational forms</p>
                 </div>
             </div>
-
-            <!-- Form Preview -->
-            <div class="card p-8">
-                <div class="flex items-center mb-6">
-                    <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center mr-3 text-sm font-semibold">2</div>
-                    <h2 class="text-xl font-heading font-semibold text-gray-900">Form Preview</h2>
-                </div>
-                <div id="formPreview" class="space-y-4">
-                    <div class="text-center py-12 text-gray-500">
-                        <i data-lucide="file-text" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
-                        <p>Your generated form will appear here</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Form Builder -->
-        <div id="formBuilder" class="hidden space-y-8">
-            <!-- Form Title -->
+            
+            <!-- Modern Progress Indicator -->
             <div class="card p-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Form Title</label>
-                <input type="text" id="formTitle" class="input-primary text-lg font-semibold" placeholder="Enter form title...">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-8">
+                        <div id="step1" class="flex items-center space-x-3 step-indicator active">
+                            <div class="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-semibold shadow-lg">
+                                <i data-lucide="edit-3" class="w-5 h-5"></i>
+                            </div>
+                            <div class="hidden sm:block">
+                                <div class="font-semibold text-gray-900">Describe</div>
+                                <div class="text-sm text-gray-500">Your survey goals</div>
+                            </div>
+                        </div>
+                        <div class="flex-1 h-1 bg-gray-200 rounded-full">
+                            <div id="progressBar1" class="h-1 bg-primary-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <div id="step2" class="flex items-center space-x-3 step-indicator">
+                            <div class="w-10 h-10 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-sm font-semibold">
+                                <i data-lucide="settings" class="w-5 h-5"></i>
+                            </div>
+                            <div class="hidden sm:block">
+                                <div class="font-semibold text-gray-600">Customize</div>
+                                <div class="text-sm text-gray-400">Form builder</div>
+                            </div>
+                        </div>
+                        <div class="flex-1 h-1 bg-gray-200 rounded-full">
+                            <div id="progressBar2" class="h-1 bg-primary-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <div id="step3" class="flex items-center space-x-3 step-indicator">
+                            <div class="w-10 h-10 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-sm font-semibold">
+                                <i data-lucide="rocket" class="w-5 h-5"></i>
+                            </div>
+                            <div class="hidden sm:block">
+                                <div class="font-semibold text-gray-600">Launch</div>
+                                <div class="text-sm text-gray-400">Share form</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Form Creation Input -->
+        <div id="formCreationStep" class="space-y-8">
+            <div class="grid lg:grid-cols-5 gap-8">
+                <!-- Text Dump Input - Takes 3 columns -->
+                <div class="lg:col-span-3">
+                    <div class="card p-8 h-full">
+                        <div class="space-y-6">
+                            <div>
+                                <h2 class="text-2xl font-heading font-bold text-gray-900 mb-3">
+                                    Describe Your Survey
+                                </h2>
+                                <p class="text-gray-600 leading-relaxed">
+                                    Tell us what you want to learn. Paste research notes, bullet points, or just describe your goals. Our AI will transform it into engaging questions.
+                                </p>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-3">
+                                        What would you like to discover?
+                                    </label>
+                                    <div class="relative">
+                                        <textarea 
+                                            id="textDump" 
+                                            class="input-primary min-h-[200px] resize-none pr-12"
+                                            placeholder="Example: I want to understand our customers' coffee preferences. What types do they like? How often do they drink coffee? What factors influence their choice - price, taste, convenience? Are they interested in sustainable options?"
+                                            maxlength="2000"></textarea>
+                                        <div class="absolute bottom-3 right-3 text-xs text-gray-400">
+                                            <span id="textDumpCount">0</span>/2000
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- AI Generation Options -->
+                                <div class="bg-gray-50 rounded-xl p-6 space-y-4">
+                                    <h3 class="font-semibold text-gray-900 text-sm">AI Generation Options</h3>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <label class="flex items-center space-x-3 cursor-pointer">
+                                            <input type="checkbox" id="includeDemographics" class="toggle-switch" checked>
+                                            <div class="toggle-switch-thumb"></div>
+                                            <span class="text-sm text-gray-700">Include demographics</span>
+                                        </label>
+                                        <label class="flex items-center space-x-3 cursor-pointer">
+                                            <input type="checkbox" id="generateFollowups" class="toggle-switch" checked>
+                                            <div class="toggle-switch-thumb"></div>
+                                            <span class="text-sm text-gray-700">Smart follow-ups</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button id="inferFormBtn" class="btn-primary w-full text-lg py-4">
+                                    <i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>
+                                    Generate Form with AI
+                                    <div class="ml-2 text-sm bg-primary-600 px-2 py-1 rounded-full">
+                                        ~30s
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Tips & Examples - Takes 2 columns -->
+                <div class="lg:col-span-2">
+                    <div class="space-y-6">
+                        <!-- Quick Tips -->
+                        <div class="card p-6">
+                            <h3 class="font-heading font-bold text-gray-900 mb-4 flex items-center">
+                                <i data-lucide="lightbulb" class="w-5 h-5 mr-2 text-yellow-500"></i>
+                                Quick Tips
+                            </h3>
+                            <ul class="space-y-3 text-sm text-gray-700">
+                                <li class="flex items-start space-x-2">
+                                    <div class="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Be specific about what you want to learn</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <div class="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Include context about your audience</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <div class="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Mention any constraints or requirements</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <div class="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Paste research notes or bullet points</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Example Topics -->
+                        <div class="card p-6">
+                            <h3 class="font-heading font-bold text-gray-900 mb-4">
+                                Popular Survey Topics
+                            </h3>
+                            <div class="space-y-2">
+                                <button class="example-topic w-full text-left p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors text-sm" 
+                                        onclick="useExampleTopic('Customer satisfaction survey for our mobile app. Want to know: usability issues, favorite features, improvement suggestions, likelihood to recommend.')">
+                                    <div class="font-medium text-gray-900">Customer Feedback</div>
+                                    <div class="text-gray-600">App satisfaction & improvements</div>
+                                </button>
+                                <button class="example-topic w-full text-left p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors text-sm"
+                                        onclick="useExampleTopic('Employee engagement survey. Topics: work satisfaction, management effectiveness, career development opportunities, work-life balance, company culture.')">
+                                    <div class="font-medium text-gray-900">Employee Engagement</div>
+                                    <div class="text-gray-600">Workplace satisfaction & culture</div>
+                                </button>
+                                <button class="example-topic w-full text-left p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors text-sm"
+                                        onclick="useExampleTopic('Market research for new coffee blend. Target audience: coffee enthusiasts. Questions about: taste preferences, price sensitivity, packaging appeal, purchase frequency.')">
+                                    <div class="font-medium text-gray-900">Market Research</div>
+                                    <div class="text-gray-600">Product validation & preferences</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Form Builder -->
+        <div id="formBuilder" class="hidden space-y-8">
+            <!-- Form Title Section -->
+            <div class="card p-8">
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-heading font-bold text-gray-900">Customize Your Form</h2>
+                    <div class="grid lg:grid-cols-3 gap-6 items-start">
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-900 mb-3">Form Title</label>
+                            <input type="text" id="formTitle" class="input-primary text-lg font-semibold" placeholder="Enter a compelling title...">
+                        </div>
+                        <div class="space-y-3">
+                            <div class="text-sm font-semibold text-gray-900">Form Statistics</div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="text-center p-3 bg-primary-50 rounded-lg">
+                                    <div id="questionCount" class="text-2xl font-bold text-primary-600">0</div>
+                                    <div class="text-xs text-gray-600">Questions</div>
+                                </div>
+                                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-gray-600">~3min</div>
+                                    <div class="text-xs text-gray-600">Duration</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Questions Section -->
-            <div class="card p-6">
-                <h3 class="text-lg font-heading font-semibold text-gray-900 mb-6">Questions</h3>
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-heading font-bold text-gray-900">Questions</h3>
+                    <button id="addQuestionBtn" class="btn-secondary">
+                        <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                        Add Question
+                    </button>
+                </div>
+                
                 <div id="questionsList" class="space-y-4">
                     <!-- Questions will be populated here -->
+                </div>
+                
+                <!-- Add Question Placeholder -->
+                <div id="addQuestionPlaceholder" class="card p-8 text-center border-2 border-dashed border-gray-300 hover:border-primary-300 transition-colors cursor-pointer" onclick="addNewQuestion()">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                            <i data-lucide="plus" class="w-6 h-6 text-gray-400"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">Add Another Question</h4>
+                            <p class="text-sm text-gray-600">Create custom questions or let AI suggest more</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Demographics Section -->
-            <div class="card p-6">
-                <h3 class="text-lg font-heading font-semibold text-gray-900 mb-6">Demographics (Optional)</h3>
-                <div id="demographicsList" class="space-y-4">
-                    <!-- Demographics will be populated here -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-heading font-bold text-gray-900">Demographics</h3>
+                        <p class="text-sm text-gray-600 mt-1">Optional background information to collect</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm text-gray-600">Enable all</span>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="enableAllDemographics" class="toggle-switch" onchange="toggleAllDemographics(this.checked)">
+                            <div class="toggle-switch-thumb"></div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="card p-6">
+                    <div id="demographicsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Demographics will be populated here -->
+                    </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row gap-4 justify-end">
-                <button id="previewFormBtn" class="btn-secondary">
-                    <i data-lucide="eye" class="w-5 h-5 mr-2"></i>
-                    Preview Chat
-                </button>
-                <button id="saveFormBtn" class="btn-primary">
-                    <i data-lucide="save" class="w-5 h-5 mr-2"></i>
-                    Save & Share Form
-                </button>
+            <div class="card p-6">
+                <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
+                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="clock" class="w-4 h-4"></i>
+                            <span>Estimated completion: 2-4 minutes</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                            <span>Anonymous by default</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button id="previewFormBtn" class="btn-secondary">
+                            <i data-lucide="eye" class="w-5 h-5 mr-2"></i>
+                            Preview Experience
+                        </button>
+                        <button id="saveFormBtn" class="btn-primary">
+                            <i data-lucide="rocket" class="w-5 h-5 mr-2"></i>
+                            Launch Form
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -579,46 +771,63 @@ function renderQuestions(questions) {
 
 function createQuestionCard(question, index) {
     const card = document.createElement('div');
-    card.className = 'question-card';
+    card.className = 'card p-6 hover:shadow-xl transition-all group relative';
     
     const typeOptions = [
-        { value: 'text', label: 'Text Response' },
-        { value: 'multiple_choice', label: 'Multiple Choice' },
-        { value: 'yes_no', label: 'Yes/No' },
-        { value: 'rating', label: 'Rating (1-5)' },
-        { value: 'number', label: 'Number' }
+        { value: 'text', label: 'Text Response', icon: 'type' },
+        { value: 'multiple_choice', label: 'Multiple Choice', icon: 'list' },
+        { value: 'yes_no', label: 'Yes/No', icon: 'check-circle' },
+        { value: 'rating', label: 'Rating (1-5)', icon: 'star' },
+        { value: 'number', label: 'Number', icon: 'hash' }
     ];
     
+    const currentType = typeOptions.find(t => t.value === question.type) || typeOptions[0];
+    
     card.innerHTML = `
-        <div class="flex items-start justify-between mb-4">
-            <div class="flex items-center">
-                <span class="w-6 h-6 bg-primary-500 text-white text-sm font-semibold rounded-full flex items-center justify-center mr-3">
+        <!-- Header with drag handle and controls -->
+        <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center space-x-3">
+                <div class="drag-handle cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i data-lucide="grip-vertical" class="w-5 h-5 text-gray-400"></i>
+                </div>
+                <div class="w-8 h-8 bg-primary-500 text-white rounded-lg flex items-center justify-center text-sm font-semibold shadow-sm">
                     ${index + 1}
-                </span>
+                </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Question</label>
+                    <div class="font-semibold text-gray-900">Question ${index + 1}</div>
+                    <div class="text-sm text-gray-500 flex items-center space-x-2">
+                        <i data-lucide="${currentType.icon}" class="w-3 h-3"></i>
+                        <span>${currentType.label}</span>
+                    </div>
                 </div>
             </div>
-            <div class="flex items-center space-x-2">
-                <label class="flex items-center cursor-pointer">
+            <div class="flex items-center space-x-3">
+                <label class="flex items-center cursor-pointer group/toggle">
                     <input type="checkbox" class="toggle-switch" ${question.enabled !== false ? 'checked' : ''} 
                            onchange="toggleQuestion(${index}, this.checked)">
                     <div class="toggle-switch-thumb"></div>
                 </label>
-                <span class="text-sm text-gray-600">Enabled</span>
+                <button class="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-red-500" 
+                        onclick="removeQuestion(${index})" title="Remove Question">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
             </div>
         </div>
         
+        <!-- Question Content -->
         <div class="space-y-4">
-            <input type="text" 
-                   class="input-primary" 
-                   placeholder="Enter your question..." 
-                   value="${question.text || ''}"
-                   onchange="updateQuestion(${index}, 'text', this.value)">
+            <div>
+                <label class="block text-sm font-semibold text-gray-900 mb-2">Question Text</label>
+                <textarea 
+                    class="input-primary resize-none" 
+                    rows="2"
+                    placeholder="What would you like to ask?" 
+                    onchange="updateQuestion(${index}, 'text', this.value)">${question.text || ''}</textarea>
+            </div>
             
-            <div class="flex space-x-4">
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+            <div class="grid grid-cols-1 ${(question.type === 'multiple_choice' || question.type === 'rating') ? 'lg:grid-cols-2' : ''} gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-900 mb-2">Question Type</label>
                     <select class="input-primary" onchange="updateQuestion(${index}, 'type', this.value)">
                         ${typeOptions.map(option => `
                             <option value="${option.value}" ${question.type === option.value ? 'selected' : ''}>
@@ -628,15 +837,23 @@ function createQuestionCard(question, index) {
                     </select>
                 </div>
                 ${(question.type === 'multiple_choice' || question.type === 'rating') ? `
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Options</label>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-900 mb-2">
+                        ${question.type === 'rating' ? 'Scale Labels (optional)' : 'Answer Options'}
+                    </label>
                     <input type="text" 
                            class="input-primary" 
-                           placeholder="Option 1, Option 2, Option 3..." 
+                           placeholder="${question.type === 'rating' ? 'Poor, Fair, Good, Great, Excellent' : 'Option 1, Option 2, Option 3'}" 
                            value="${(question.options || []).join(', ')}"
                            onchange="updateQuestion(${index}, 'options', this.value.split(',').map(s => s.trim()).filter(s => s))">
                 </div>
                 ` : ''}
+            </div>
+            
+            <!-- Question Preview -->
+            <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-primary-300">
+                <div class="text-xs font-medium text-gray-600 mb-2">PREVIEW</div>
+                <div class="text-sm text-gray-800">${question.text || 'Question preview will appear here'}</div>
             </div>
         </div>
     `;
@@ -656,23 +873,58 @@ function renderDemographics(demographics) {
 
 function createDemographicCard(demo, index) {
     const card = document.createElement('div');
-    card.className = 'card-compact p-4';
+    card.className = 'card p-4 hover:shadow-md transition-all border-2 border-transparent hover:border-primary-200';
+    
+    const demographicIcons = {
+        'age': 'calendar',
+        'gender': 'user',
+        'location': 'map-pin',
+        'education': 'graduation-cap',
+        'income': 'dollar-sign',
+        'occupation': 'briefcase',
+        'ethnicity': 'users'
+    };
+    
+    const iconName = demographicIcons[demo.name.toLowerCase()] || 'user-check';
     
     card.innerHTML = `
-        <div class="flex items-center justify-between">
-            <div class="flex items-center">
-                <span class="text-sm font-medium text-gray-900">${demo.name}</span>
-                <span class="ml-2 text-xs text-gray-500">(${demo.type})</span>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <i data-lucide="${iconName}" class="w-4 h-4 text-gray-600"></i>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900">${demo.name}</div>
+                        <div class="text-xs text-gray-500">${demo.type}</div>
+                    </div>
+                </div>
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" class="toggle-switch" ${demo.enabled ? 'checked' : ''} 
+                           onchange="toggleDemographic(${index}, this.checked)">
+                    <div class="toggle-switch-thumb"></div>
+                </label>
             </div>
-            <label class="flex items-center cursor-pointer">
-                <input type="checkbox" class="toggle-switch" ${demo.enabled ? 'checked' : ''} 
-                       onchange="toggleDemographic(${index}, this.checked)">
-                <div class="toggle-switch-thumb"></div>
-            </label>
+            <div class="text-xs text-gray-600 leading-relaxed">
+                ${getDemographicDescription(demo.name)}
+            </div>
         </div>
     `;
     
     return card;
+}
+
+function getDemographicDescription(name) {
+    const descriptions = {
+        'Age': 'Age range or specific age',
+        'Gender': 'Gender identity',
+        'Location': 'Geographic location',
+        'Education': 'Educational background',
+        'Income': 'Household income range',
+        'Occupation': 'Job title or industry',
+        'Ethnicity': 'Ethnic background'
+    };
+    return descriptions[name] || 'Demographic information';
 }
 
 // Form builder event handlers
@@ -1193,6 +1445,128 @@ window.addEventListener('load', () => {
 });
 
 window.addEventListener('popstate', handleUrlRouting);
+
+// Additional functions for modern UI
+function updateTextDumpCount() {
+    const textDump = document.getElementById('textDump');
+    const counter = document.getElementById('textDumpCount');
+    if (textDump && counter) {
+        counter.textContent = textDump.value.length;
+    }
+}
+
+function useExampleTopic(text) {
+    const textDump = document.getElementById('textDump');
+    if (textDump) {
+        textDump.value = text;
+        updateTextDumpCount();
+        textDump.focus();
+    }
+}
+
+function addNewQuestion() {
+    if (!currentFormData) {
+        currentFormData = { questions: [], demographics: [] };
+    }
+    
+    const newQuestion = {
+        text: '',
+        type: 'text',
+        enabled: true,
+        options: []
+    };
+    
+    currentFormData.questions.push(newQuestion);
+    renderQuestions(currentFormData.questions);
+    updateQuestionCount();
+}
+
+function removeQuestion(index) {
+    if (currentFormData && currentFormData.questions[index]) {
+        currentFormData.questions.splice(index, 1);
+        renderQuestions(currentFormData.questions);
+        updateQuestionCount();
+    }
+}
+
+function toggleAllDemographics(enabled) {
+    if (currentFormData && currentFormData.demographics) {
+        currentFormData.demographics.forEach(demo => {
+            demo.enabled = enabled;
+        });
+        renderDemographics(currentFormData.demographics);
+    }
+}
+
+function updateQuestionCount() {
+    const questionCount = document.getElementById('questionCount');
+    if (questionCount && currentFormData) {
+        const enabledQuestions = currentFormData.questions.filter(q => q.enabled !== false).length;
+        questionCount.textContent = enabledQuestions;
+    }
+}
+
+function updateProgress(step) {
+    // Update step indicators
+    const steps = ['step1', 'step2', 'step3'];
+    const progressBars = ['progressBar1', 'progressBar2'];
+    
+    steps.forEach((stepId, index) => {
+        const stepElement = document.getElementById(stepId);
+        if (stepElement) {
+            const circle = stepElement.querySelector('div');
+            if (index < step) {
+                // Completed step
+                circle.className = 'w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-semibold shadow-lg';
+                stepElement.className = 'flex items-center space-x-3 step-indicator completed';
+            } else if (index === step) {
+                // Active step
+                circle.className = 'w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-semibold shadow-lg';
+                stepElement.className = 'flex items-center space-x-3 step-indicator active';
+            } else {
+                // Future step
+                circle.className = 'w-10 h-10 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-sm font-semibold';
+                stepElement.className = 'flex items-center space-x-3 step-indicator';
+            }
+        }
+    });
+    
+    // Update progress bars
+    progressBars.forEach((barId, index) => {
+        const bar = document.getElementById(barId);
+        if (bar) {
+            bar.style.width = index < step ? '100%' : '0%';
+        }
+    });
+}
+
+// Enhanced displayFormBuilder function
+function displayFormBuilder(formData) {
+    document.getElementById('formBuilder').classList.remove('hidden');
+    document.getElementById('formTitle').value = formData.title || '';
+    
+    // Update progress to step 2
+    updateProgress(1);
+    
+    // Render questions
+    renderQuestions(formData.questions || []);
+    updateQuestionCount();
+    
+    // Render demographics
+    renderDemographics(formData.demographics || []);
+    
+    // Scroll to form builder
+    document.getElementById('formBuilder').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Add event listeners for new elements
+document.addEventListener('DOMContentLoaded', function() {
+    // Text dump counter
+    const textDump = document.getElementById('textDump');
+    if (textDump) {
+        textDump.addEventListener('input', updateTextDumpCount);
+    }
+});
 
 // Re-initialize icons after any dynamic content
 lucide.createIcons();
