@@ -43,7 +43,7 @@
         <div class="flex justify-between items-center h-16">
             <div class="flex items-center">
                 <h1 class="text-2xl font-heading font-bold text-gray-900">
-                    <span class="text-primary-500">Bermuda</span>
+                    <span style="color: #CC5500;">Bermuda</span>
                 </h1>
                 <div class="ml-4 text-sm text-gray-500 hidden sm:block">
                     Conversational Forms
@@ -68,7 +68,7 @@
             <div class="max-w-3xl mx-auto">
                 <h1 class="text-5xl sm:text-6xl font-heading font-bold text-gray-900 mb-6">
                     Forms that feel like 
-                    <span class="bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
+                    <span style="background: linear-gradient(to right, #CC5500, #9a3412); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
                         conversations
                     </span>
                 </h1>
@@ -1081,7 +1081,7 @@ function displayForms(forms) {
             <h3 class="text-lg font-heading font-semibold text-gray-900 mb-3 line-clamp-2">${form.title}</h3>
             <div class="flex items-center justify-between text-sm text-gray-600 mb-6">
                 <span>${new Date(form.created_at).toLocaleDateString()}</span>
-                <span class="bg-primary-100 text-primary-700 px-2 py-1 rounded-full text-xs font-medium">
+                <span class="px-2 py-1 rounded-full text-xs font-medium" style="background-color: #fff5eb; color: #9a3412;">
                     ${form.response_count || 0} responses
                 </span>
             </div>

@@ -24,6 +24,7 @@ sys.path.append(os.path.dirname(__file__))
 from conversation import create_conversation_manager
 from agentic_conversation import create_agentic_conversation_manager
 from modern_chat_agents import create_modern_chat_manager
+from natural_conversation_manager import create_natural_conversation_manager
 from langchain_manager import get_langchain_manager
 from firebase_integration import firebase_manager
 
@@ -34,6 +35,7 @@ CORS(app, origins=['https://bermuda-01.web.app'])
 conversation_manager = create_conversation_manager()
 agentic_manager = create_agentic_conversation_manager()
 modern_chat_manager = create_modern_chat_manager()
+natural_conversation_manager = create_natural_conversation_manager()
 langchain_manager = get_langchain_manager()
 
 # In-memory storage for sessions (use Firebase Realtime DB in production)
@@ -254,37 +256,45 @@ def chat_message():
         session = active_sessions[session_id]
         history = conversation_history[session_id]
         
-        # Use modern multi-agent chat architecture (2025 OpenAI Agents SDK pattern)
-        import asyncio
-        
+        # Use natural conversation manager with LangChain for organic flow
         try:
-            # Process message through modern agent system
-            result = asyncio.run(modern_chat_manager.process_message(
+            # Process message through natural conversation system
+            bot_response, is_completed = natural_conversation_manager.process_conversation_turn(
                 session_id=session_id,
                 form_data=form_data,
                 user_message=user_message,
-                device_id=session.get('device_id')
-            ))
+                conversation_history=history
+            )
             
-            bot_response = result.get('response', '')
-            is_completed = result.get('completed', False)
-            is_paused = result.get('paused', False)
-            
-            # Handle pause state
-            if is_paused:
-                session['paused'] = True
-                session['paused_at'] = time.time()
+            # Initialize pause state
+            is_paused = False
             
         except Exception as e:
-            print(f"Modern chat manager error: {e}")
-            # Fallback to agentic manager
-            bot_response, is_completed = agentic_manager.get_bot_response(
-                user_message=user_message,
-                conversation_history=history,
-                form_data=form_data,
-                demographics=form_data.get('demographics', []),
-                session_id=session_id
-            )
+            print(f"Natural conversation manager error: {e}")
+            # Fallback to modern chat manager
+            try:
+                result = modern_chat_manager.process_message(
+                    session_id=session_id,
+                    form_data=form_data,
+                    user_message=user_message,
+                    device_id=session.get('device_id')
+                )
+                
+                bot_response = result.get('response', '')
+                is_completed = result.get('completed', False)
+                is_paused = result.get('paused', False)
+                
+            except Exception as e2:
+                print(f"Modern chat manager fallback error: {e2}")
+                # Final fallback to agentic manager
+                bot_response, is_completed = agentic_manager.get_bot_response(
+                    user_message=user_message,
+                    conversation_history=history,
+                    form_data=form_data,
+                    demographics=form_data.get('demographics', []),
+                    session_id=session_id
+                )
+                is_paused = False
         
         # Add messages to conversation history
         timestamp = datetime.now(timezone.utc).isoformat()
@@ -319,9 +329,39 @@ def chat_message():
         
         if should_extract:
             try:
-                # Extract structured data using LangChain manager (with fallback)
+                # Extract structured data using natural conversation manager first
                 try:
-                    # Prepare questions JSON for LangChain
+                    extracted_data = natural_conversation_manager.extract_final_data(session_id)
+                    
+                    # If natural conversation manager doesn't have enough data, use LangChain
+                    if not extracted_data.get('questions') or extracted_data.get('completion_status') == 'partial':
+                        # Prepare questions JSON for LangChain fallback
+                        questions = form_data.get('questions', [])
+                        enabled_questions = [q for q in questions if q.get('enabled', True)]
+                        questions_json = json.dumps(enabled_questions)
+                        
+                        langchain_data = langchain_manager.extract_structured_data(
+                            transcript=history,
+                            questions_json=questions_json
+                        )
+                        
+                        # Merge the data, preferring natural conversation data where available
+                        if langchain_data.get('questions'):
+                            for q_text, answer in langchain_data['questions'].items():
+                                if q_text not in extracted_data.get('questions', {}):
+                                    if 'questions' not in extracted_data:
+                                        extracted_data['questions'] = {}
+                                    extracted_data['questions'][q_text] = answer
+                        
+                        # Update completion status if we got more data
+                        total_questions = len(enabled_questions)
+                        answered_questions = len(extracted_data.get('questions', {}))
+                        if total_questions > 0 and answered_questions / total_questions >= 0.8:
+                            extracted_data['completion_status'] = 'complete'
+                            
+                except Exception as e:
+                    print(f"Natural conversation extraction error: {e}")
+                    # Fallback to LangChain extraction
                     questions = form_data.get('questions', [])
                     enabled_questions = [q for q in questions if q.get('enabled', True)]
                     questions_json = json.dumps(enabled_questions)
@@ -331,25 +371,13 @@ def chat_message():
                         questions_json=questions_json
                     )
                     
-                    # Fallback to agentic manager if LangChain extraction is poor
-                    if not extracted_data.get('questions') or extracted_data.get('partial', True):
-                        fallback_data = agentic_manager.extract_structured_data(
+                    # Final fallback to agentic manager
+                    if not extracted_data.get('questions'):
+                        extracted_data = agentic_manager.extract_structured_data(
                             transcript=history,
                             form_data=form_data,
                             demographics=form_data.get('demographics', [])
                         )
-                        # Use fallback if it has more data
-                        if len(fallback_data.get('questions', {})) > len(extracted_data.get('questions', {})):
-                            extracted_data = fallback_data
-                            
-                except Exception as e:
-                    print(f"LangChain extraction error: {e}")
-                    # Fallback to agentic manager
-                    extracted_data = agentic_manager.extract_structured_data(
-                        transcript=history,
-                        form_data=form_data,
-                        demographics=form_data.get('demographics', [])
-                    )
                 
                 # Save to Firebase
                 save_response_to_firebase(form_id, session_id, extracted_data)
@@ -566,8 +594,7 @@ def resume_chat():
             return jsonify({'error': 'Session is not paused'}), 400
         
         # Resume using modern chat manager
-        import asyncio
-        result = asyncio.run(modern_chat_manager.resume_session(session_id))
+        result = modern_chat_manager.resume_session(session_id)
         
         if 'error' in result:
             return jsonify({'error': result['error']}), 404

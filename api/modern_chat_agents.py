@@ -48,7 +48,7 @@ class ModernChatAgent:
         self.api_key = api_key
         self.name = f"{agent_type.value}_agent"
         
-    async def process(self, context: ChatContext, user_message: str) -> Tuple[str, ChatAction, Optional[AgentType]]:
+    def process(self, context: ChatContext, user_message: str) -> Tuple[str, ChatAction, Optional[AgentType]]:
         """Process message and return (response, action, next_agent)"""
         raise NotImplementedError
 
@@ -58,7 +58,7 @@ class OrchestratorAgent(ModernChatAgent):
     def __init__(self, api_key: str):
         super().__init__(AgentType.ORCHESTRATOR, api_key)
         
-    async def process(self, context: ChatContext, user_message: str) -> Tuple[str, ChatAction, Optional[AgentType]]:
+    def process(self, context: ChatContext, user_message: str) -> Tuple[str, ChatAction, Optional[AgentType]]:
         """Decide what to do with the user message"""
         
         # Use OpenAI for intelligent routing
@@ -139,7 +139,7 @@ class ConversationAgent(ModernChatAgent):
     def __init__(self, api_key: str):
         super().__init__(AgentType.CONVERSATION, api_key)
         
-    async def process(self, context: ChatContext, user_message: str) -> Tuple[str, ChatAction, Optional[AgentType]]:
+    def process(self, context: ChatContext, user_message: str) -> Tuple[str, ChatAction, Optional[AgentType]]:
         """Handle natural conversation flow"""
         
         form_title = context.form_data.get('title', 'Survey')
@@ -154,9 +154,17 @@ class ConversationAgent(ModernChatAgent):
                 return f"hey! let's chat about {form_title.lower()}! what would u like to share?", ChatAction.CONTINUE, None
         
         # Build conversation prompt for GPT following YAML specs
+        # Build questions list for prompt
+        questions_data = []
+        for q in questions:
+            q_dict = {'text': q.get('text', ''), 'type': q.get('type', 'text')}
+            if q.get('options'):
+                q_dict['options'] = q.get('options', [])
+            questions_data.append(q_dict)
+        
         conversation_prompt = f"""You are a warm, friendly human conversationalist (like a curious friend) gathering info for this form: {form_title}. Act naturally—use emojis, casual language, empathy. Never sound robotic. Ask one question at a time, weave in follow-ups if needed.
 
-Required data to collect (questions and demographics, in order): {json.dumps([{{'text': q.get('text', ''), 'type': q.get('type', 'text'), 'options': q.get('options', [])}} for q in questions], indent=2)}
+Required data to collect (questions and demographics, in order): {json.dumps(questions_data, indent=2)}
 
 Rules (STRICTLY follow):
 - Be unbiased: For multiple_choice/yes_no/rating, NEVER list options upfront. Ask openly (e.g., "What's your favorite coffee type?"), let user answer freely, then handle in CoT.
@@ -221,7 +229,7 @@ class ExtractorAgent(ModernChatAgent):
     def __init__(self, api_key: str):
         super().__init__(AgentType.EXTRACTOR, api_key)
         
-    async def process(self, context: ChatContext, user_message: str) -> Tuple[str, ChatAction, Optional[AgentType]]:
+    def process(self, context: ChatContext, user_message: str) -> Tuple[str, ChatAction, Optional[AgentType]]:
         """Extract structured data from conversation"""
         
         questions = [q for q in context.form_data.get('questions', []) if q.get('enabled', True)]
@@ -318,7 +326,7 @@ class ModernChatManager:
             )
         return self.sessions[session_id]
     
-    async def process_message(self, session_id: str, form_data: Dict, user_message: str, device_id: str = None) -> Dict:
+    def process_message(self, session_id: str, form_data: Dict, user_message: str, device_id: str = None) -> Dict:
         """Main entry point for processing messages"""
         
         context = self.get_session(session_id, form_data)
@@ -340,7 +348,7 @@ class ModernChatManager:
             # Process through agent chain
             while current_agent:
                 agent = self.agents[current_agent]
-                agent_response, action, next_agent = await agent.process(context, user_message)
+                agent_response, action, next_agent = agent.process(context, user_message)
                 
                 if agent_response:  # Agent provided a response
                     response = agent_response
@@ -369,11 +377,11 @@ class ModernChatManager:
                 # Trigger extraction if not already done
                 if not hasattr(context, 'extracted_data'):
                     extractor = self.agents[AgentType.EXTRACTOR]
-                    await extractor.process(context, "")
+                    extractor.process(context, "")
             
             # Periodic saves every 5 messages
             if len(context.conversation_history) % 5 == 0 and len(context.conversation_history) > 0:
-                await self._save_partial_data(context)
+                self._save_partial_data(context)
             
             return {
                 'response': response,
@@ -394,7 +402,7 @@ class ModernChatManager:
                 'session_id': session_id
             }
     
-    async def resume_session(self, session_id: str) -> Dict:
+    def resume_session(self, session_id: str) -> Dict:
         """Resume a paused conversation"""
         if session_id in self.sessions:
             context = self.sessions[session_id]
@@ -419,12 +427,12 @@ class ModernChatManager:
         
         return {'error': 'Session not found'}
     
-    async def _save_partial_data(self, context: ChatContext):
+    def _save_partial_data(self, context: ChatContext):
         """Save partial conversation data"""
         try:
             # Trigger extraction for partial save
             extractor = self.agents[AgentType.EXTRACTOR]
-            await extractor.process(context, "")
+            extractor.process(context, "")
             
             # Here you would save to your database
             # For now just log it
