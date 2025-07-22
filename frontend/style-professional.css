@@ -1,0 +1,131 @@
+/* Professional message styling for Bermuda conversational forms */
+
+/* Professional message styling */
+.message-bot {
+    margin-left: 0;
+    margin-right: 4rem;
+    border-radius: 1.25rem;
+    border-bottom-left-radius: 0.5rem;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    padding: 1rem 1.25rem;
+    font-weight: 500;
+    line-height: 1.6;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.message-user {
+    margin-right: 0;
+    margin-left: 4rem;
+    border-radius: 1.25rem;
+    border-bottom-right-radius: 0.5rem;
+    background-color: #0f172a;
+    color: #ffffff;
+    padding: 1rem 1.25rem;
+    font-weight: 500;
+    line-height: 1.6;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Professional typing indicator */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    space-x: 0.5rem;
+    border-radius: 1.25rem;
+    border-bottom-left-radius: 0.5rem;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 1rem 1.25rem;
+    margin-right: 4rem;
+}
+
+.typing-dot {
+    height: 0.5rem;
+    width: 0.5rem;
+    border-radius: 9999px;
+    background-color: #64748b;
+    animation: typingBounce 1.4s ease-in-out infinite;
+}
+
+/* Professional color scheme overrides */
+body {
+    background-color: #f8fafc;
+}
+
+/* Update main container background */
+main {
+    background-color: transparent;
+}
+
+/* Professional card styling */
+.professional-card {
+    background-color: #ffffff;
+    border-radius: 1.5rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.professional-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Professional button styles */
+.btn-professional-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    border: none;
+    background-color: #0f172a;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-professional-primary:hover {
+    background-color: #1e293b;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.btn-professional-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    border: 2px solid #e2e8f0;
+    background-color: #ffffff;
+    color: #475569;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.btn-professional-secondary:hover {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+    color: #334155;
+}
+
+/* Remove old color schemes */
+:root {
+    --primary-50: #f8fafc;
+    --primary-100: #f1f5f9;
+    --primary-200: #e2e8f0;
+    --primary-300: #cbd5e1;
+    --primary-400: #94a3b8;
+    --primary-500: #64748b;
+    --primary-600: #475569;
+    --primary-700: #334155;
+    --primary-800: #1e293b;
+    --primary-900: #0f172a;
+}
