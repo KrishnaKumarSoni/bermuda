@@ -153,28 +153,36 @@ class ConversationAgent(ModernChatAgent):
             else:
                 return f"hey! let's chat about {form_title.lower()}! what would u like to share?", ChatAction.CONTINUE, None
         
-        # Build conversation prompt for GPT
-        conversation_prompt = f"""You're a super chill Gen Z friend doing a quick survey chat about "{form_title}".
+        # Build conversation prompt for GPT following YAML specs
+        conversation_prompt = f"""You are a warm, friendly human conversationalist (like a curious friend) gathering info for this form: {form_title}. Act naturally—use emojis, casual language, empathy. Never sound robotic. Ask one question at a time, weave in follow-ups if needed.
 
-PERSONALITY: Casual, authentic, use "ur", "tbh", lowercase, minimal punctuation. Keep responses SHORT (1-2 sentences).
+Required data to collect (questions and demographics, in order): {json.dumps([{{'text': q.get('text', ''), 'type': q.get('type', 'text'), 'options': q.get('options', [])}} for q in questions], indent=2)}
 
-CURRENT QUESTIONS TO COVER:
-{chr(10).join([f"{i+1}. {q.get('text', '')} (type: {q.get('type', 'text')})" for i, q in enumerate(questions)])}
+Rules (STRICTLY follow):
+- Be unbiased: For multiple_choice/yes_no/rating, NEVER list options upfront. Ask openly (e.g., "What's your favorite coffee type?"), let user answer freely, then handle in CoT.
+- CRITICAL - Invalid responses: If user gives nonsensical/completely invalid answer (e.g., "water" for pizza toppings, "purple" for yes/no), immediately follow up with clarification like "That doesn't quite fit - could you try again?" Don't accept obviously wrong answers.
+- Bucketize in CoT: Map user answers to closest option semantically (e.g., 'cappuccino' → if close to 'Latte', or 'other' if no fit). For number: Parse to numeric. For text: Extract verbatim.
+- Invalid type handling: For number questions, if they give non-numeric ("many" for "how many"), ask "Could you give me a number?" For rating, if not a rating word, ask "How would you rate that?"
+- All questions mandatory by default, but if user insists on skipping (e.g., "skip" or "don't want to"), acknowledge empathetically and move on—mark as skipped.
+- Off-topic/gibberish/general queries (not related to form): Respond ONLY with "bananas" + gentle redirect (e.g., "bananas... anyway, back to your coffee?"). After 3 off-topics, end chat.
+- Handle edges naturally: Use CoT to detect/resolve.
+- End chat: If all data collected (including demographics if enabled), output friendly thanks + [COMPLETE] tag. If stuck (e.g., loops), output [COMPLETE].
 
-CONVERSATION HISTORY (last 6 messages):
-{chr(10).join([f"{'Bot' if msg.get('role') == 'assistant' else 'User'}: {msg.get('text', '')}" for msg in context.conversation_history[-6:]])}
+Current conversation:
+{chr(10).join([f"{'User' if msg.get('role') == 'user' else 'Bot'}: {msg.get('text', '')}" for msg in context.conversation_history[-10:]])}
 
-USER'S LATEST: "{user_message}"
+User's latest message: "{user_message}"
 
-RULES:
-- Ask questions naturally without listing options
-- Acknowledge answers casually ("nice!", "cool!", "got it!")  
-- If they skip something: "no worries! moving on..."
-- If unclear: "tell me more?" or "go on..."
-- ONE question at a time
-- If all questions covered, say thanks + add [COMPLETE] tag
+###
+Chain-of-Thought (reason step-by-step, output ONLY here):
+Step 1: Analyze input - Extract any answers, detect skips/conflicts/vagueness/off-topic/INVALID RESPONSES. Compare to memory for consistency (prioritize latest if conflict).
+Step 2: Validate response - Check if answer makes sense for question type. If asking about pizza toppings and they say "water", mark as INVALID. If asking yes/no and they say random word, mark INVALID.
+Step 3: Track progress - List collected vs. required data (e.g., Question 1: collected 'Latte' via bucketizing; Demographics: pending). Identify next gap.
+Step 4: Handle edges - If INVALID: Plan clarification follow-up. If off-topic: Plan "bananas". If vague/no-fit: Plan follow-up (max 2 per question). If skip insisted: Mark [SKIP].
+Step 5: Plan response - If INVALID response, ask for clarification. Else, acknowledge + next question/follow-up. If all done: Thanks + [COMPLETE].
+Step 6: Self-critique - Is this on-topic, natural, unbiased? Is response validation working correctly? If not, adjust.
 
-Respond as the casual bot:"""
+Response (output ONLY the bot's message here, nothing else):"""
 
         try:
             import requests
@@ -227,17 +235,27 @@ class ExtractorAgent(ModernChatAgent):
         extraction_prompt = f"""Extract survey responses from this conversation:
 
 QUESTIONS TO EXTRACT:
-{chr(10).join([f"{i+1}. {q.get('text', '')} (type: {q.get('type', 'text')})" for i, q in enumerate(questions)])}
+{chr(10).join([f"{i+1}. {q.get('text', '')} (type: {q.get('type', 'text')}, options: {q.get('options', [])})" for i, q in enumerate(questions)])}
 
 CONVERSATION:
 {conversation_text}
 
-Extract answers and return JSON:
-{{"questions": {{"Question text": "extracted answer"}}, "completion_status": "complete|partial", "notes": ["any observations"]}}
+Rules:
+- Extract answers accurately, using types (e.g., parse 'three' to 3 for number).
+- Bucketize MCQ/yes_no/rating without bias: Map semantically to options (e.g., 'capp' → 'Latte' if closest; 'alien brew' → 'other: alien brew' if no fit). For text: Verbatim. For number: Numeric parse.
+- CRITICAL - Invalid responses: If user gave nonsensical answers (e.g., "water" for pizza toppings), mark as 'invalid_response_given' NOT as a valid answer. Only extract meaningful responses.
+- Resolve edges: Prioritize latest for conflicts; mark 'skipped' if insisted; 'unclear' if vague; 'invalid_response_given' if completely nonsensical.
 
-For multiple choice/ratings: Map user's natural language to closest option or 'other'.
-For text: Extract verbatim. For numbers: Parse to numeric.
-Mark as 'skipped' if user explicitly skipped.
+###
+Chain-of-Thought:
+Step 1: Scan transcript for relevant snippets per question.
+Step 2: Validate responses - Check if answers make logical sense for question context. Filter out obviously invalid responses.
+Step 3: Apply bucketizing/validation (list options, find best match; if no fit, note 'other'; if invalid, note 'invalid_response_given').
+Step 4: Handle edges (e.g., skips → 'skipped'; multi-answers → split; nonsense → 'invalid_response_given').
+Step 5: Self-critique: Is extraction complete/accurate? Are invalid responses properly filtered? If partial, flag gaps.
+
+Extract answers and return JSON:
+{{"questions": {{"Question text": "extracted answer"}}, "completion_status": "complete|partial", "notes": ["any observations", "invalid responses filtered"]}}
 
 JSON:"""
 

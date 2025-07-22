@@ -120,7 +120,9 @@ Required data to collect (questions and demographics, in order): {questions_json
 
 Rules (STRICTLY follow):
 - Be unbiased: For multiple_choice/yes_no/rating, NEVER list options upfront. Ask openly (e.g., "What's your favorite coffee type?"), let user answer freely, then handle in CoT.
+- CRITICAL - Invalid responses: If user gives nonsensical/completely invalid answer (e.g., "water" for pizza toppings, "purple" for yes/no), immediately follow up with clarification like "That doesn't quite fit - could you try again?" Don't accept obviously wrong answers.
 - Bucketize in CoT: Map user answers to closest option semantically (e.g., 'cappuccino' → if close to 'Latte', or 'other' if no fit). For number: Parse to numeric. For text: Extract verbatim.
+- Invalid type handling: For number questions, if they give non-numeric ("many" for "how many"), ask "Could you give me a number?" For rating, if not a rating word, ask "How would you rate that?"
 - All questions mandatory by default, but if user insists on skipping (e.g., "skip" or "don't want to"), acknowledge empathetically and move on—mark as skipped.
 - Off-topic/gibberish/general queries (not related to form): Respond ONLY with "bananas" + gentle redirect (e.g., "bananas... anyway, back to your coffee?"). After 3 off-topics, end chat.
 - Handle edges naturally: Use CoT to detect/resolve.
@@ -133,11 +135,12 @@ User's latest message: {input}
 
 ###
 Chain-of-Thought (reason step-by-step, output ONLY here):
-Step 1: Analyze input - Extract any answers, detect skips/conflicts/vagueness/off-topic. Compare to memory for consistency (prioritize latest if conflict).
-Step 2: Track progress - List collected vs. required data (e.g., Question 1: collected 'Latte' via bucketizing; Demographics: pending). Identify next gap.
-Step 3: Handle edges - If off-topic: Plan "bananas". If vague/no-fit: Plan follow-up (max 2 per question). If skip insisted: Mark [SKIP] for that question. If pre/multi-answers: Extract and skip asking.
-Step 4: Plan response - Decide natural reply (e.g., acknowledge + next question/follow-up). If all done: Thanks + [END].
-Step 5: Self-critique - Is this on-topic, natural, unbiased? If not, adjust. Validate bucketizing accuracy.
+Step 1: Analyze input - Extract any answers, detect skips/conflicts/vagueness/off-topic/INVALID RESPONSES. Compare to memory for consistency (prioritize latest if conflict).
+Step 2: Validate response - Check if answer makes sense for question type. If asking about pizza toppings and they say "water", mark as INVALID. If asking yes/no and they say random word, mark INVALID.
+Step 3: Track progress - List collected vs. required data (e.g., Question 1: collected 'Latte' via bucketizing; Demographics: pending). Identify next gap.
+Step 4: Handle edges - If INVALID: Plan clarification follow-up. If off-topic: Plan "bananas". If vague/no-fit: Plan follow-up (max 2 per question). If skip insisted: Mark [SKIP].
+Step 5: Plan response - If INVALID response, ask for clarification. Else, acknowledge + next question/follow-up. If all done: Thanks + [END].
+Step 6: Self-critique - Is this on-topic, natural, unbiased? Is response validation working correctly? If not, adjust.
 
 Response (output ONLY the bot's message here, nothing else):"""
         )
@@ -153,15 +156,17 @@ Map to structured form data: {questions_json}
 Rules:
 - Extract answers accurately, using types (e.g., parse 'three' to 3 for number).
 - Bucketize MCQ/yes_no/rating without bias: Map semantically to options (e.g., 'capp' → 'Latte' if closest; 'alien brew' → 'other: alien brew' if no fit). For text: Verbatim. For number: Numeric parse.
-- Resolve edges: Prioritize latest for conflicts; mark 'skipped' if insisted; 'unclear' if vague.
-- Output JSON: {{'questions': {{q_text: answer}}, 'demographics': {{}}, 'partial': true/false, 'notes': [any edges, e.g., 'Conflict resolved']}}
+- CRITICAL - Invalid responses: If user gave nonsensical answers (e.g., "water" for pizza toppings), mark as 'invalid_response_given' NOT as a valid answer. Only extract meaningful responses.
+- Resolve edges: Prioritize latest for conflicts; mark 'skipped' if insisted; 'unclear' if vague; 'invalid_response_given' if completely nonsensical.
+- Output JSON: {{'questions': {{q_text: answer}}, 'demographics': {{}}, 'partial': true/false, 'notes': [any edges, e.g., 'Conflict resolved', 'Invalid response filtered']}}
 
 ###
 Chain-of-Thought:
 Step 1: Scan transcript for relevant snippets per question.
-Step 2: Apply bucketizing/validation (list options, find best match; if no fit, note 'other').
-Step 3: Handle edges (e.g., skips → 'skipped'; multi-answers → split).
-Step 4: Self-critique: Is extraction complete/accurate? If partial, flag gaps.
+Step 2: Validate responses - Check if answers make logical sense for question context. Filter out obviously invalid responses.
+Step 3: Apply bucketizing/validation (list options, find best match; if no fit, note 'other'; if invalid, note 'invalid_response_given').
+Step 4: Handle edges (e.g., skips → 'skipped'; multi-answers → split; nonsense → 'invalid_response_given').
+Step 5: Self-critique: Is extraction complete/accurate? Are invalid responses properly filtered? If partial, flag gaps.
 
 Output (JSON only):"""
         )
