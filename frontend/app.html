@@ -6,8 +6,8 @@
     <title>Bermuda - Conversational Forms</title>
     <!-- Force refresh: v2025.07.22.02 -->
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?v=2025072202"></script>
+    <!-- Compiled Tailwind CSS -->
+    <link rel="stylesheet" href="style.css">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <!-- Inter & Plus Jakarta Sans fonts -->
@@ -15,68 +15,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                        'heading': ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: {
-                            50: '#fff7ed',
-                            100: '#ffedd5',
-                            200: '#fed7aa',
-                            300: '#fdba74',
-                            400: '#fb923c',
-                            500: '#f97316', // Main burnt orange
-                            600: '#ea580c',
-                            700: '#c2410c',
-                            800: '#9a3412',
-                            900: '#7c2d12',
-                            950: '#431407',
-                        },
-                        secondary: {
-                            50: '#fefdf2',
-                            100: '#fef7cd',
-                            200: '#fef08a',
-                            300: '#fde047',
-                            400: '#facc15',
-                            500: '#eab308',
-                            600: '#ca8a04',
-                            700: '#a16207',
-                            800: '#854d0e',
-                            900: '#713f12',
-                        }
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out',
-                        'slide-up': 'slideUp 0.4s ease-out',
-                        'pulse-subtle': 'pulseSubtle 2s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' }
-                        },
-                        slideUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' }
-                        },
-                        pulseSubtle: {
-                            '0%, 100%': { opacity: '1' },
-                            '50%': { opacity: '0.8' }
-                        }
-                    },
-                    boxShadow: {
-                        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-                        'glow': '0 0 20px -5px rgba(249, 115, 22, 0.4)',
-                    }
-                }
-            }
-        }
-    </script>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -85,90 +23,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
     <style>
-        /* Custom component styles */
+        /* Additional custom animations and helpers */
         .chat-message-enter {
             animation: slideUp 0.3s ease-out;
         }
         
-        .btn-primary {
-            @apply inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 active:from-primary-700 active:to-primary-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl border-0 transition-all duration-200 ease-in-out transform hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 focus:ring-4 focus:ring-primary-200 outline-none;
-        }
-        
-        .btn-secondary {
-            @apply inline-flex items-center justify-center gap-2 bg-white hover:bg-primary-50 active:bg-primary-100 text-primary-600 border-2 border-primary-500 hover:border-primary-600 active:border-primary-700 font-semibold py-3 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 ease-in-out transform hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 focus:ring-4 focus:ring-primary-200 outline-none;
-        }
-        
-        .btn-ghost {
-            @apply inline-flex items-center justify-center gap-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 active:bg-primary-100 border border-transparent hover:border-primary-200 active:border-primary-300 font-medium py-2.5 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] focus:ring-4 focus:ring-primary-100 outline-none;
-        }
-
-        .btn-success {
-            @apply inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 active:from-green-700 active:to-green-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl border-0 transition-all duration-200 ease-in-out transform hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 focus:ring-4 focus:ring-green-200 outline-none;
-        }
-
-        .btn-danger {
-            @apply inline-flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:from-red-700 active:to-red-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl border-0 transition-all duration-200 ease-in-out transform hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 focus:ring-4 focus:ring-red-200 outline-none;
-        }
-        
-        .input-primary {
-            @apply w-full px-5 py-3.5 bg-white border-2 border-gray-200 hover:border-gray-300 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 rounded-xl shadow-sm hover:shadow-md focus:shadow-lg transition-all duration-200 outline-none placeholder-gray-400 text-gray-900 font-medium;
-        }
-        
-        .typing-indicator {
-            @apply flex items-center space-x-1 px-4 py-3 bg-gray-100 rounded-2xl rounded-bl-md;
-        }
-        
-        .typing-dot {
-            @apply w-2 h-2 bg-gray-400 rounded-full;
-            animation: typingBounce 1.4s ease-in-out infinite;
-        }
-        
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        .typing-dot:nth-child(3) { animation-delay: 0s; }
-        
-        @keyframes typingBounce {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-8px); }
-        }
-        
-        .card {
-            @apply bg-white rounded-2xl border-2 border-gray-100 shadow-lg hover:shadow-2xl hover:border-gray-200 transition-all duration-300 ease-out;
-        }
-        
-        .card-compact {
-            @apply bg-white rounded-xl border-2 border-gray-100 shadow-md hover:shadow-lg hover:border-gray-200 transition-all duration-200;
-        }
-
-        /* Chat specific styles */
-        .message-bot {
-            @apply bg-primary-50 text-primary-900 ml-0 mr-12 rounded-2xl rounded-bl-md px-4 py-3;
-        }
-        
-        .message-user {
-            @apply bg-gray-100 text-gray-900 mr-0 ml-12 rounded-2xl rounded-br-md px-4 py-3;
-        }
-
-        /* Form builder styles */
-        .question-card {
-            @apply card p-6 mb-4 hover:border-primary-200 transition-all duration-200;
-        }
-
-        /* Toggle switch */
-        .toggle-switch {
-            @apply relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-0 bg-gray-200 shadow-inner transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-50;
-        }
-        
-        .toggle-switch.active {
-            @apply bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg;
-        }
-        
-        .toggle-switch-thumb {
-            @apply pointer-events-none inline-block h-5 w-5 mt-1 ml-1 transform rounded-full bg-white shadow-lg ring-0 transition-all duration-300 ease-in-out;
-        }
-        
-        .toggle-switch.active .toggle-switch-thumb {
-            @apply translate-x-5 shadow-xl;
+        @keyframes slideUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -1224,16 +1086,16 @@ function displayForms(forms) {
                 </span>
             </div>
             <div class="grid grid-cols-2 gap-2">
-                <button class="btn-secondary !text-sm !py-2 !px-3" onclick="openForm('${form.form_id}')" title="View/Edit Form">
+                <button class="btn-secondary text-sm py-2 px-3" onclick="openForm('${form.form_id}')" title="View/Edit Form">
                     <i data-lucide="eye" class="w-4 h-4"></i>View
                 </button>
-                <button class="btn-secondary !text-sm !py-2 !px-3" onclick="shareForm('${form.form_id}')" title="Share Form">
+                <button class="btn-secondary text-sm py-2 px-3" onclick="shareForm('${form.form_id}')" title="Share Form">
                     <i data-lucide="share-2" class="w-4 h-4"></i>Share
                 </button>
-                <button class="btn-secondary !text-sm !py-2 !px-3" onclick="testChat('${form.form_id}')" title="Test Chat Experience">
+                <button class="btn-secondary text-sm py-2 px-3" onclick="testChat('${form.form_id}')" title="Test Chat Experience">
                     <i data-lucide="message-circle" class="w-4 h-4"></i>Test
                 </button>
-                <button class="btn-ghost !text-sm !py-2 !px-3 !text-red-600 hover:!bg-red-50 hover:!text-red-700 hover:!border-red-200" onclick="deleteForm('${form.form_id}')" title="Delete Form">
+                <button class="btn-ghost text-sm py-2 px-3 text-red-600" onclick="deleteForm('${form.form_id}')" title="Delete Form">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>Delete
                 </button>
             </div>
