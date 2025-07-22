@@ -929,53 +929,161 @@ function toggleDemographic(index, enabled) {
     }
 }
 
+function gatherFormData() {
+    const formData = {
+        questions: [],
+        demographics: []
+    };
+    
+    // Gather questions
+    const questionElements = document.querySelectorAll('.question-item');
+    questionElements.forEach(element => {
+        const textInput = element.querySelector('.question-text');
+        const typeSelect = element.querySelector('.question-type');
+        const enabledToggle = element.querySelector('.question-enabled');
+        
+        if (textInput && typeSelect) {
+            const question = {
+                text: textInput.value.trim(),
+                type: typeSelect.value,
+                enabled: enabledToggle ? enabledToggle.checked : true
+            };
+            
+            // Gather options for multiple choice questions
+            if (['multiple_choice', 'yes_no', 'rating'].includes(question.type)) {
+                const optionInputs = element.querySelectorAll('.option-input');
+                question.options = [];
+                optionInputs.forEach(input => {
+                    if (input.value.trim()) {
+                        question.options.push(input.value.trim());
+                    }
+                });
+            }
+            
+            if (question.text) {
+                formData.questions.push(question);
+            }
+        }
+    });
+    
+    // Gather demographics
+    const demographicElements = document.querySelectorAll('.demographic-item');
+    demographicElements.forEach(element => {
+        const textInput = element.querySelector('.demographic-text');
+        const enabledToggle = element.querySelector('.demographic-enabled');
+        
+        if (textInput) {
+            const demographic = {
+                text: textInput.value.trim(),
+                enabled: enabledToggle ? enabledToggle.checked : true
+            };
+            
+            if (demographic.text) {
+                formData.demographics.push(demographic);
+            }
+        }
+    });
+    
+    return formData;
+}
+
 async function saveForm() {
     if (!currentUser) {
         showToast('Please sign in to save forms', 'error');
         return;
     }
     
-    if (!currentFormData) {
-        showToast('No form data to save', 'error');
+    // Check if we're editing an existing form
+    const isEditing = window.currentEditingFormId;
+    
+    // Get form data from the form builder
+    const formData = gatherFormData();
+    
+    if (!formData) {
+        showToast('Failed to gather form data', 'error');
         return;
     }
     
-    const title = document.getElementById('formTitle').value.trim();
+    const title = document.getElementById('form-title').value.trim();
     if (!title) {
         showToast('Please enter a form title', 'error');
         return;
     }
     
-    currentFormData.title = title;
+    formData.title = title;
     
     showLoading();
     
     try {
         const token = await currentUser.getIdToken();
-        const response = await fetch('https://us-central1-bermuda-01.cloudfunctions.net/api/save-form', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(currentFormData)
-        });
+        
+        let response;
+        if (isEditing) {
+            // Update existing form
+            response = await fetch(`https://us-central1-bermuda-01.cloudfunctions.net/api/forms/${window.currentEditingFormId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+        } else {
+            // Create new form
+            response = await fetch('https://us-central1-bermuda-01.cloudfunctions.net/api/save-form', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+        }
         
         if (!response.ok) {
-            throw new Error('Failed to save form');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to save form');
         }
         
         const result = await response.json();
         
-        showShareModal(result.form_id, result.share_url);
-        showToast('Form saved successfully!', 'success');
+        if (isEditing) {
+            showToast(result.message || 'Form updated successfully!', 'success');
+            // Clear editing state
+            clearFormBuilderState();
+            // Go back to dashboard
+            showPage('dashboard');
+            loadUserForms();
+        } else {
+            showShareModal(result.form_id, result.share_url);
+            showToast(result.message || 'Form saved successfully!', 'success');
+        }
         
     } catch (error) {
-        console.error('Error:', error);
-        showToast('Failed to save form. Please try again.', 'error');
+        console.error('Save form error:', error);
+        showToast(`Failed to save form: ${error.message}`, 'error');
     } finally {
         hideLoading();
     }
+}
+
+function clearFormBuilderState() {
+    // Clear editing state
+    window.currentEditingFormId = null;
+    
+    // Clear form builder
+    document.getElementById('form-title').value = '';
+    document.getElementById('questions-container').innerHTML = '';
+    document.getElementById('demographics-container').innerHTML = '';
+    
+    // Reset save button text
+    const saveButton = document.querySelector('#form-builder button[onclick="saveForm()"]');
+    if (saveButton) {
+        saveButton.innerHTML = '<i data-lucide="save" class="w-4 h-4 mr-2"></i>Save Form';
+    }
+    
+    // Clear current form data
+    window.currentFormData = null;
 }
 
 function openForm(formId) {
@@ -1026,16 +1134,142 @@ async function deleteForm(formId) {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
+            throw new Error(errorMessage);
         }
         
-        showToast('Form deleted successfully', 'success');
+        const data = await response.json();
+        showToast(data.message || 'Form deleted successfully', 'success');
         loadUserForms();
     } catch (error) {
         console.error('Delete form error:', error);
-        showToast('Failed to delete form', 'error');
+        showToast(`Failed to delete form: ${error.message}`, 'error');
     } finally {
         hideLoading();
+    }
+}
+
+async function editForm(formId) {
+    if (!currentUser) {
+        showToast('Please sign in to edit forms', 'error');
+        return;
+    }
+    
+    showLoading();
+    
+    try {
+        // Fetch the current form data
+        const token = await currentUser.getIdToken();
+        const response = await fetch(`https://us-central1-bermuda-01.cloudfunctions.net/api/forms/${formId}`, {
+            method: 'GET',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch form data: ${response.status}`);
+        }
+        
+        const formData = await response.json();
+        
+        // Switch to form builder mode and populate with existing data
+        showPage('form-builder');
+        
+        // Populate the form builder with existing data
+        populateFormBuilder(formData, formId);
+        
+        showToast('Form loaded for editing', 'success');
+        
+    } catch (error) {
+        console.error('Edit form error:', error);
+        showToast(`Failed to load form for editing: ${error.message}`, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function populateFormBuilder(formData, formId) {
+    // Store the form ID for updates
+    window.currentEditingFormId = formId;
+    
+    // Populate title
+    const titleInput = document.getElementById('form-title');
+    if (titleInput) {
+        titleInput.value = formData.title || '';
+    }
+    
+    // Clear existing questions
+    document.getElementById('questions-container').innerHTML = '';
+    
+    // Populate questions
+    if (formData.questions && formData.questions.length > 0) {
+        formData.questions.forEach((question, index) => {
+            addQuestion();
+            
+            // Get the last added question element
+            const questionElements = document.querySelectorAll('.question-item');
+            const questionElement = questionElements[questionElements.length - 1];
+            
+            if (questionElement) {
+                // Set question text
+                const textInput = questionElement.querySelector('.question-text');
+                if (textInput) textInput.value = question.text || '';
+                
+                // Set question type
+                const typeSelect = questionElement.querySelector('.question-type');
+                if (typeSelect) {
+                    typeSelect.value = question.type || 'text';
+                    // Trigger change event to show options if needed
+                    typeSelect.dispatchEvent(new Event('change'));
+                }
+                
+                // Set enabled state
+                const enabledToggle = questionElement.querySelector('.question-enabled');
+                if (enabledToggle) {
+                    enabledToggle.checked = question.enabled !== false;
+                }
+                
+                // Set options for multiple choice questions
+                if (question.options && question.options.length > 0) {
+                    setTimeout(() => {
+                        const optionInputs = questionElement.querySelectorAll('.option-input');
+                        question.options.forEach((option, optionIndex) => {
+                            if (optionInputs[optionIndex]) {
+                                optionInputs[optionIndex].value = option;
+                            }
+                        });
+                    }, 100);
+                }
+            }
+        });
+    }
+    
+    // Clear demographics and populate if needed
+    document.getElementById('demographics-container').innerHTML = '';
+    if (formData.demographics && formData.demographics.length > 0) {
+        formData.demographics.forEach(demo => {
+            addDemographic();
+            const demoElements = document.querySelectorAll('.demographic-item');
+            const demoElement = demoElements[demoElements.length - 1];
+            
+            if (demoElement) {
+                const textInput = demoElement.querySelector('.demographic-text');
+                if (textInput) textInput.value = demo.text || '';
+                
+                const enabledToggle = demoElement.querySelector('.demographic-enabled');
+                if (enabledToggle) enabledToggle.checked = demo.enabled !== false;
+            }
+        });
+    }
+    
+    // Update the save button text
+    const saveButton = document.querySelector('#form-builder button[onclick="saveForm()"]');
+    if (saveButton) {
+        saveButton.textContent = 'Update Form';
+        saveButton.innerHTML = '<i data-lucide="save" class="w-4 h-4 mr-2"></i>Update Form';
     }
 }
 
@@ -1389,6 +1623,9 @@ function displayForms(forms) {
                 <div class="flex items-center space-x-2">
                     <button class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg" onclick="viewResponses('${form.form_id}')">
                         View Responses
+                    </button>
+                    <button class="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" onclick="editForm('${form.form_id}')" title="Edit Form">
+                        <i data-lucide="edit" class="w-4 h-4"></i>
                     </button>
                     <button class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" onclick="deleteForm('${form.form_id}')" title="Delete Form">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>

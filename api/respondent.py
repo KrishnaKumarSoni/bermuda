@@ -169,30 +169,179 @@ def save_response_to_firebase(form_id: str, session_id: str, response_data: Dict
         firebase_mock['responses'][form_id] = {}
     firebase_mock['responses'][form_id][session_id] = response_doc
 
-@app.route('/api/forms/<form_id>', methods=['GET'])
-def get_form_metadata(form_id: str):
+@app.route('/api/forms/<form_id>', methods=['GET', 'DELETE', 'PUT'])
+def form_operations(form_id: str):
     """
-    Get form metadata for anonymous respondent access
-    Endpoint: GET /api/forms/{form_id}
+    Handle form operations: GET (anonymous access) and DELETE (authenticated)
     """
-    try:
-        form_data = validate_form_exists(form_id)
+    if request.method == 'GET':
+        # Check if this is an authenticated request (for editing)
+        auth_header = request.headers.get('Authorization')
+        is_authenticated = auth_header and auth_header.startswith('Bearer ')
         
-        if not form_data:
-            return jsonify({'error': 'Form not found'}), 404
-        
-        # Return only enabled questions and demographics for respondent
-        enabled_questions = [q for q in form_data['questions'] if q.get('enabled', True)]
-        enabled_demographics = [d for d in form_data.get('demographics', []) if d.get('enabled', True)]
-        
-        return jsonify({
-            'title': form_data['title'],
-            'questions': enabled_questions,
-            'demographics': enabled_demographics
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+        try:
+            form_data = validate_form_exists(form_id)
+            
+            if not form_data:
+                return jsonify({'error': 'Form not found'}), 404
+            
+            if is_authenticated:
+                # Authenticated request - verify token and ownership for full form data
+                try:
+                    import firebase_admin
+                    from firebase_admin import auth
+                    
+                    token = auth_header.split('Bearer ')[1]
+                    decoded_token = auth.verify_id_token(token)
+                    user_uid = decoded_token['uid']
+                    
+                    # Check if user owns the form
+                    if form_data.get('creator_id') != user_uid:
+                        return jsonify({'error': 'Access denied - you can only edit your own forms'}), 403
+                    
+                    # Return full form data for editing
+                    return jsonify({
+                        'title': form_data['title'],
+                        'questions': form_data['questions'],
+                        'demographics': form_data.get('demographics', []),
+                        'created_at': form_data.get('created_at'),
+                        'updated_at': form_data.get('updated_at')
+                    }), 200
+                    
+                except Exception as auth_error:
+                    print(f"Authentication error in GET: {auth_error}")
+                    return jsonify({'error': 'Invalid authentication token'}), 401
+            else:
+                # Anonymous request - return only enabled questions and demographics for respondent
+                enabled_questions = [q for q in form_data['questions'] if q.get('enabled', True)]
+                enabled_demographics = [d for d in form_data.get('demographics', []) if d.get('enabled', True)]
+                
+                return jsonify({
+                    'title': form_data['title'],
+                    'questions': enabled_questions,
+                    'demographics': enabled_demographics
+                }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+    
+    elif request.method == 'DELETE':
+        # Delete form (authenticated access)
+        try:
+            # Get authorization token
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            token = auth_header.split('Bearer ')[1]
+            
+            # Verify Firebase token
+            try:
+                import firebase_admin
+                from firebase_admin import auth
+                
+                decoded_token = auth.verify_id_token(token)
+                user_uid = decoded_token['uid']
+                
+            except Exception as auth_error:
+                print(f"Authentication error: {auth_error}")
+                return jsonify({'error': 'Invalid authentication token'}), 401
+            
+            # Check if form exists and user owns it
+            form_data = firebase_manager.get_form(form_id)
+            if not form_data:
+                return jsonify({'error': 'Form not found'}), 404
+            
+            if form_data.get('creator_id') != user_uid:
+                return jsonify({'error': 'Access denied - you can only delete your own forms'}), 403
+            
+            # Delete the form
+            success = firebase_manager.delete_form(form_id)
+            
+            if success:
+                return jsonify({'message': 'Form deleted successfully'}), 200
+            else:
+                return jsonify({'error': 'Failed to delete form'}), 500
+                
+        except Exception as e:
+            print(f"Delete form error: {str(e)}")
+            return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+    
+    elif request.method == 'PUT':
+        # Update/edit form (authenticated access)
+        try:
+            # Get authorization token
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            token = auth_header.split('Bearer ')[1]
+            
+            # Verify Firebase token
+            try:
+                import firebase_admin
+                from firebase_admin import auth
+                
+                decoded_token = auth.verify_id_token(token)
+                user_uid = decoded_token['uid']
+                
+            except Exception as auth_error:
+                print(f"Authentication error: {auth_error}")
+                return jsonify({'error': 'Invalid authentication token'}), 401
+            
+            # Validate JSON data
+            if not request.is_json:
+                return jsonify({'error': 'Content-Type must be application/json'}), 400
+            
+            try:
+                data = request.get_json()
+            except Exception:
+                return jsonify({'error': 'Invalid JSON format'}), 400
+            
+            if data is None:
+                return jsonify({'error': 'Request body cannot be empty'}), 400
+            
+            # Check if form exists and user owns it
+            existing_form_data = firebase_manager.get_form(form_id)
+            if not existing_form_data:
+                return jsonify({'error': 'Form not found'}), 404
+            
+            if existing_form_data.get('creator_id') != user_uid:
+                return jsonify({'error': 'Access denied - you can only edit your own forms'}), 403
+            
+            # Validate required fields
+            if not data.get('title') or not data.get('questions'):
+                return jsonify({'error': 'Missing required fields: title and questions'}), 400
+            
+            # Update form data with current timestamp
+            from datetime import datetime, timezone
+            
+            updated_form = {
+                'form_id': form_id,
+                'title': data.get('title'),
+                'questions': data.get('questions', []),
+                'demographics': data.get('demographics', []),
+                'created_at': existing_form_data.get('created_at'),  # Keep original creation time
+                'updated_at': datetime.now(timezone.utc).isoformat(),  # Update modification time
+                'creator_id': user_uid,
+                'status': 'active'
+            }
+            
+            # Save updated form
+            success = firebase_manager.save_form(updated_form, user_uid)
+            
+            if success:
+                return jsonify({
+                    'form_id': form_id,
+                    'message': 'Form updated successfully',
+                    'share_url': f'https://bermuda-01.web.app/form/{form_id}'
+                }), 200
+            else:
+                return jsonify({'error': 'Failed to update form'}), 500
+                
+        except Exception as e:
+            print(f"Edit form error: {str(e)}")
+            return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 @app.route('/api/chat-message', methods=['POST', 'OPTIONS'])
 def chat_message():
