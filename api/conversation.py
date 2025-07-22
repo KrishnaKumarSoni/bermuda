@@ -495,6 +495,9 @@ JSON:"""
         
         # Skip LLM call for obviously valid short answers
         message_lower = message.lower().strip()
+        # Empty messages are for conversation initiation, NOT off-topic
+        if len(message_lower) == 0:
+            return False
         if len(message_lower) < 2:  # Single characters are suspicious
             return True
             

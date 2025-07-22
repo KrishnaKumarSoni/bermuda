@@ -223,11 +223,20 @@ Output (JSON only):"""
     
     def infer_form_structure(self, text_dump: str) -> Dict:
         """Use inference chain to create form from text dump"""
+        print(f"🔍 Starting inference for dump: {text_dump[:100]}...")
+        print(f"🔧 LangChain available: {LANGCHAIN_AVAILABLE}")
+        print(f"🔑 API key available: {bool(self.api_key)}")
+        print(f"🤖 LLM initialized: {bool(self.llm)}")
+        print(f"⛓️ Inference chain available: {bool(self.chains.get('inference'))}")
+        
         if not self.chains.get('inference'):
+            print("⚠️ No inference chain, using fallback")
             return self._fallback_inference(text_dump)
             
         try:
+            print("🚀 Running LangChain inference...")
             result = self.chains['inference'].run(dump=text_dump)
+            print(f"📤 Raw LangChain result: {result[:200]}...")
             
             # Clean and parse JSON result
             result = result.strip()
@@ -236,9 +245,18 @@ Output (JSON only):"""
             elif result.startswith('```'):
                 result = result.replace('```', '').strip()
             
-            return json.loads(result)
+            parsed_result = json.loads(result)
+            print(f"✅ Parsed LangChain result: {parsed_result}")
+            
+            # Validate result has required fields
+            if not parsed_result.get('questions') or len(parsed_result['questions']) == 0:
+                print("⚠️ LangChain result missing questions, using fallback")
+                return self._fallback_inference(text_dump)
+                
+            return parsed_result
         except Exception as e:
-            print(f"Inference chain error: {e}")
+            print(f"❌ Inference chain error: {e}")
+            print(f"🔧 Error type: {type(e).__name__}")
             return self._fallback_inference(text_dump)
     
     def get_bot_response(self, user_message: str, session_id: str, 
@@ -291,10 +309,70 @@ Output (JSON only):"""
             return self._fallback_extraction(transcript, questions_json)
     
     def _fallback_inference(self, text_dump: str) -> Dict:
-        """Fallback inference when LangChain unavailable"""
+        """Improved fallback inference when LangChain unavailable"""
+        print(f"Using fallback inference for: {text_dump[:100]}...")
+        
+        # Simple heuristic-based inference
+        dump_lower = text_dump.lower()
+        
+        # Generate title based on content
+        title = "Survey"
+        if "food" in dump_lower or "cook" in dump_lower or "cuisine" in dump_lower:
+            title = "Food & Cooking Survey"
+        elif "movie" in dump_lower or "film" in dump_lower:
+            title = "Movie Preferences Survey"
+        elif "music" in dump_lower or "song" in dump_lower:
+            title = "Music Survey"
+        elif "product" in dump_lower or "service" in dump_lower:
+            title = "Product Feedback Survey"
+        elif "travel" in dump_lower or "vacation" in dump_lower:
+            title = "Travel Survey"
+        elif "work" in dump_lower or "job" in dump_lower:
+            title = "Work Experience Survey"
+        
+        # Generate questions based on content
+        questions = []
+        
+        # Look for question patterns and question words
+        if "favorite" in dump_lower and ("food" in dump_lower or "cuisine" in dump_lower):
+            questions.append({"text": "What's your favorite cuisine?", "type": "text", "enabled": True})
+        
+        if "cook" in dump_lower and ("often" in dump_lower or "how" in dump_lower):
+            questions.append({"text": "How often do you cook at home?", "type": "multiple_choice", 
+                            "options": ["Never", "Rarely", "Sometimes", "Often", "Daily"], "enabled": True})
+        
+        if "rate" in dump_lower and ("skill" in dump_lower or "1-5" in dump_lower):
+            questions.append({"text": "Rate your cooking skills", "type": "rating", 
+                            "options": ["1", "2", "3", "4", "5"], "enabled": True})
+        
+        # Add generic questions if no specific ones found
+        if not questions:
+            if "?" in text_dump:
+                # Extract questions from the dump
+                sentences = text_dump.split(".")
+                for sentence in sentences:
+                    if "?" in sentence:
+                        question_text = sentence.strip()
+                        if len(question_text) > 5:
+                            q_type = "text"
+                            if "rate" in question_text.lower() and any(num in question_text for num in ["1-5", "1-10"]):
+                                q_type = "rating"
+                                options = ["1", "2", "3", "4", "5"] if "1-5" in question_text else ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+                                questions.append({"text": question_text, "type": q_type, "options": options, "enabled": True})
+                            else:
+                                questions.append({"text": question_text, "type": q_type, "enabled": True})
+            
+            # Fallback to generic questions
+            if not questions:
+                questions = [
+                    {"text": "What are your thoughts on this topic?", "type": "text", "enabled": True},
+                    {"text": "How would you rate your overall experience?", "type": "rating", 
+                     "options": ["1", "2", "3", "4", "5"], "enabled": True}
+                ]
+        
         return {
-            "title": "Survey",
-            "questions": [{"text": "What are your thoughts?", "type": "text", "enabled": True}]
+            "title": title,
+            "questions": questions[:5]  # Limit to 5 questions
         }
     
     def _fallback_response(self, user_message: str, form_title: str) -> str:

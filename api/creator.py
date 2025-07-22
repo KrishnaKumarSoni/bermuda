@@ -21,7 +21,7 @@ from langchain_manager import get_langchain_manager
 from firebase_integration import firebase_manager
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=['https://bermuda-01.web.app'])
 
 # Load .env file for local development
 try:
@@ -107,11 +107,12 @@ def infer_form():
         if len(dump) > 5000:
             return jsonify({'error': 'Invalid dump - too long (max 5000 characters)'}), 400
         
-        # Use LangChain manager for inference (with fallback to agentic)
+        # Use conversation manager for reliable OpenAI inference
         try:
-            inferred_data = langchain_manager.infer_form_structure(dump)
+            conversation_mgr = create_conversation_manager()
+            inferred_data = conversation_mgr.infer_form_structure(dump)
             
-            # Fallback to agentic manager if LangChain fails
+            # Fallback to agentic manager if needed
             if not inferred_data or not inferred_data.get('questions'):
                 inferred_data = agentic_manager.infer_form_structure(dump)
             
@@ -206,6 +207,34 @@ def get_forms():
     except Exception as e:
         return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
+@app.route('/api/forms/<form_id>', methods=['DELETE'])
+def delete_form(form_id: str):
+    """
+    Deletes a form
+    Endpoint: DELETE /api/forms/{form_id}
+    """
+    try:
+        # Verify authentication
+        user = verify_auth_token(request)
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Check if form exists and user owns it
+        form_data = firebase_manager.get_form(form_id)
+        if not form_data:
+            return jsonify({'error': 'Form not found'}), 404
+        
+        if form_data.get('creator_id') != user['uid']:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        # Delete the form
+        firebase_manager.delete_form(form_id)
+        
+        return jsonify({'message': 'Form deleted successfully'}), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+
 @app.route('/api/forms/<form_id>/responses', methods=['GET'])
 def get_responses(form_id: str):
     """
@@ -278,8 +307,30 @@ def save_form():
         if not user_info:
             return jsonify({'error': 'Authentication required'}), 401
         
-        # Get form data from request
+        # Get form data from request - handle both JSON and string data
         form_data = request.get_json()
+        
+        # Debug logging
+        print(f"Raw form_data type: {type(form_data)}")
+        print(f"Raw form_data: {form_data}")
+        
+        # Handle case where Firebase Functions passes data as string
+        if isinstance(form_data, str):
+            try:
+                form_data = json.loads(form_data)
+                print("Parsed string to dict successfully")
+            except json.JSONDecodeError:
+                return jsonify({'error': 'Invalid JSON data'}), 400
+        
+        # Additional fallback - try to get data from request.data if get_json() fails
+        if form_data is None:
+            try:
+                raw_data = request.get_data(as_text=True)
+                print(f"Raw request data: {raw_data}")
+                form_data = json.loads(raw_data)
+                print("Parsed raw data to dict successfully")
+            except json.JSONDecodeError:
+                return jsonify({'error': 'No valid JSON data found'}), 400
         
         # Validate required fields
         if not form_data or not form_data.get('title'):
@@ -304,7 +355,7 @@ def save_form():
         }
         
         # Save to Firebase
-        success = firebase_manager.save_form(form_id, form_document)
+        success = firebase_manager.save_form(form_document, user_info['uid'])
         
         if success:
             return jsonify({

@@ -30,14 +30,7 @@ sys.path.append(os.path.dirname(__file__))
 from respondent import app as respondent_app
 from creator import app as creator_app
 
-# Configure function options
-api_options = options.CorsOptions(
-    cors_origins=["*"],
-    cors_methods=["GET", "POST", "OPTIONS"]
-)
-
 @https_fn.on_request(
-    cors=api_options,
     timeout_sec=540,  # Increased timeout for large payloads
     memory=options.MemoryOption.MB_512,
     secrets=["OPENAI_API_KEY"]
@@ -65,12 +58,12 @@ def api(req: https_fn.Request) -> https_fn.Response:
         if path.startswith('/infer') or path.startswith('/save-form') or path.startswith('/api/infer') or path.startswith('/api/save-form'):
             target_app = creator_app
             print(f"📝 Routing to creator app: {path}")
-        elif (path.startswith('/forms') or path.startswith('/api/forms')) and '/responses' in path:
-            # Form responses endpoint goes to creator app
+        elif path.startswith('/forms') or path.startswith('/api/forms'):
+            # All forms endpoints go to creator app (list forms, responses, form metadata)
             target_app = creator_app
-            print(f"📊 Routing to creator app (responses): {path}")
+            print(f"📊 Routing to creator app (forms): {path}")
         else:
-            # All other endpoints (chat, extract, debug, health, anonymous form access) go to respondent app
+            # All other endpoints (chat, extract, debug, health) go to respondent app
             target_app = respondent_app
             print(f"💬 Routing to respondent app: {path}")
             

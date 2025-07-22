@@ -1,0 +1,46 @@
+============================================================
+BERMUDA CHAT TESTING REPORT
+============================================================
+Test Session: length_test_1753087850
+Form ID: test-form-coffee
+API Base: https://us-central1-bermuda-01.cloudfunctions.net/api
+Test Time: 2025-07-21 14:20:50
+
+TEST RESULTS SUMMARY:
+------------------------------
+Form Access               ❌ FAIL
+Initial Greeting          ❌ FAIL
+Conversation Flow         ❌ FAIL
+Off Topic Handling        ❌ FAIL
+Data Extraction           ✅ PASS
+
+OVERALL SCORE: 1/5 (20.0%)
+
+DETAILED RESULTS:
+------------------------------
+
+Form Access:
+  Result: False
+
+Initial Greeting:
+  score: 0
+  error: Chat API error: 404 - {"error":"Form not found"}
+
+
+Conversation Flow:
+  overall_score: 0.0
+  message_scores: [0, 0, 0, 0, 0]
+  conversation_length: 0
+
+Off Topic Handling:
+  bananas_responses: 0
+  chat_ended_after_3: False
+  total_tests: 3
+
+Data Extraction:
+  score: 1.0
+  extracted_answers: 5
+  expected_answers: 5
+  checks: {'extracted_questions': True, 'proper_bucketizing': True, 'rating_parsed': True, 'text_verbatim': True, 'yes_no_mapped': True}
+
+============================================================

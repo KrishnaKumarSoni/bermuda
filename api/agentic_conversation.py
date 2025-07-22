@@ -113,31 +113,187 @@ class AgenticConversationManager:
         return api_key.strip().replace('\n', '').replace('\r', '')
     
     def _setup_llm(self):
-        """Setup LLM - use direct OpenAI instead of LangChain in production"""
-        # Skip LangChain setup in Firebase environment to avoid import issues
-        self.llm = None
-        print("Using direct OpenAI API calls instead of LangChain")
+        """Setup LLM using direct OpenAI for Firebase compatibility"""
+        if not self.api_key:
+            print("No OpenAI API key - using basic fallback")
+            self.llm = None
+            return
+            
+        # Use direct OpenAI API for Firebase compatibility
+        print("Setting up direct OpenAI API for conversation")
     
     def get_bot_response(self, user_message: str, conversation_history: List[Dict], 
                         form_data: Dict, demographics: List[Dict] = None, 
                         session_id: str = None) -> Tuple[str, bool]:
-        """Get intelligent response using LangChain"""
+        """Get intelligent response using direct OpenAI API"""
         
-        # Always use fallback response for Firebase deployment
-        return self._fallback_response(user_message, conversation_history, form_data)
+        # Use sophisticated conversation system if API key available
+        if self.api_key:
+            return self._openai_conversation_response(user_message, conversation_history, form_data, demographics)
+        else:
+            # Only fallback if no API key
+            return self._fallback_response(user_message, conversation_history, form_data)
+    
+    def _openai_conversation_response(self, user_message: str, conversation_history: List[Dict], 
+                                    form_data: Dict, demographics: List[Dict] = None) -> Tuple[str, bool]:
+        """Human-like conversation using direct OpenAI API following YAML specifications"""
         
         try:
-            # Analyze context
+            import requests
+            
+            form_title = form_data.get('title', 'Survey')
+            
+            # Check if this is conversation initiation (empty message) BEFORE off-topic check
+            is_initiation = not user_message.strip()
+            
+            # Quick off-topic check first (but skip for conversation initiation)
+            if not is_initiation and self._is_off_topic(user_message, form_title):
+                return f"bananas... anyway, back to {form_title.lower()}?", False
+            
+            # Build enabled questions for the prompt
+            questions = form_data.get('questions', [])
+            enabled_questions = [q for q in questions if q.get('enabled', True)]
+            
+            # Build conversation context
+            conversation_context = ""
+            for msg in conversation_history[-10:]:  # Last 10 messages for memory
+                role = "Bot" if msg.get('role') == 'assistant' else "User"
+                conversation_context += f"{role}: {msg.get('text', '')}\n"
+            
+            
+            # Create conversation prompt following YAML specs exactly
+            if is_initiation:
+                # Agent initiates conversation per respondant-chat-xp.yaml
+                first_question = enabled_questions[0] if enabled_questions else None
+                if first_question:
+                    conversation_prompt = f"""You're a super chill, casual person starting a conversation about "{form_title}". 
+
+PERSONALITY: Text like a friend - short, casual, authentic. Use "ur", "tbh", "ngl", lowercase, minimal punctuation.
+
+MESSAGE STYLE:
+- Keep responses SHORT (1-2 sentences max)
+- Use casual texting language 
+- Drop formal words, be conversational
+- Add personality with casual reactions
+- Ask ONE question at a time, naturally
+
+FIRST QUESTION TO WEAVE IN: {first_question.get('text', '')} (type: {first_question.get('type', 'text')})
+
+INITIATION EXAMPLES:
+- "hey! quick chat about {form_title.lower()}? first up - [question]"
+- "hi there! lets talk {form_title.lower()}. so [question]?"
+
+RULES:
+- NO long responses or formal language
+- DON'T repeat what they said back in detail  
+- USE lowercase, casual words, be authentic
+- NEVER list multiple choice options
+- Be like texting a friend
+
+Respond naturally as the friendly bot starting the conversation:"""
+                else:
+                    conversation_prompt = f"""Start a friendly conversation about "{form_title}". Say hello and ask what they'd like to share about {form_title.lower()}. Be casual and use emojis."""
+            else:
+                # Use exact prompt from llm-prompts-and-chains.yaml
+                questions_json = []
+                for q in enabled_questions:
+                    q_dict = {
+                        'text': q.get('text', ''),
+                        'type': q.get('type', 'text')
+                    }
+                    if q.get('options'):
+                        q_dict['options'] = q.get('options', [])
+                    questions_json.append(q_dict)
+
+                conversation_prompt = f"""You're a super chill, casual person having a quick chat about "{form_title}". 
+
+PERSONALITY: Text like a friend - short, casual, authentic. Use "ur", "tbh", "ngl", lowercase, minimal punctuation.
+
+MESSAGE STYLE:
+- Keep responses SHORT (1-2 sentences max)
+- Use casual texting language 
+- Drop formal words, be conversational
+- Add personality with casual reactions
+- Ask ONE question at a time, naturally
+
+QUESTIONS TO ASK:
+{chr(10).join([f"{i+1}. {q['text']} (type: {q['type']})" for i, q in enumerate(questions_json)])}
+
+CONVERSATION EXAMPLES:
+- Acknowledge: "nice! anything else on that?" OR "got it! go on..." OR move to next if feels complete
+- Incomplete response: "mmhm, tell me more" OR "go on..." OR "anything else?"
+- Complete response: "cool! so [next question]?"
+- Multiple answers: "got it! what about [next thing]?"
+- Corrections: "ah gotcha, thanks"
+- Skip: "no worries! [next question]?"
+- End: "awesome, thanks! [END]"
+
+HANDLING PARTIAL RESPONSES:
+- If response seems incomplete/short, use: "go on...", "anything else?", "tell me more"
+- If response ends mid-thought or with "but", "also", "and", etc. - wait for more
+- Only move to next question when response feels complete
+- Be patient, don't rush
+
+RULES (STRICTLY follow):
+- Be unbiased: For multiple_choice/yes_no/rating, NEVER list options upfront. Ask openly (e.g., "What's your favorite coffee type?"), let user answer freely, then handle in CoT.
+- All questions mandatory by default, but if user insists on skipping (e.g., "skip" or "don't want to"), acknowledge empathetically and move on—mark as skipped.
+- Off-topic/gibberish/general queries (not related to form): Respond ONLY with "bananas" + gentle redirect (e.g., "bananas... anyway, back to your coffee?"). After 3 off-topics, end chat.
+- End chat: If all data collected, output friendly thanks + [END] tag. If stuck (e.g., loops), output [END].
+
+RULES:
+- NO long responses or formal language
+- DON'T repeat what they said back in detail  
+- BE PATIENT - don't rush to next question if they might have more to say
+- USE lowercase, casual words, be authentic
+- NEVER list multiple choice options
+- ADD [END] when done
+
+Chat history: {conversation_context}
+
+User's latest message: {user_message}
+
+Be like texting a friend who lets you finish your thoughts."""
+
+            # Call OpenAI API
+            response = requests.post(
+                'https://api.openai.com/v1/chat/completions',
+                headers={
+                    'Authorization': f'Bearer {self.api_key}',
+                    'Content-Type': 'application/json'
+                },
+                json={
+                    'model': 'gpt-4o-mini',
+                    'messages': [{'role': 'user', 'content': conversation_prompt}],
+                    'temperature': 0.8,  # Higher for more natural, varied responses
+                    'max_tokens': 200,
+                    'presence_penalty': 0.6,  # Encourage varied language
+                    'frequency_penalty': 0.3  # Reduce repetition
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                result = response.json()['choices'][0]['message']['content'].strip()
+                
+                # Check for completion
+                is_completed = '[END]' in result
+                if is_completed:
+                    result = result.replace('[END]', '').strip()
+                
+                return result, is_completed
+            else:
+                print(f"OpenAI API error: {response.status_code} - {response.text}")
+                return self._fallback_response(user_message, conversation_history, form_data)
+                
+        except Exception as e:
+            print(f"OpenAI conversation error: {e}")
+            return self._fallback_response(user_message, conversation_history, form_data)
+        
+        try:
+            # Old LangChain code (keeping for reference but won't execute)
             form_title = form_data.get('title', 'Survey')
             progress = analyze_question_progress(form_data, conversation_history)
             completeness = analyze_response_completeness(user_message)
-            
-            # Check off-topic
-            if self._is_off_topic(user_message, form_title):
-                return "bananas... anyway, back to the survey?", False
-            
-            # Create conversation prompt
-            HumanMessage = _langchain_cache['HumanMessage']
             
             # Build questions JSON for the prompt
             questions_json = []
@@ -265,8 +421,14 @@ Response (output ONLY the bot's message here, nothing else):"""
         message_lower = message.lower().strip()
         
         # Quick checks for obviously valid responses
-        if len(message_lower) < 2:
+        # NOTE: Empty messages are NOT off-topic - they're used for conversation initiation
+        if len(message_lower) < 2 and len(message_lower) > 0:
             return True
+            
+        # Skip functionality - these are valid survey responses, not off-topic
+        skip_variations = ['skip', 'skip this', 'skip that', 'pass', 'skip question', 'dont want to', 'don\'t want to', 'no thanks']
+        if any(skip_phrase in message_lower for skip_phrase in skip_variations):
+            return False
             
         if (message_lower.isdigit() or 
             message_lower in ['yes', 'no', 'maybe', 'sure', 'ok', 'good', 'bad', 'great']):
@@ -288,6 +450,7 @@ Consider these as ON-TOPIC:
 - Clarifications or corrections to previous answers
 - Questions about the survey itself
 - Single word answers that could be valid responses
+- Skip requests (skip, pass, don't want to, etc.)
 
 Consider these as OFF-TOPIC:
 - General conversation unrelated to {form_title}

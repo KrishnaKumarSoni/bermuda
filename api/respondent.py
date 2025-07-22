@@ -23,15 +23,17 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 from conversation import create_conversation_manager
 from agentic_conversation import create_agentic_conversation_manager
+from modern_chat_agents import create_modern_chat_manager
 from langchain_manager import get_langchain_manager
 from firebase_integration import firebase_manager
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=['https://bermuda-01.web.app'])
 
 # Global conversation managers
 conversation_manager = create_conversation_manager()
 agentic_manager = create_agentic_conversation_manager()
+modern_chat_manager = create_modern_chat_manager()
 langchain_manager = get_langchain_manager()
 
 # In-memory storage for sessions (use Firebase Realtime DB in production)
@@ -221,9 +223,9 @@ def chat_message():
         form_id = data.get('form_id')
         user_message = data.get('message', '').strip()
         
-        # Validate required fields
-        if not all([session_id, form_id, user_message]):
-            return jsonify({'error': 'Missing required fields'}), 400
+        # Validate required fields (allow empty message for agent initiation)
+        if not session_id or not form_id:
+            return jsonify({'error': 'Missing required fields: session_id and form_id required'}), 400
         
         if len(user_message) > 1000:
             return jsonify({'error': 'Message too long (max 1000 characters)'}), 400
@@ -252,65 +254,49 @@ def chat_message():
         session = active_sessions[session_id]
         history = conversation_history[session_id]
         
-        # Check for off-topic message
-        form_title = form_data.get('title', 'survey')
-        is_off_topic = conversation_manager.handle_off_topic_message(user_message, form_title)
+        # Use modern multi-agent chat architecture (2025 OpenAI Agents SDK pattern)
+        import asyncio
         
-        if is_off_topic:
-            off_topic_counters[session_id] += 1
-            if off_topic_counters[session_id] >= 3:
-                # Force completion after 3 off-topic messages
-                bot_response = "bananas... I think we're done here! Thanks for your time. 😊"
-                is_completed = True
-            else:
-                bot_response = "bananas... anyway, let's get back to the survey?"
-                is_completed = False
-        else:
-            # Reset off-topic counter on valid message
-            off_topic_counters[session_id] = 0
+        try:
+            # Process message through modern agent system
+            result = asyncio.run(modern_chat_manager.process_message(
+                session_id=session_id,
+                form_data=form_data,
+                user_message=user_message,
+                device_id=session.get('device_id')
+            ))
             
-            # Get bot response using LangChain manager (with fallback to agentic)
-            try:
-                # Prepare questions JSON for LangChain
-                questions = form_data.get('questions', [])
-                enabled_questions = [q for q in questions if q.get('enabled', True)]
-                questions_json = json.dumps(enabled_questions)
-                
-                bot_response, is_completed = langchain_manager.get_bot_response(
-                    user_message=user_message,
-                    session_id=session_id,
-                    form_title=form_data.get('title', 'Survey'),
-                    questions_json=questions_json
-                )
-                
-                # Fallback to agentic manager if LangChain fails
-                if not bot_response or bot_response.startswith("thanks for sharing"):
-                    bot_response, is_completed = agentic_manager.get_bot_response(
-                        user_message=user_message,
-                        conversation_history=history,
-                        form_data=form_data,
-                        demographics=form_data.get('demographics', []),
-                        session_id=session_id
-                    )
-            except Exception as e:
-                print(f"LangChain conversation error: {e}")
-                # Fallback to agentic manager
-                bot_response, is_completed = agentic_manager.get_bot_response(
-                    user_message=user_message,
-                    conversation_history=history,
-                    form_data=form_data,
-                    demographics=form_data.get('demographics', []),
-                    session_id=session_id
-                )
+            bot_response = result.get('response', '')
+            is_completed = result.get('completed', False)
+            is_paused = result.get('paused', False)
+            
+            # Handle pause state
+            if is_paused:
+                session['paused'] = True
+                session['paused_at'] = time.time()
+            
+        except Exception as e:
+            print(f"Modern chat manager error: {e}")
+            # Fallback to agentic manager
+            bot_response, is_completed = agentic_manager.get_bot_response(
+                user_message=user_message,
+                conversation_history=history,
+                form_data=form_data,
+                demographics=form_data.get('demographics', []),
+                session_id=session_id
+            )
         
         # Add messages to conversation history
         timestamp = datetime.now(timezone.utc).isoformat()
         
-        user_msg = {
-            'role': 'user',
-            'text': user_message,
-            'timestamp': timestamp
-        }
+        # Only add user message if it's not empty (not agent initiation)
+        if user_message:
+            user_msg = {
+                'role': 'user',
+                'text': user_message,
+                'timestamp': timestamp
+            }
+            history.append(user_msg)
         
         bot_msg = {
             'role': 'assistant',
@@ -318,15 +304,15 @@ def chat_message():
             'timestamp': timestamp
         }
         
-        history.append(user_msg)
         history.append(bot_msg)
         
         # Save to Firebase Realtime DB for live sync
-        firebase_manager.save_chat_message(session_id, form_id, 'user', user_message)
+        if user_message:  # Only save user message if not empty
+            firebase_manager.save_chat_message(session_id, form_id, 'user', user_message)
         firebase_manager.save_chat_message(session_id, form_id, 'assistant', bot_response)
         
         # Update message count
-        session['message_count'] += 2
+        session['message_count'] += 2 if user_message else 1
         
         # Check for periodic extraction (every 5 total messages)
         should_extract = (session['message_count'] % 5 == 0) or is_completed
@@ -553,15 +539,83 @@ def debug_test_chat():
     except Exception as e:
         return jsonify({'error': f'Test error: {str(e)}'}), 500
 
+@app.route('/api/resume-chat', methods=['POST'])
+def resume_chat():
+    """
+    Resume a paused chat conversation
+    Endpoint: POST /api/resume-chat
+    """
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Content-Type must be application/json'}), 400
+        
+        data = request.get_json()
+        if data is None:
+            return jsonify({'error': 'Request body cannot be empty'}), 400
+        
+        session_id = data.get('session_id')
+        if not session_id:
+            return jsonify({'error': 'session_id is required'}), 400
+        
+        # Check if session exists and is paused
+        if session_id not in active_sessions:
+            return jsonify({'error': 'Session not found'}), 404
+        
+        session = active_sessions[session_id]
+        if not session.get('paused', False):
+            return jsonify({'error': 'Session is not paused'}), 400
+        
+        # Resume using modern chat manager
+        import asyncio
+        result = asyncio.run(modern_chat_manager.resume_session(session_id))
+        
+        if 'error' in result:
+            return jsonify({'error': result['error']}), 404
+        
+        # Update session state
+        session['paused'] = False
+        session.pop('paused_at', None)
+        
+        # Add resume message to history
+        if session_id in conversation_history:
+            timestamp = datetime.now(timezone.utc).isoformat()
+            conversation_history[session_id].append({
+                'role': 'assistant',
+                'text': result['response'],
+                'timestamp': timestamp
+            })
+        
+        # Save to Firebase
+        firebase_manager.save_chat_message(
+            session_id, 
+            session['form_id'], 
+            'assistant', 
+            result['response']
+        )
+        
+        return jsonify({
+            'message': 'Chat resumed successfully',
+            'response': result['response'],
+            'session_id': session_id,
+            'resumed': True
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Resume error: {str(e)}'}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check for respondent API"""
+    # Check OpenAI API key from environment (includes Firebase secrets)
+    api_key = os.getenv('OPENAI_API_KEY', '').strip()
+    has_key = bool(api_key)
+    
     return jsonify({
         'status': 'healthy',
         'service': 'respondent-chat-api',
-        'openai': 'configured' if os.getenv('OPENAI_API_KEY') else 'missing',
-        'active_sessions': len(active_sessions)
+        'openai': 'configured' if has_key else 'missing',
+        'active_sessions': len(active_sessions),
+        'modern_agents': 'enabled'
     }), 200
 
 # For Vercel WSGI

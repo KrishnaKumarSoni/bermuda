@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bermuda - Conversational Forms</title>
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+    <meta name="theme-color" content="#000212" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    
+    <!-- Modern Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://unpkg.com/framer-motion@10/dist/framer-motion.js"></script>
+    
+    <!-- SF Pro Display Font (Linear Style) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=SF+Pro+Display:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['SF Pro Display', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+                        'display': ['SF Pro Display', 'Inter', 'sans-serif'],
+                        'mono': ['SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Consolas', 'monospace']
+                    },
+                    colors: {
+                        // Linear-inspired dark palette
+                        'black': '#000212',
+                        'gray': {
+                            50: '#fafafa',
+                            100: 'rgba(255, 255, 255, 0.1)',
+                            200: '#f5f5f5',
+                            300: '#e5e5e5',
+                            400: '#a3a3a3',
+                            500: '#737373',
+                            600: '#525252',
+                            700: '#404040',
+                            800: '#262626',
+                            900: '#171717',
+                            950: '#0a0a0a'
+                        },
+                        'primary': {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            200: '#fecaca',
+                            300: '#fca5a5',
+                            400: '#f87171',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d'
+                        },
+                        'accent': {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'glow-line': 'glow-line-horizontal 4s ease-in-out infinite',
+                        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+                        'float': 'float 3s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        'glow-line-horizontal': {
+                            '0%, 100%': { transform: 'translateX(-100%)' },
+                            '50%': { transform: 'translateX(100%)' }
+                        },
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: '0.4' },
+                            '50%': { opacity: '0.8' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-5px)' }
+                        }
+                    },
+                    fontSize: {
+                        'xs': ['0.75rem', { lineHeight: '1rem' }],
+                        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
+                        'base': ['1rem', { lineHeight: '1.5rem' }],
+                        'lg': ['1.125rem', { lineHeight: '1.75rem' }],
+                        'xl': ['1.25rem', { lineHeight: '1.75rem' }],
+                        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+                        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+                        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
+                        '5xl': ['3rem', { lineHeight: '1' }],
+                        '6xl': ['3.75rem', { lineHeight: '1' }],
+                        '7xl': ['4.5rem', { lineHeight: '1' }],
+                        '8xl': ['6rem', { lineHeight: '1' }],
+                        '9xl': ['8rem', { lineHeight: '1' }]
+                    },
+                    backdropBlur: {
+                        'xs': '2px',
+                        'sm': '4px',
+                        'md': '8px',
+                        'lg': '16px',
+                        'xl': '24px'
+                    },
+                    boxShadow: {
+                        'glow': '0 0 20px rgba(239, 68, 68, 0.3)',
+                        'glow-lg': '0 0 40px rgba(239, 68, 68, 0.2)',
+                        'dark': '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        'dark-lg': '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+                        'inner-glow': 'inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Glass Morphism Effects */
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Premium Gradients */
+        .gradient-burnt {
+            background: linear-gradient(135deg, #FF6B1A 0%, #F04E00 50%, #CC3D00 100%);
+        }
+
+        .gradient-warm {
+            background: linear-gradient(135deg, #FFF7ED 0%, #FFEED4 25%, #FFDAB9 50%, #FFE4CC 100%);
+        }
+
+        .gradient-radial {
+            background: radial-gradient(circle at center, rgba(240, 78, 0, 0.1) 0%, rgba(240, 78, 0, 0.05) 50%, transparent 100%);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #FF6B1A, #F04E00);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #F04E00, #CC3D00);
+        }
+
+        /* Premium Buttons */
+        .btn-primary {
+            @apply bg-gradient-to-r from-primary to-accent text-white font-semibold px-8 py-4 rounded-2xl shadow-burnt transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:translate-y-0;
+        }
+
+        .btn-secondary {
+            @apply bg-white text-primary border-2 border-primary font-semibold px-8 py-4 rounded-2xl shadow-soft hover:bg-primary hover:text-white transition-all duration-300 hover:-translate-y-1;
+        }
+
+        .btn-ghost {
+            @apply text-primary font-semibold px-6 py-3 rounded-xl hover:bg-burnt-50 transition-all duration-300;
+        }
+
+        /* Form Elements */
+        .input-field {
+            @apply w-full px-6 py-4 bg-white border-2 border-gray-200 rounded-2xl focus:border-primary focus:ring-0 focus:outline-none transition-all duration-300 text-gray-800 placeholder-gray-400;
+        }
+
+        .input-field:focus {
+            box-shadow: 0 0 0 3px rgba(240, 78, 0, 0.1);
+        }
+
+        /* Cards */
+        .card {
+            @apply bg-white rounded-3xl shadow-elegant border border-gray-100 overflow-hidden;
+        }
+
+        .card-glass {
+            @apply glass rounded-3xl shadow-glass overflow-hidden;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            @apply relative inline-block w-14 h-8;
+        }
+
+        .toggle-switch input {
+            @apply opacity-0 w-0 h-0;
+        }
+
+        .toggle-slider {
+            @apply absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 transition-all duration-300 rounded-full;
+        }
+
+        .toggle-slider:before {
+            @apply absolute content-[''] h-6 w-6 left-1 bottom-1 bg-white transition-all duration-300 rounded-full shadow-soft;
+        }
+
+        input:checked + .toggle-slider {
+            @apply bg-primary;
+        }
+
+        input:checked + .toggle-slider:before {
+            @apply transform translate-x-6;
+        }
+
+        /* Chat Messages */
+        .message-user {
+            @apply bg-primary text-white ml-12 rounded-3xl rounded-br-lg px-6 py-4 shadow-soft;
+        }
+
+        .message-bot {
+            @apply bg-white text-gray-800 mr-12 rounded-3xl rounded-bl-lg px-6 py-4 shadow-soft border border-gray-100;
+        }
+
+        /* Animations */
+        .animate-bounce-subtle {
+            animation: bounceSubtle 2s ease-in-out infinite;
+        }
+
+        @keyframes bounceSubtle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Loading States */
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Particles Background */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+    </style>
+</head>
+
+<body class="font-sans bg-neutral text-dark overflow-x-hidden">
+    <!-- Particles Background -->
+    <div id="particles-js"></div>
+
+    <!-- Landing Page -->
+    <div id="landing-page" class="min-h-screen relative">
+        <!-- Hero Section -->
+        <div class="relative min-h-screen flex items-center justify-center px-6">
+            <div class="absolute inset-0 gradient-radial"></div>
+            
+            <div class="relative z-10 text-center max-w-4xl mx-auto" data-aos="fade-up" data-aos-duration="800">
+                <!-- Logo/Brand -->
+                <div class="mb-8">
+                    <div class="inline-flex items-center justify-center w-24 h-24 bg-primary rounded-3xl shadow-burnt mb-6 animate-float">
+                        <i data-lucide="message-circle" class="w-12 h-12 text-white"></i>
+                    </div>
+                    <h1 class="font-display text-6xl md:text-8xl font-bold text-dark mb-4">
+                        Bermuda
+                    </h1>
+                    <div class="w-24 h-1 bg-primary mx-auto rounded-full"></div>
+                </div>
+
+                <!-- Subtitle -->
+                <p class="text-xl md:text-2xl text-muted mb-12 max-w-2xl mx-auto leading-relaxed">
+                    Transform boring forms into <span class="text-primary font-semibold">engaging conversations</span>. 
+                    Create, share, and analyze with the power of AI.
+                </p>
+
+                <!-- CTA Section -->
+                <div class="space-y-6 mb-16">
+                    <button id="google-signin-btn" class="btn-primary text-lg inline-flex items-center gap-3 animate-glow">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        Start Creating with Google
+                    </button>
+                    
+                    <div id="auth-error" class="text-red-500 text-sm hidden bg-red-50 border border-red-200 rounded-xl px-6 py-3 max-w-md mx-auto"></div>
+                </div>
+
+                <!-- Features Preview -->
+                <div class="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+                    <div class="text-center" data-aos="fade-up" data-aos-delay="100">
+                        <div class="w-16 h-16 bg-burnt-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="brain" class="w-8 h-8 text-primary"></i>
+                        </div>
+                        <h3 class="font-semibold text-dark mb-2">AI-Powered</h3>
+                        <p class="text-sm text-muted">Smart conversations that feel natural</p>
+                    </div>
+                    
+                    <div class="text-center" data-aos="fade-up" data-aos-delay="200">
+                        <div class="w-16 h-16 bg-burnt-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="zap" class="w-8 h-8 text-primary"></i>
+                        </div>
+                        <h3 class="font-semibold text-dark mb-2">Lightning Fast</h3>
+                        <p class="text-sm text-muted">Create forms in seconds, not hours</p>
+                    </div>
+                    
+                    <div class="text-center" data-aos="fade-up" data-aos-delay="300">
+                        <div class="w-16 h-16 bg-burnt-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="users" class="w-8 h-8 text-primary"></i>
+                        </div>
+                        <h3 class="font-semibold text-dark mb-2">Better Responses</h3>
+                        <p class="text-sm text-muted">Higher completion rates guaranteed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="hidden min-h-screen bg-gradient-to-br from-neutral to-burnt-50">
+        <!-- Header -->
+        <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center">
+                            <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-display text-2xl font-bold text-dark">Your Forms</h1>
+                            <p id="user-email" class="text-sm text-muted"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <button id="create-new-form-btn" class="btn-primary inline-flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            Create Form
+                        </button>
+                        <button id="sign-out-btn" class="btn-ghost">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-6 py-12">
+            <!-- Mobile Hint -->
+            <div class="md:hidden bg-burnt-100 border border-burnt-200 rounded-2xl p-4 mb-8 text-center">
+                <p class="text-burnt-800 text-sm">
+                    <i data-lucide="smartphone" class="w-4 h-4 inline mr-2"></i>
+                    For the best experience, use desktop to create forms
+                </p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="text-center py-24">
+                <div class="max-w-md mx-auto" data-aos="fade-up">
+                    <div class="w-24 h-24 bg-burnt-100 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                        <i data-lucide="file-plus" class="w-12 h-12 text-primary"></i>
+                    </div>
+                    <h2 class="font-display text-3xl font-bold text-dark mb-4">Ready to start?</h2>
+                    <p class="text-muted mb-8 leading-relaxed">
+                        Create your first conversational form and watch engagement soar. It only takes a few seconds.
+                    </p>
+                    <button class="btn-primary create-form-trigger inline-flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        Create Your First Form
+                    </button>
+                </div>
+            </div>
+
+            <!-- Forms Grid -->
+            <div id="forms-list" class="hidden">
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="forms-grid">
+                    <!-- Forms will be populated here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Form Creator -->
+    <div id="form-creator" class="hidden min-h-screen bg-gradient-to-br from-neutral to-burnt-50">
+        <!-- Header -->
+        <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40">
+            <div class="max-w-4xl mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button id="back-to-dashboard" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                            <i data-lucide="arrow-left" class="w-5 h-5 text-muted"></i>
+                        </button>
+                        <div>
+                            <h1 class="font-display text-2xl font-bold text-dark">Form Builder</h1>
+                            <p class="text-sm text-muted">Create engaging conversational forms</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <button id="preview-btn" class="btn-ghost" disabled>
+                            <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                            Preview
+                        </button>
+                        <button id="save-btn" class="btn-secondary">
+                            <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                            Save
+                        </button>
+                        <button id="share-btn" class="btn-primary" disabled>
+                            <i data-lucide="share" class="w-4 h-4 mr-2"></i>
+                            Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Step 1: Text Dump -->
+        <div id="text-dump-step" class="max-w-4xl mx-auto px-6 py-12">
+            <div class="card p-12" data-aos="fade-up">
+                <div class="text-center mb-12">
+                    <div class="w-16 h-16 bg-burnt-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="edit-3" class="w-8 h-8 text-primary"></i>
+                    </div>
+                    <h2 class="font-display text-3xl font-bold text-dark mb-4">Describe Your Form</h2>
+                    <p class="text-muted max-w-2xl mx-auto leading-relaxed">
+                        Just tell us what you want to ask about. Our AI will create the perfect conversational form for you.
+                    </p>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-dark mb-3">What do you want to learn about?</label>
+                        <textarea 
+                            id="dump-textarea" 
+                            class="input-field min-h-[200px] resize-y" 
+                            placeholder="Example: I want to survey customers about their experience with our coffee shop - taste preferences, frequency of visits, favorite times, dietary restrictions..."
+                            maxlength="5000"
+                        ></textarea>
+                        <div class="flex justify-between items-center mt-3">
+                            <p class="text-xs text-muted">Be as detailed as possible for better results</p>
+                            <span id="char-count" class="text-xs text-muted">0/5000</span>
+                        </div>
+                        <div id="text-dump-error" class="text-red-500 text-sm mt-2 hidden"></div>
+                    </div>
+
+                    <div class="flex gap-4 pt-6">
+                        <button id="create-form-btn" class="btn-primary flex-1" disabled>
+                            <i data-lucide="wand-2" class="w-4 h-4 mr-2"></i>
+                            Generate Form with AI
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading-inference" class="hidden text-center py-12">
+                    <div class="w-16 h-16 border-4 border-burnt-200 border-t-primary rounded-full animate-spin mx-auto mb-6"></div>
+                    <p class="text-muted">Our AI is analyzing your content...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Form Builder -->
+        <div id="form-builder-step" class="hidden max-w-6xl mx-auto px-6 py-12">
+            <!-- Form Title -->
+            <div class="card p-8 mb-8" data-aos="fade-up">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 bg-burnt-100 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="type" class="w-6 h-6 text-primary"></i>
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-dark">Form Title</h3>
+                </div>
+                
+                <input 
+                    id="form-title" 
+                    class="input-field text-xl font-semibold" 
+                    placeholder="Enter your form title..."
+                    maxlength="200"
+                />
+                <div id="title-error" class="text-red-500 text-sm mt-2 hidden"></div>
+            </div>
+
+            <!-- Questions Section -->
+            <div class="card p-8 mb-8" data-aos="fade-up" data-aos-delay="100">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-burnt-100 rounded-2xl flex items-center justify-center">
+                            <i data-lucide="help-circle" class="w-6 h-6 text-primary"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-display text-2xl font-bold text-dark">Questions</h3>
+                            <p class="text-sm text-muted">Customize your conversational questions</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <span id="question-count" class="bg-primary text-white px-3 py-1 rounded-full text-sm font-semibold">0</span>
+                        <button id="add-question-btn" class="btn-ghost">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                            Add Question
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="questions-container" class="space-y-6">
+                    <!-- Questions will be populated here -->
+                </div>
+                <div id="questions-error" class="text-red-500 text-sm mt-4 hidden"></div>
+            </div>
+
+            <!-- Demographics Section -->
+            <div class="card p-8" data-aos="fade-up" data-aos-delay="200">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-12 h-12 bg-burnt-100 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="users" class="w-6 h-6 text-primary"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display text-2xl font-bold text-dark">Demographics</h3>
+                        <p class="text-sm text-muted">Optional data for better insights</p>
+                    </div>
+                </div>
+                
+                <div id="demographics-container" class="grid md:grid-cols-2 gap-4">
+                    <!-- Demographics will be populated here -->
+                </div>
+            </div>
+
+            <div id="form-builder-error" class="text-red-500 text-sm mt-4 hidden bg-red-50 border border-red-200 rounded-xl px-6 py-3"></div>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div id="chat-interface" class="hidden min-h-screen bg-gradient-to-br from-neutral to-burnt-50">
+        <div class="max-w-4xl mx-auto px-6 py-8">
+            <!-- Chat Header -->
+            <div class="card p-8 mb-8 text-center" data-aos="fade-up">
+                <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce-subtle">
+                    <i data-lucide="message-circle" class="w-8 h-8 text-white"></i>
+                </div>
+                <h1 id="chat-form-title" class="font-display text-3xl font-bold text-dark mb-4">Loading...</h1>
+                <p class="text-muted">Have a natural conversation to complete this form</p>
+            </div>
+            
+            <!-- Chat Messages -->
+            <div class="card mb-6" data-aos="fade-up" data-aos-delay="100">
+                <div id="chat-messages" class="p-6 space-y-6 min-h-[500px] max-h-[600px] overflow-y-auto">
+                    <!-- Messages will appear here -->
+                </div>
+            </div>
+            
+            <!-- Chat Input -->
+            <div class="card p-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="flex gap-4">
+                    <input 
+                        type="text" 
+                        id="message-input" 
+                        class="input-field flex-1" 
+                        placeholder="Type your message..."
+                        maxlength="1000"
+                    />
+                    <button id="send-btn" class="btn-primary px-8">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div id="chat-error" class="text-red-500 text-sm mt-3 hidden"></div>
+            </div>
+            
+            <!-- Typing Indicator -->
+            <div id="chat-loading" class="hidden flex justify-center py-6">
+                <div class="flex items-center gap-3 text-muted">
+                    <div class="flex gap-1">
+                        <div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                        <div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                        <div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+                    </div>
+                    <span class="text-sm">AI is thinking...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
+        <div class="card max-w-md w-full p-8 animate-slide-up">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-xl font-bold text-dark">Chat Preview</h3>
+                <button id="close-preview" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-muted"></i>
+                </button>
+            </div>
+            <div id="preview-content" class="space-y-4">
+                <!-- Preview content goes here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="share-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
+        <div class="card max-w-md w-full p-8 animate-slide-up">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-xl font-bold text-dark">Share Your Form</h3>
+                <button id="close-share" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-muted"></i>
+                </button>
+            </div>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-dark mb-3">Form Link</label>
+                    <div class="flex gap-3">
+                        <input id="share-link" class="input-field flex-1" readonly />
+                        <button id="copy-link" class="btn-secondary">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="qr-code" class="flex justify-center">
+                    <div class="w-32 h-32 bg-gradient-to-br from-burnt-100 to-burnt-200 rounded-2xl flex items-center justify-center">
+                        <span class="text-primary font-semibold text-xs text-center">QR Code<br/>Coming Soon</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-3">
+        <!-- Toasts will appear here -->
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            easing: 'ease-out-cubic',
+            once: true,
+            offset: 50
+        });
+
+        // Initialize Particles
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 50, density: { enable: true, value_area: 800 } },
+                color: { value: '#FF6B1A' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.3, random: true },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#FF6B1A', opacity: 0.1, width: 1 },
+                move: { enable: true, speed: 2, direction: 'none', random: true, straight: false, out_mode: 'out' }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: { repulse: { distance: 100, duration: 0.4 } }
+            },
+            retina_detect: true
+        });
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAoWt0HAUvLzMD5OX43URZlbLFimA0wnmA",
+            authDomain: "bermuda-01.firebaseapp.com",
+            projectId: "bermuda-01",
+            storageBucket: "bermuda-01.firebasestorage.app",
+            messagingSenderId: "212698241186",
+            appId: "1:212698241186:web:dfe2ec1c46dd5a4e9c1ffb",
+            measurementId: "G-ZQGF5RB992"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // Global state
+        let currentUser = null;
+        let currentForm = null;
+        let questionCounter = 0;
+        
+        // API Base URL
+        const API_BASE_URL = 'https://us-central1-bermuda-01.cloudfunctions.net/api';
+
+        // Form actions - Define early to avoid timing issues
+        window.viewForm = function(formId) {
+            window.open(`https://bermuda-01.web.app/form/${formId}`, '_blank');
+        }
+
+        window.shareForm = function(formId) {
+            const shareLink = `https://bermuda-01.web.app/form/${formId}`;
+            navigator.clipboard.writeText(shareLink).then(() => {
+                showToast('Share link copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Could not copy link', 'error');
+            });
+        }
+
+        // UI Elements
+        const landingPage = document.getElementById('landing-page');
+        const dashboard = document.getElementById('dashboard');
+        const formCreator = document.getElementById('form-creator');
+        const textDumpStep = document.getElementById('text-dump-step');
+        const formBuilderStep = document.getElementById('form-builder-step');
+        const chatInterface = document.getElementById('chat-interface');
+
+        // Chat state
+        let currentChatSession = null;
+        let currentFormId = null;
+        let chatSessionId = null;
+
+        // Initialize app - check URL for routing
+        initializeBermudaApp();
+
+        // Authentication state management
+        function setupAuthStateListener() {
+            onAuthStateChanged(auth, (user) => {
+                console.log('Auth state changed:', user ? user.uid : 'null');
+                currentUser = user;
+                
+                // Handle auth state changes based on current page
+                const path = window.location.pathname;
+                
+                if (path === '/app') {
+                    if (user) {
+                        console.log('User authenticated, showing dashboard');
+                        showDashboard();
+                    } else {
+                        console.log('User not authenticated, showing login');
+                        showLanding();
+                    }
+                }
+            });
+        }
+
+        // App initialization with URL routing
+        function initializeBermudaApp() {
+            const path = window.location.pathname;
+            console.log('Initializing Bermuda App with path:', path);
+            
+            // Set up auth state listener first
+            setupAuthStateListener();
+            
+            if (path.startsWith('/f/')) {
+                // New form URL format - extract form ID from URL
+                const formId = path.replace('/f/', '');
+                console.log('Detected form ID (new format):', formId);
+                if (formId) {
+                    loadChatInterface(formId);
+                } else {
+                    console.log('No form ID found, showing landing');
+                    showLanding();
+                }
+            } else if (path.startsWith('/form/')) {
+                // Legacy form URL format - extract form ID from URL
+                const formId = path.replace('/form/', '');
+                console.log('Detected form ID (legacy format):', formId);
+                if (formId) {
+                    loadChatInterface(formId);
+                } else {
+                    console.log('No form ID found, showing landing');
+                    showLanding();
+                }
+            } else if (path === '/app') {
+                // App interface - auth state listener will handle this
+                console.log('App interface requested - checking auth state');
+                // Auth state listener will determine whether to show login or dashboard
+                if (currentUser) {
+                    showDashboard();
+                } else {
+                    showLanding();
+                }
+            } else {
+                // Default flow - show landing page
+                console.log('Showing landing page');
+                currentUser = null;
+                showLanding();
+            }
+        }
+
+        // Show different views
+        function showLanding() {
+            landingPage.classList.remove('hidden');
+            dashboard.classList.add('hidden');
+            formCreator.classList.add('hidden');
+            chatInterface.classList.add('hidden');
+        }
+
+        function showDashboard() {
+            landingPage.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+            formCreator.classList.add('hidden');
+            chatInterface.classList.add('hidden');
+            
+            // Update user info display
+            if (currentUser) {
+                document.getElementById('user-email').textContent = currentUser.email || 'Signed in';
+            }
+            
+            loadForms();
+        }
+
+        function showFormCreator() {
+            landingPage.classList.add('hidden');
+            dashboard.classList.add('hidden');
+            formCreator.classList.remove('hidden');
+            chatInterface.classList.add('hidden');
+            textDumpStep.classList.remove('hidden');
+            formBuilderStep.classList.add('hidden');
+            resetFormCreator();
+        }
+
+        function showChatInterface() {
+            landingPage.classList.add('hidden');
+            dashboard.classList.add('hidden');
+            formCreator.classList.add('hidden');
+            chatInterface.classList.remove('hidden');
+        }
+
+        function showFormBuilder() {
+            textDumpStep.classList.add('hidden');
+            formBuilderStep.classList.remove('hidden');
+        }
+
+        // Chat Interface Functions
+        async function loadChatInterface(formId) {
+            console.log('Loading chat interface for form ID:', formId);
+            currentFormId = formId;
+            chatSessionId = generateSessionId();
+            
+            try {
+                // Load form metadata
+                console.log('Fetching form metadata...');
+                const response = await fetch(`${API_BASE_URL}/forms/${formId}`);
+                console.log('Form API response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.log('Form API error response:', errorText);
+                    
+                    if (response.status === 404) {
+                        console.log('Form not found, showing error in chat interface');
+                        document.getElementById('chat-form-title').textContent = 'Form Not Found';
+                        showChatInterface();
+                        showError('chat-error', 'Form not found. Please check the URL.');
+                        return;
+                    }
+                    throw new Error('Failed to load form');
+                }
+                
+                const formData = await response.json();
+                console.log('Form data loaded:', formData);
+                currentChatSession = formData;
+                
+                // Update UI
+                document.getElementById('chat-form-title').textContent = formData.title;
+                showChatInterface();
+                
+                // Clear previous messages
+                document.getElementById('chat-messages').innerHTML = '';
+                
+                // Send initial bot message
+                await sendBotWelcomeMessage();
+                console.log('Chat interface loaded successfully');
+                
+            } catch (error) {
+                console.error('Error loading chat interface:', error);
+                document.getElementById('chat-form-title').textContent = 'Error Loading Form';
+                showChatInterface();
+                showError('chat-error', 'Could not load the form. Please try again.');
+            }
+        }
+
+        async function sendBotWelcomeMessage() {
+            // Agent initiates conversation - send empty message to trigger bot start
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat-message`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: chatSessionId,
+                        form_id: currentFormId,
+                        message: "",  // Empty message triggers agent to start conversation
+                        device_data: collectDeviceFingerprint()
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addChatMessage('assistant', data.response);
+                } else {
+                    console.error('Failed to get initial bot message');
+                }
+            } catch (error) {
+                console.error('Error initiating conversation:', error);
+            }
+        }
+
+        function addChatMessage(role, text) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            
+            if (role === 'user') {
+                messageDiv.className = 'flex justify-end animate-fade-in';
+                messageDiv.innerHTML = `
+                    <div class="message-user max-w-xs lg:max-w-md">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                                <i data-lucide="user" class="w-3 h-3 text-white"></i>
+                            </div>
+                            <span class="text-xs text-white/80">You</span>
+                        </div>
+                        <p class="leading-relaxed">${text}</p>
+                    </div>
+                `;
+            } else {
+                messageDiv.className = 'flex justify-start animate-fade-in';
+                messageDiv.innerHTML = `
+                    <div class="message-bot max-w-xs lg:max-w-md">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                <i data-lucide="bot" class="w-3 h-3 text-white"></i>
+                            </div>
+                            <span class="text-xs text-muted">Bermuda AI</span>
+                        </div>
+                        <p class="leading-relaxed">${text}</p>
+                    </div>
+                `;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            // Re-initialize icons for new elements
+            lucide.createIcons();
+            
+            // Smooth scroll to bottom
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        function collectDeviceFingerprint() {
+            /**
+             * Collect device fingerprinting data for security and analytics
+             * Note: This data is used only for anti-abuse and session management
+             */
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Device fingerprint canvas', 2, 2);
+            
+            return {
+                screen_resolution: `${screen.width}x${screen.height}`,
+                timezone_offset: new Date().getTimezoneOffset(),
+                platform: navigator.platform,
+                canvas_fingerprint: canvas.toDataURL().slice(-50), // Last 50 chars
+                webgl_renderer: (() => {
+                    try {
+                        const gl = canvas.getContext('webgl');
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).slice(0, 50);
+                    } catch {
+                        return 'unknown';
+                    }
+                })(),
+                language: navigator.language,
+                user_agent: navigator.userAgent.slice(0, 100) // Truncate for privacy
+            };
+        }
+
+        async function sendUserMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addChatMessage('user', message);
+            input.value = '';
+            
+            // Show loading
+            document.getElementById('chat-loading').classList.remove('hidden');
+            hideError('chat-error');
+            
+            try {
+                // Collect device fingerprint for first message
+                const deviceData = collectDeviceFingerprint();
+                
+                // Send to API
+                const response = await fetch(`${API_BASE_URL}/chat-message`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: chatSessionId,
+                        form_id: currentFormId,
+                        message: message,
+                        device_data: deviceData
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to send message');
+                }
+                
+                const data = await response.json();
+                
+                // Add bot response
+                addChatMessage('assistant', data.response);
+                
+                // Check if conversation is complete
+                if (data.tag === '[END]') {
+                    showToast('Thanks for completing the form!', 'success');
+                    document.getElementById('message-input').disabled = true;
+                    document.getElementById('send-btn').disabled = true;
+                }
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showError('chat-error', 'Could not send message. Please try again.');
+            } finally {
+                document.getElementById('chat-loading').classList.add('hidden');
+            }
+        }
+
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Chat event listeners
+        document.getElementById('send-btn').addEventListener('click', sendUserMessage);
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendUserMessage();
+            }
+        });
+
+        // Authentication - Real Google Auth implementation
+        document.getElementById('google-signin-btn').addEventListener('click', async () => {
+            console.log('Google sign-in clicked');
+            hideError('auth-error');
+            
+            try {
+                // Show loading state
+                const button = document.getElementById('google-signin-btn');
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2"></i>Signing in...';
+                button.disabled = true;
+                lucide.createIcons();
+                
+                // Attempt Google sign-in
+                const result = await signInWithPopup(auth, provider);
+                currentUser = result.user;
+                
+                console.log('Google sign-in successful:', currentUser.uid);
+                
+                // Get fresh token for API calls
+                const token = await currentUser.getIdToken();
+                console.log('Got Firebase token');
+                
+                // Show dashboard
+                showDashboard();
+                
+            } catch (error) {
+                console.error('Google sign-in error:', error);
+                
+                // Reset button state
+                const button = document.getElementById('google-signin-btn');
+                button.innerHTML = '<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Start Creating with Google';
+                button.disabled = false;
+                lucide.createIcons();
+                
+                // Show appropriate error message
+                let errorMessage = 'Could not sign in. Please try again.';
+                
+                if (error.code === 'auth/popup-closed-by-user') {
+                    errorMessage = 'Sign-in was cancelled. Please try again.';
+                } else if (error.code === 'auth/popup-blocked') {
+                    errorMessage = 'Please allow popups for this site to sign in.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorMessage = 'Network error. Please check your connection and try again.';
+                }
+                
+                showError('auth-error', errorMessage);
+            }
+        });
+
+        // Sign out functionality
+        document.getElementById('sign-out-btn').addEventListener('click', async () => {
+            try {
+                console.log('Sign out clicked');
+                await auth.signOut();
+                console.log('Sign out successful');
+                
+                // Clear current user
+                currentUser = null;
+                
+                // Redirect to landing page
+                window.location.href = '/';
+                
+            } catch (error) {
+                console.error('Sign out error:', error);
+                // Even if sign out fails, clear local state and redirect
+                currentUser = null;
+                window.location.href = '/';
+            }
+        });
+
+        // Form Creation Flow
+        document.getElementById('create-new-form-btn').addEventListener('click', showFormCreator);
+        document.querySelectorAll('.create-form-trigger').forEach(btn => {
+            btn.addEventListener('click', showFormCreator);
+        });
+
+        document.getElementById('back-to-dashboard').addEventListener('click', showDashboard);
+
+        // Text dump input handling
+        const textDumpInput = document.getElementById('dump-textarea');
+        const charCount = document.getElementById('char-count');
+        const createFormSubmit = document.getElementById('create-form-btn');
+
+        textDumpInput.addEventListener('input', (e) => {
+            const length = e.target.value.length;
+            charCount.textContent = `${length}/5000`;
+            
+            if (length < 20) {
+                createFormSubmit.disabled = true;
+                showError('text-dump-error', 'Please enter at least 20 characters');
+            } else if (length > 5000) {
+                createFormSubmit.disabled = true;
+                showError('text-dump-error', 'Maximum 5000 characters allowed');
+            } else {
+                createFormSubmit.disabled = false;
+                hideError('text-dump-error');
+            }
+        });
+
+        createFormSubmit.addEventListener('click', async () => {
+            const dump = textDumpInput.value.trim();
+            if (dump.length < 20) {
+                showError('text-dump-error', 'Please enter at least 20 characters');
+                return;
+            }
+
+            showLoading();
+            try {
+                // Get fresh authentication token
+                if (!currentUser) {
+                    throw new Error('Not authenticated');
+                }
+                
+                const token = await currentUser.getIdToken();
+                
+                const response = await fetch(`${API_BASE_URL}/infer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ dump })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to process text');
+                }
+
+                const data = await response.json();
+                currentForm = data;
+                populateFormBuilder(data);
+                showFormBuilder();
+            } catch (error) {
+                showError('text-dump-error', 'Could not process your text. Please try again with clearer content.');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Form builder functions
+        function populateFormBuilder(formData) {
+            // Set title
+            document.getElementById('form-title').value = formData.title || '';
+            
+            // Populate questions
+            const questionsContainer = document.getElementById('questions-container');
+            questionsContainer.innerHTML = '';
+            questionCounter = 0;
+            
+            if (formData.questions && formData.questions.length > 0) {
+                formData.questions.forEach(question => {
+                    addQuestionCard(question);
+                });
+            }
+            
+            updateQuestionCount();
+            populateDemographics();
+        }
+
+        function addQuestionCard(questionData = null) {
+            const questionId = `question-${questionCounter++}`;
+            const card = document.createElement('div');
+            card.className = 'bg-gray-50 border border-gray-200 rounded-2xl p-6 animate-fade-in';
+            card.dataset.questionId = questionId;
+            
+            card.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-white border border-gray-200 rounded-xl flex items-center justify-center">
+                                <i data-lucide="help-circle" class="w-4 h-4 text-muted"></i>
+                            </div>
+                            <span class="font-semibold text-dark">Question ${questionCounter}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="question-enabled" ${questionData?.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <button class="remove-question p-2 hover:bg-red-50 rounded-xl transition-colors text-red-500">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <input 
+                        type="text" 
+                        class="input-field question-text" 
+                        placeholder="What would you like to ask?"
+                        value="${questionData?.text || ''}"
+                        maxlength="500"
+                    />
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <select class="input-field question-type">
+                            <option value="text" ${questionData?.type === 'text' ? 'selected' : ''}>Text Response</option>
+                            <option value="multiple_choice" ${questionData?.type === 'multiple_choice' ? 'selected' : ''}>Multiple Choice</option>
+                            <option value="yes_no" ${questionData?.type === 'yes_no' ? 'selected' : ''}>Yes/No</option>
+                            <option value="number" ${questionData?.type === 'number' ? 'selected' : ''}>Number</option>
+                            <option value="rating" ${questionData?.type === 'rating' ? 'selected' : ''}>Rating (1-5)</option>
+                        </select>
+                        
+                        <input 
+                            type="text" 
+                            class="input-field question-options ${questionData?.type === 'multiple_choice' || questionData?.type === 'yes_no' || questionData?.type === 'rating' ? '' : 'hidden'}" 
+                            placeholder="Enter options (comma-separated)"
+                            value="${questionData?.options?.join(', ') || ''}"
+                            maxlength="1000"
+                        />
+                    </div>
+                    
+                    <div class="question-error text-red-500 text-sm hidden"></div>
+                </div>
+            `;
+            
+            // Add event listeners
+            const typeSelect = card.querySelector('.question-type');
+            const optionsInput = card.querySelector('.question-options');
+            const removeBtn = card.querySelector('.remove-question');
+            const enabledToggle = card.querySelector('.question-enabled');
+            
+            typeSelect.addEventListener('change', (e) => {
+                const showOptions = ['multiple_choice', 'yes_no', 'rating'].includes(e.target.value);
+                optionsInput.classList.toggle('hidden', !showOptions);
+                
+                if (e.target.value === 'yes_no') {
+                    optionsInput.value = 'Yes, No';
+                } else if (e.target.value === 'rating') {
+                    optionsInput.value = '1, 2, 3, 4, 5';
+                }
+            });
+            
+            removeBtn.addEventListener('click', () => {
+                card.remove();
+                updateQuestionCount();
+                validateForm();
+            });
+            
+            enabledToggle.addEventListener('change', () => {
+                validateForm();
+            });
+            
+            // Add validation listeners
+            card.querySelector('.question-text').addEventListener('blur', validateForm);
+            optionsInput.addEventListener('blur', validateForm);
+            
+            document.getElementById('questions-container').appendChild(card);
+            updateQuestionCount();
+            
+            // Re-initialize icons
+            lucide.createIcons();
+        }
+
+        function populateDemographics() {
+            const demographics = [
+                { name: 'Age Range', type: 'multiple_choice', options: ['Under 18', '18-24', '25-34', '35-44', '45-54', '55+', 'Prefer not to say'] },
+                { name: 'Gender', type: 'multiple_choice', options: ['Male', 'Female', 'Non-binary', 'Other', 'Prefer not to say'] },
+                { name: 'Location', type: 'text', options: [] },
+                { name: 'Education Level', type: 'multiple_choice', options: ['High school or less', 'Some college', 'Bachelor\'s degree', 'Master\'s degree', 'Doctoral degree', 'Other'] },
+                { name: 'Income Bracket', type: 'multiple_choice', options: ['Under $25k', '$25k-$50k', '$50k-$100k', '$100k+', 'Prefer not to say'] },
+                { name: 'Occupation', type: 'text', options: [] },
+                { name: 'Ethnicity', type: 'multiple_choice', options: ['Asian', 'Black or African American', 'Hispanic or Latino', 'White', 'Other', 'Prefer not to say'] }
+            ];
+            
+            const container = document.getElementById('demographics-container');
+            container.innerHTML = '';
+            
+            demographics.forEach(demo => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-50 border border-gray-200 rounded-2xl p-4 flex items-center justify-between';
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="demographic-enabled" data-name="${demo.name}">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <div>
+                            <span class="font-semibold text-dark">${demo.name}</span>
+                            <p class="text-xs text-muted">${demo.type === 'text' ? 'Text Response' : 'Multiple Choice'}</p>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-white border border-gray-200 rounded-xl flex items-center justify-center">
+                        <i data-lucide="${demo.type === 'text' ? 'type' : 'list'}" class="w-4 h-4 text-muted"></i>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            
+            // Re-initialize icons
+            lucide.createIcons();
+        }
+
+        document.getElementById('add-question-btn').addEventListener('click', () => {
+            const questionsContainer = document.getElementById('questions-container');
+            const questionCount = questionsContainer.children.length;
+            
+            if (questionCount >= 50) {
+                showToast('Maximum 50 questions allowed', 'error');
+                return;
+            }
+            
+            if (questionCount >= 40) {
+                showToast('Warning: You have many questions. Consider keeping it shorter for better completion rates.', 'warning');
+            }
+            
+            addQuestionCard();
+            validateForm();
+        });
+
+        function updateQuestionCount() {
+            const count = document.getElementById('questions-container').children.length;
+            document.getElementById('question-count').textContent = count;
+        }
+
+        function validateForm() {
+            const title = document.getElementById('form-title').value.trim();
+            const questions = Array.from(document.querySelectorAll('.question-card, [data-question-id]'));
+            const enabledQuestions = questions.filter(card => card.querySelector('.question-enabled').checked);
+            
+            let isValid = true;
+            let errors = [];
+            
+            // Validate title
+            if (!title) {
+                showError('title-error', 'Form title is required');
+                isValid = false;
+            } else if (title.length > 200) {
+                showError('title-error', 'Title must be 200 characters or less');
+                isValid = false;
+            } else {
+                hideError('title-error');
+            }
+            
+            // Validate questions
+            if (enabledQuestions.length === 0) {
+                showError('questions-error', 'Please enable at least one question');
+                isValid = false;
+            } else {
+                hideError('questions-error');
+            }
+            
+            // Validate individual questions
+            enabledQuestions.forEach(card => {
+                const questionText = card.querySelector('.question-text').value.trim();
+                const questionType = card.querySelector('.question-type').value;
+                const questionOptions = card.querySelector('.question-options').value.trim();
+                const questionError = card.querySelector('.question-error');
+                
+                if (!questionText) {
+                    questionError.textContent = 'Question text is required';
+                    questionError.classList.remove('hidden');
+                    isValid = false;
+                } else if (['multiple_choice', 'yes_no', 'rating'].includes(questionType)) {
+                    const options = questionOptions.split(',').map(opt => opt.trim()).filter(opt => opt);
+                    if (options.length < 2) {
+                        questionError.textContent = 'At least 2 options required';
+                        questionError.classList.remove('hidden');
+                        isValid = false;
+                    } else if (options.length > 20) {
+                        questionError.textContent = 'Maximum 20 options allowed';
+                        questionError.classList.remove('hidden');
+                        isValid = false;
+                    } else {
+                        questionError.classList.add('hidden');
+                    }
+                } else {
+                    questionError.classList.add('hidden');
+                }
+            });
+            
+            // Update button states
+            document.getElementById('preview-btn').disabled = !isValid;
+            document.getElementById('save-btn').disabled = !isValid;
+            
+            return isValid;
+        }
+
+        // Form title validation
+        document.getElementById('form-title').addEventListener('blur', validateForm);
+
+        // Save form
+        document.getElementById('save-btn').addEventListener('click', async () => {
+            if (!validateForm()) return;
+            
+            const button = document.getElementById('save-btn');
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i>Saving...';
+            button.disabled = true;
+            lucide.createIcons();
+            
+            const formData = {
+                title: document.getElementById('form-title').value.trim(),
+                questions: Array.from(document.querySelectorAll('[data-question-id]')).map(card => {
+                    const enabled = card.querySelector('.question-enabled').checked;
+                    if (!enabled) return null;
+                    
+                    const text = card.querySelector('.question-text').value.trim();
+                    const type = card.querySelector('.question-type').value;
+                    const optionsText = card.querySelector('.question-options').value.trim();
+                    
+                    const question = { text, type, enabled };
+                    
+                    if (['multiple_choice', 'yes_no', 'rating'].includes(type)) {
+                        question.options = optionsText.split(',').map(opt => opt.trim()).filter(opt => opt);
+                    }
+                    
+                    return question;
+                }).filter(q => q !== null),
+                demographics: Array.from(document.querySelectorAll('.demographic-enabled')).map(checkbox => {
+                    if (!checkbox.checked) return null;
+                    
+                    const name = checkbox.dataset.name;
+                    const demographicData = {
+                        'Age Range': { type: 'multiple_choice', options: ['Under 18', '18-24', '25-34', '35-44', '45-54', '55+', 'Prefer not to say'] },
+                        'Gender': { type: 'multiple_choice', options: ['Male', 'Female', 'Non-binary', 'Other', 'Prefer not to say'] },
+                        'Location': { type: 'text', options: [] },
+                        'Education Level': { type: 'multiple_choice', options: ['High school or less', 'Some college', 'Bachelor\'s degree', 'Master\'s degree', 'Doctoral degree', 'Other'] },
+                        'Income Bracket': { type: 'multiple_choice', options: ['Under $25k', '$25k-$50k', '$50k-$100k', '$100k+', 'Prefer not to say'] },
+                        'Occupation': { type: 'text', options: [] },
+                        'Ethnicity': { type: 'multiple_choice', options: ['Asian', 'Black or African American', 'Hispanic or Latino', 'White', 'Other', 'Prefer not to say'] }
+                    };
+                    
+                    return {
+                        name,
+                        type: demographicData[name].type,
+                        options: demographicData[name].options,
+                        enabled: true
+                    };
+                }).filter(d => d !== null)
+            };
+            
+            try {
+                // Get fresh authentication token
+                if (!currentUser) {
+                    throw new Error('Not authenticated');
+                }
+                
+                const token = await currentUser.getIdToken();
+                
+                const response = await fetch(`${API_BASE_URL}/save-form`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to save form');
+                }
+                
+                const result = await response.json();
+                currentForm.form_id = result.form_id;
+                
+                showToast('Form saved successfully!', 'success');
+                document.getElementById('share-btn').disabled = false;
+                
+            } catch (error) {
+                showToast('Failed to save form. Please try again.', 'error');
+            } finally {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                lucide.createIcons();
+            }
+        });
+
+        // Preview functionality
+        document.getElementById('preview-btn').addEventListener('click', () => {
+            const previewContent = document.getElementById('preview-content');
+            const questions = Array.from(document.querySelectorAll('[data-question-id]'))
+                .filter(card => card.querySelector('.question-enabled').checked)
+                .map(card => card.querySelector('.question-text').value.trim())
+                .filter(text => text);
+            
+            if (questions.length === 0) {
+                previewContent.innerHTML = '<p class="text-muted text-center py-8">No questions to preview</p>';
+            } else {
+                previewContent.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="message-bot">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                    <i data-lucide="bot" class="w-3 h-3 text-white"></i>
+                                </div>
+                                <span class="text-xs text-muted">Bermuda AI</span>
+                            </div>
+                            <p>Hey! Let's chat about ${document.getElementById('form-title').value.trim()}. ${questions[0]}</p>
+                        </div>
+                        <div class="message-user">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="w-3 h-3 text-white"></i>
+                                </div>
+                                <span class="text-xs text-white/80">You</span>
+                            </div>
+                            <p class="italic opacity-75">Your response will appear here...</p>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+            
+            document.getElementById('preview-modal').classList.remove('hidden');
+        });
+
+        // Share functionality
+        document.getElementById('share-btn').addEventListener('click', () => {
+            if (!currentForm?.form_id) {
+                showToast('Please save the form first', 'error');
+                return;
+            }
+            
+            const shareLink = `https://bermuda-01.web.app/form/${currentForm.form_id}`;
+            document.getElementById('share-link').value = shareLink;
+            
+            document.getElementById('share-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('copy-link').addEventListener('click', async () => {
+            const shareLink = document.getElementById('share-link');
+            try {
+                await navigator.clipboard.writeText(shareLink.value);
+                showToast('Link copied to clipboard!', 'success');
+            } catch (err) {
+                // Fallback for older browsers
+                shareLink.select();
+                document.execCommand('copy');
+                showToast('Link copied!', 'success');
+            }
+        });
+
+        // Modal close handlers
+        document.getElementById('close-preview').addEventListener('click', () => {
+            document.getElementById('preview-modal').classList.add('hidden');
+        });
+
+        document.getElementById('close-share').addEventListener('click', () => {
+            document.getElementById('share-modal').classList.add('hidden');
+        });
+
+        // Click outside modal to close
+        document.getElementById('preview-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                document.getElementById('preview-modal').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('share-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                document.getElementById('share-modal').classList.add('hidden');
+            }
+        });
+
+        // Utility functions
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.classList.remove('hidden');
+            }
+        }
+
+        function hideError(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.classList.add('hidden');
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loading-inference').classList.remove('hidden');
+            document.getElementById('create-form-btn').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-inference').classList.add('hidden');
+            document.getElementById('create-form-btn').disabled = false;
+        }
+
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const icons = {
+                success: 'check-circle',
+                error: 'x-circle',
+                warning: 'alert-triangle',
+                info: 'info'
+            };
+            
+            const colors = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                warning: 'bg-yellow-500 text-white',
+                info: 'bg-blue-500 text-white'
+            };
+            
+            toast.className = `${colors[type] || colors.success} px-6 py-4 rounded-2xl shadow-elegant flex items-center gap-3 animate-slide-up max-w-sm`;
+            toast.innerHTML = `
+                <i data-lucide="${icons[type] || icons.success}" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="font-medium">${message}</span>
+            `;
+            
+            toastContainer.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(400px)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function resetFormCreator() {
+            document.getElementById('dump-textarea').value = '';
+            document.getElementById('char-count').textContent = '0/5000';
+            document.getElementById('create-form-btn').disabled = true;
+            hideError('text-dump-error');
+            currentForm = null;
+        }
+
+        async function loadForms() {
+            try {
+                if (!currentUser) {
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    document.getElementById('forms-list').classList.add('hidden');
+                    return;
+                }
+                
+                const token = await currentUser.getIdToken();
+                const response = await fetch(`${API_BASE_URL}/forms`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load forms');
+                }
+
+                const forms = await response.json();
+                
+                if (forms.length === 0) {
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    document.getElementById('forms-list').classList.add('hidden');
+                } else {
+                    document.getElementById('empty-state').classList.add('hidden');
+                    document.getElementById('forms-list').classList.remove('hidden');
+                    
+                    // Populate forms list
+                    const formsGrid = document.getElementById('forms-grid');
+                    formsGrid.innerHTML = forms.map(form => `
+                        <div class="card p-8 hover:shadow-burnt transition-all duration-300 hover:-translate-y-1" data-aos="fade-up">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="w-12 h-12 bg-burnt-100 rounded-2xl flex items-center justify-center">
+                                    <i data-lucide="file-text" class="w-6 h-6 text-primary"></i>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                    <span class="text-xs text-muted">Active</span>
+                                </div>
+                            </div>
+                            
+                            <h3 class="font-display text-xl font-bold text-dark mb-2 line-clamp-2">
+                                ${form.title}
+                            </h3>
+                            
+                            <div class="flex items-center gap-4 text-sm text-muted mb-6">
+                                <div class="flex items-center gap-1">
+                                    <i data-lucide="calendar" class="w-3 h-3"></i>
+                                    <span>${new Date(form.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <i data-lucide="message-square" class="w-3 h-3"></i>
+                                    <span>${form.response_count || 0} responses</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button onclick="viewForm('${form.form_id}')" class="btn-ghost flex-1 text-sm">
+                                    <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                                    View
+                                </button>
+                                <button onclick="shareForm('${form.form_id}')" class="btn-secondary text-sm">
+                                    <i data-lucide="share" class="w-4 h-4 mr-2"></i>
+                                    Share
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error('Error loading forms:', error);
+                document.getElementById('empty-state').classList.remove('hidden');
+                document.getElementById('forms-list').classList.add('hidden');
+            }
+        }
+
+
+        // Initialize validation after DOM is ready
+        setTimeout(() => {
+            validateForm();
+        }, 100);
+    </script>
+</body>
+</html>
