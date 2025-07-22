@@ -143,12 +143,12 @@ class AgenticConversationManager:
             
             form_title = form_data.get('title', 'Survey')
             
-            # Check if this is conversation initiation (empty message) BEFORE off-topic check
-            is_initiation = not user_message.strip()
+            # Check if this is conversation initiation (empty message AND no conversation history)
+            is_initiation = not user_message.strip() and len(conversation_history) == 0
             
-            # Quick off-topic check first (but skip for conversation initiation)
-            if not is_initiation and self._is_off_topic(user_message, form_title):
-                return f"bananas... anyway, back to {form_title.lower()}?", False
+            # Handle mid-conversation empty inputs differently
+            if not user_message.strip() and len(conversation_history) > 0:
+                return "tell me more... 🤔", False
             
             # Build enabled questions for the prompt
             questions = form_data.get('questions', [])
@@ -205,17 +205,23 @@ Respond naturally as the friendly bot starting the conversation:"""
                         q_dict['options'] = q.get('options', [])
                     questions_json.append(q_dict)
 
+                # Add retry tracking to conversation context
+                retry_context = self._analyze_retry_context(conversation_history)
+                
                 conversation_prompt = f"""You are a warm, friendly human conversationalist (like a curious friend) gathering info for this form: {form_title}. Act naturally—use emojis, casual language, empathy. Never sound robotic. Ask one question at a time, weave in follow-ups if needed.
 
 Required data to collect (questions and demographics, in order): {json.dumps(questions_json, indent=2)}
 
+Current retry context: {retry_context}
+
 Rules (STRICTLY follow):
 - Be unbiased: For multiple_choice/yes_no/rating, NEVER list options upfront. Ask openly (e.g., "What's your favorite coffee type?"), let user answer freely, then handle in CoT.
-- CRITICAL - Invalid responses: If user gives nonsensical/completely invalid answer (e.g., "water" for pizza toppings, "purple" for yes/no), immediately follow up with clarification like "That doesn't quite fit - could you try again?" Don't accept obviously wrong answers.
+- CRITICAL - Invalid responses: If user gives nonsensical/completely invalid answer (e.g., "water" for pizza toppings, "purple" for yes/no), immediately follow up with clarification. Use retry context to vary your response.
 - Bucketize in CoT: Map user answers to closest option semantically (e.g., 'cappuccino' → if close to 'Latte', or 'other' if no fit). For number: Parse to numeric. For text: Extract verbatim.
 - Invalid type handling: For number questions, if they give non-numeric ("many" for "how many"), ask "Could you give me a number?" For rating, if not a rating word, ask "How would you rate that?"
+- Be more accepting: Mathematical expressions like "2+2" for age should be interpreted as valid numbers (=4). Single digit responses like "2" are completely valid.
 - All questions mandatory by default, but if user insists on skipping (e.g., "skip" or "don't want to"), acknowledge empathetically and move on—mark as skipped.
-- Off-topic/gibberish/general queries (not related to form): Respond ONLY with "bananas" + gentle redirect (e.g., "bananas... anyway, back to your coffee?"). After 3 off-topics, end chat.
+- Off-topic detection: ONLY flag clearly unrelated topics (weather, politics, crypto). Math expressions, single words, or attempts to answer questions should NOT be flagged as off-topic.
 - Handle edges naturally: Use CoT to detect/resolve.
 - End chat: If all data collected (including demographics if enabled), output friendly thanks + [END] tag. If stuck (e.g., loops), output [END].
 
@@ -226,12 +232,12 @@ User's latest message: {user_message}
 
 ###
 Chain-of-Thought (reason step-by-step, output ONLY here):
-Step 1: Analyze input - Extract any answers, detect skips/conflicts/vagueness/off-topic/INVALID RESPONSES. Compare to memory for consistency (prioritize latest if conflict).
-Step 2: Validate response - Check if answer makes sense for question type. If asking about pizza toppings and they say "water", mark as INVALID. If asking yes/no and they say random word, mark INVALID.
-Step 3: Track progress - List collected vs. required data (e.g., Question 1: collected 'Latte' via bucketizing; Demographics: pending). Identify next gap.
-Step 4: Handle edges - If INVALID: Plan clarification follow-up. If off-topic: Plan "bananas". If vague/no-fit: Plan follow-up (max 2 per question). If skip insisted: Mark [SKIP].
-Step 5: Plan response - If INVALID response, ask for clarification. Else, acknowledge + next question/follow-up. If all done: Thanks + [END].
-Step 6: Self-critique - Is this on-topic, natural, unbiased? Is response validation working correctly? If not, adjust.
+Step 1: Analyze input - Extract any answers, detect skips/conflicts/vagueness/TRULY off-topic/INVALID RESPONSES. Be VERY permissive - only flag obvious off-topic stuff.
+Step 2: Validate response - Check if answer makes sense for question type. Single digits, math expressions, and reasonable attempts should be accepted.
+Step 3: Track progress - List collected vs. required data. Identify next gap.
+Step 4: Handle edges - If INVALID: Use retry context for varied clarification. If truly off-topic: Plan "bananas". If vague: gentle follow-up.
+Step 5: Plan response - Vary clarification based on retry count. Acknowledge valid attempts even if imperfect.
+Step 6: Self-critique - Am I being too strict? Is this truly off-topic or just an awkward attempt to answer?
 
 Response (output ONLY the bot's message here, nothing else):"""
 
@@ -257,9 +263,15 @@ Response (output ONLY the bot's message here, nothing else):"""
                 result = response.json()['choices'][0]['message']['content'].strip()
                 
                 # Check for completion
-                is_completed = '[END]' in result
+                is_completed = '[END]' in result or '[COMPLETE]' in result
                 if is_completed:
-                    result = result.replace('[END]', '').strip()
+                    result = result.replace('[END]', '').replace('[COMPLETE]', '').strip()
+                
+                # Fallback off-topic check only if LLM didn't handle it and response seems generic
+                if (not is_initiation and 
+                    result.lower().startswith('i ') and  # Generic LLM responses often start with "I"
+                    self._is_off_topic(user_message, form_title)):
+                    return f"bananas... anyway, back to {form_title.lower()}?", False
                 
                 return result, is_completed
             else:
@@ -397,38 +409,70 @@ Response (output ONLY the bot's message here, nothing else):"""
         else:
             return "anything else you'd like to share?", False
     
+    def _analyze_retry_context(self, conversation_history: List[Dict]) -> str:
+        """Analyze conversation for retry patterns and provide context"""
+        if len(conversation_history) < 2:
+            return "First interaction"
+            
+        recent_messages = conversation_history[-6:]  # Last 6 messages
+        
+        # Count clarification attempts
+        clarification_patterns = [
+            "doesn't quite fit", "could you try again", "could you give me", 
+            "how would you rate", "tell me more", "anything else"
+        ]
+        
+        retry_count = 0
+        last_question_context = ""
+        
+        for msg in recent_messages:
+            if msg.get('role') == 'assistant':
+                bot_text = msg.get('text', '').lower()
+                if any(pattern in bot_text for pattern in clarification_patterns):
+                    retry_count += 1
+                # Extract the question being asked
+                if '?' in bot_text:
+                    last_question_context = bot_text.split('?')[0] + '?'
+        
+        if retry_count == 0:
+            return "No retries yet"
+        elif retry_count == 1:
+            return f"1st clarification attempt for: {last_question_context}"
+        elif retry_count == 2:
+            return f"2nd clarification attempt - user seems confused about: {last_question_context}"
+        else:
+            return f"Multiple clarification attempts ({retry_count}) - consider being more helpful or moving on"
+
     def _is_off_topic(self, message: str, form_title: str) -> bool:
-        """LLM-based off-topic detection following YAML specifications"""
+        """Very permissive off-topic detection - only flag obviously unrelated content"""
         message_lower = message.lower().strip()
         
-        # Quick checks for obviously valid responses
-        # NOTE: Empty messages are NOT off-topic - they're used for conversation initiation
-        if len(message_lower) < 2 and len(message_lower) > 0:
-            return True
+        # Empty messages are handled elsewhere, not off-topic
+        if not message_lower:
+            return False
             
-        # Skip functionality - these are valid survey responses, not off-topic
-        skip_variations = ['skip', 'skip this', 'skip that', 'pass', 'skip question', 'dont want to', 'don\'t want to', 'no thanks']
+        # ALL single words/characters are considered potentially valid responses
+        if len(message_lower.split()) <= 2:
+            return False
+            
+        # Skip functionality - always valid
+        skip_variations = ['skip', 'pass', 'dont want', 'don\'t want', 'no thanks']
         if any(skip_phrase in message_lower for skip_phrase in skip_variations):
             return False
             
-        # Common conversational responses that should not be flagged as off-topic
-        conversational_responses = ['yes', 'no', 'maybe', 'sure', 'ok', 'good', 'bad', 'great', 'what\'s up', 'whats up', 'sure what\'s up', 'hi', 'hello', 'hey']
-        if (message_lower.isdigit() or message_lower in conversational_responses):
+        # All numbers, math expressions, and conversational responses are valid
+        if (message_lower.replace(' ', '').replace('+', '').replace('-', '').replace('*', '').replace('/', '').replace('.', '').replace('=', '').isdigit() or
+            any(word in message_lower for word in ['yes', 'no', 'maybe', 'sure', 'ok', 'good', 'bad', 'great', 'like', 'love', 'hate', 'prefer', 'think', 'feel', 'sometimes', 'always', 'never'])):
             return False
         
-        # Use simple local off-topic detection to be more permissive
-        # (Disabled OpenAI API detection as it was too aggressive)
+        # Only flag VERY obvious off-topic patterns
+        clearly_off_topic = [
+            'weather today', 'what\'s the weather', 'stock market', 'bitcoin', 'crypto', 
+            'politics', 'election', 'covid', 'vaccine', 'what are you', 'how do you work',
+            'math homework', 'solve this equation', 'what is 2+2'
+        ]
         
-        # Be permissive - only flag obviously problematic content
-        # Allow most conversational responses unless clearly off-topic
-        
-        # Flag only clearly off-topic patterns
-        off_topic_patterns = ['weather', 'what\'s 2+2', '2+2', 'crypto', 'stock market', 'bitcoin', 'politics', 'covid', 'vaccine']
-        if any(pattern in message_lower for pattern in off_topic_patterns):
-            return True
-            
-        # Everything else is considered on-topic or conversational
-        return False
+        return any(pattern in message_lower for pattern in clearly_off_topic)
     
     def infer_form_structure(self, text_dump: str) -> Dict:
         """Use LangChain for form inference"""
