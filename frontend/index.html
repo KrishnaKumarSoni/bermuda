@@ -569,9 +569,9 @@
 
     <!-- Dashboard Page -->
     <div id="dashboardPage" class="hidden min-h-screen bg-gradient-to-br from-gray-50 to-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <!-- Dashboard Header -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-12">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
                 <div class="mb-6 sm:mb-0">
                     <h1 class="text-4xl font-black text-gray-900 mb-2">Your Forms</h1>
                     <p class="text-lg text-gray-600">Create and manage your conversational surveys</p>
@@ -583,17 +583,17 @@
             </div>
 
             <!-- Forms Grid -->
-            <div id="formsGrid" class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div id="formsGrid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <!-- Forms will be loaded here -->
             </div>
 
             <!-- Empty State -->
-            <div id="emptyState" class="text-center py-24 hidden">
-                <div class="w-24 h-24 mx-auto mb-8 rounded-3xl bg-gradient-to-r from-primary-100 to-orange-100 flex items-center justify-center">
+            <div id="emptyState" class="text-center py-16 hidden">
+                <div class="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-r from-primary-100 to-orange-100 flex items-center justify-center">
                     <i data-lucide="file-text" class="w-10 h-10 text-primary-600"></i>
                 </div>
                 <h3 class="text-3xl font-bold text-gray-900 mb-4">No forms yet</h3>
-                <p class="text-lg text-gray-600 mb-8 max-w-md mx-auto">Create your first conversational form and start getting better responses from your audience</p>
+                <p class="text-lg text-gray-600 mb-6 max-w-md mx-auto">Create your first conversational form and start getting better responses from your audience</p>
                 <button class="inline-flex items-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-primary-600 to-orange-600 rounded-2xl hover:from-primary-700 hover:to-orange-700 focus:outline-none focus:ring-4 focus:ring-primary-300 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5" onclick="showCreateForm()">
                     <i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>
                     Create Your First Form
@@ -628,17 +628,17 @@
         </div>
 
         <!-- Step 1: Form Creation Input -->
-        <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-10">
-            <div id="formCreationStep" class="space-y-8">
-                <div class="text-center mb-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div id="formCreationStep" class="space-y-6">
+                <div class="text-center mb-8">
                     <h2 class="text-2xl font-bold text-gray-900 mb-4">What would you like to learn?</h2>
                     <p class="text-base text-gray-600 max-w-3xl mx-auto">Describe your research goals and our AI will generate thoughtful questions that get real insights from your audience.</p>
                 </div>
 
-                <div class="grid lg:grid-cols-3 gap-8">
+                <div class="grid lg:grid-cols-3 gap-6">
                     <!-- Main Input Area -->
                     <div class="lg:col-span-2">
-                        <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-8">
+                        <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
                             <div class="space-y-6">
                                 <div>
                                     <label class="block text-base font-semibold text-gray-900 mb-4">
@@ -687,7 +687,7 @@
                     <!-- Sidebar with Tips -->
                     <div class="space-y-6">
                         <!-- Quick Tips -->
-                        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                             <h3 class="font-bold text-gray-900 mb-4 flex items-center text-base">
                                 <i data-lucide="lightbulb" class="w-5 h-5 mr-2 text-yellow-500"></i>
                                 Quick Tips
@@ -713,7 +713,7 @@
                         </div>
 
                         <!-- Example Topics -->
-                        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                             <h3 class="font-bold text-gray-900 mb-4 text-base">
                                 Popular Survey Topics
                             </h3>
@@ -741,10 +741,10 @@
         </div>
 
         <!-- Step 2: Form Builder -->
-        <div class="max-w-5xl mx-auto px-10 sm:px-16 lg:px-20 py-10 pb-32">
-            <div id="formBuilder" class="hidden space-y-8">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24">
+            <div id="formBuilder" class="hidden space-y-6">
             <!-- Form Title Section -->
-            <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-8">
+            <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
                 <div class="space-y-4">
                     <h2 class="text-2xl font-bold text-gray-900">Customize Your Form</h2>
                     <div class="grid lg:grid-cols-3 gap-6 items-start">
@@ -784,7 +784,7 @@
                 </div>
                 
                 <!-- Add Question Placeholder -->
-                <div id="addQuestionPlaceholder" class="bg-white rounded-2xl shadow-lg border-2 border-dashed border-gray-300 hover:border-primary-300 transition-all duration-200 cursor-pointer p-8 text-center" onclick="addNewQuestion()">
+                <div id="addQuestionPlaceholder" class="bg-white rounded-2xl shadow-lg border-2 border-dashed border-gray-300 hover:border-primary-300 transition-all duration-200 cursor-pointer p-6 text-center" onclick="addNewQuestion()">
                     <div class="space-y-4">
                         <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto">
                             <i data-lucide="plus" class="w-8 h-8 text-gray-400"></i>
@@ -813,7 +813,7 @@
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                     <div id="demographicsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <!-- Demographics will be populated here -->
                     </div>
@@ -821,7 +821,7 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                 <div class="flex flex-col lg:flex-row gap-6 justify-between items-center">
                     <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 text-gray-600">
                         <div class="flex items-center space-x-2">

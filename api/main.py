@@ -47,7 +47,7 @@ def api(req: https_fn.Request) -> https_fn.Response:
         if req.method == "OPTIONS":
             headers = {
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
                 "Access-Control-Allow-Headers": "Authorization, Content-Type",
                 "Access-Control-Max-Age": "3600"
             }
@@ -59,9 +59,15 @@ def api(req: https_fn.Request) -> https_fn.Response:
             target_app = creator_app
             print(f"📝 Routing to creator app: {path}")
         elif path.startswith('/forms') or path.startswith('/api/forms'):
-            # All forms endpoints go to creator app (list forms, responses, form metadata)
-            target_app = creator_app
-            print(f"📊 Routing to creator app (forms): {path}")
+            # Route forms endpoints based on HTTP method
+            if req.method in ['DELETE', 'PUT']:
+                # DELETE and PUT operations are handled by respondent app
+                target_app = respondent_app
+                print(f"🗑️ Routing to respondent app (forms {req.method}): {path}")
+            else:
+                # GET and POST operations go to creator app (list forms, responses, form metadata)
+                target_app = creator_app
+                print(f"📊 Routing to creator app (forms {req.method}): {path}")
         else:
             # All other endpoints (chat, extract, debug, health) go to respondent app
             target_app = respondent_app
@@ -95,7 +101,7 @@ def api(req: https_fn.Request) -> https_fn.Response:
             response_headers = dict(flask_response.headers)
             response_headers.update({
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
                 "Access-Control-Allow-Headers": "Authorization, Content-Type"
             })
             

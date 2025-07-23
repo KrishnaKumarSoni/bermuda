@@ -4,19 +4,35 @@
     "rewrites": [
       {
         "source": "/f/**",
-        "destination": "/app.html"
+        "destination": "/index.html"
       },
       {
         "source": "/form/**",
-        "destination": "/app.html"
+        "destination": "/index.html"
       },
       {
         "source": "/app",
-        "destination": "/app.html"
+        "destination": "/index.html"
       },
       {
         "source": "/app/**",
-        "destination": "/app.html"
+        "destination": "/index.html"
+      },
+      {
+        "source": "/dashboard",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/dashboard/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/create",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/create/**",
+        "destination": "/index.html"
       }
     ],
     "headers": [

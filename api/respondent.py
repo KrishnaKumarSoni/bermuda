@@ -169,11 +169,24 @@ def save_response_to_firebase(form_id: str, session_id: str, response_data: Dict
         firebase_mock['responses'][form_id] = {}
     firebase_mock['responses'][form_id][session_id] = response_doc
 
-@app.route('/api/forms/<form_id>', methods=['GET', 'DELETE', 'PUT'])
+@app.route('/api/forms/<form_id>', methods=['GET', 'DELETE', 'PUT', 'POST'])
 def form_operations(form_id: str):
     """
-    Handle form operations: GET (anonymous access) and DELETE (authenticated)
+    Handle form operations: GET (anonymous access), DELETE/PUT (authenticated), and POST with _method override
     """
+    # Handle POST with method override for CORS workaround
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
+            if data and data.get('_method') == 'DELETE':
+                # Treat as DELETE request
+                request.method = 'DELETE'
+            elif data and data.get('_method') == 'PUT':
+                # Treat as PUT request
+                request.method = 'PUT'
+        except:
+            pass  # Continue as normal POST if JSON parsing fails
+    
     if request.method == 'GET':
         # Check if this is an authenticated request (for editing)
         auth_header = request.headers.get('Authorization')

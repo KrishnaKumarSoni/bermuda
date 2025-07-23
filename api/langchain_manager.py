@@ -91,7 +91,7 @@ Output JSON: {{'title': str, 'questions': [{{'text': str, 'type': 'text'|'multip
 ###
 Chain-of-Thought:
 Step 1: Summarize dump's intent.
-Step 2: Derive 5-10 clear questions.
+Step 2: Derive 10-15 clear questions.
 Step 3: Infer type per question (e.g., choices → multiple_choice with options; binary → yes_no; numeric → number; scale → rating; else text).
 Step 4: Self-critique: Are types/options logical/non-redundant?
 
@@ -375,9 +375,23 @@ Output (JSON only):"""
                      "options": ["1", "2", "3", "4", "5"], "enabled": True}
                 ]
         
+        # Ensure we have at least 12 questions; pad with generic ones if needed
+        generic_bank = [
+            {"text": "Could you describe your overall experience?", "type": "text", "enabled": True},
+            {"text": "What influenced your decision the most?", "type": "text", "enabled": True},
+            {"text": "If you could change one thing, what would it be?", "type": "text", "enabled": True},
+            {"text": "How likely are you to recommend us to a friend?", "type": "rating", "options": ["1","2","3","4","5"], "enabled": True},
+            {"text": "Which of the following best describes you?", "type": "multiple_choice", "options": ["Casual user", "Power user", "First-timer", "Other"], "enabled": True}
+        ]
+
+        i = 0
+        while len(questions) < 12 and i < len(generic_bank):
+            questions.append(generic_bank[i])
+            i += 1
+
         return {
             "title": title,
-            "questions": questions[:5]  # Limit to 5 questions
+            "questions": questions[:25]  # Allow up to 25 comprehensive questions
         }
     
     def _fallback_response(self, user_message: str, form_title: str) -> str:

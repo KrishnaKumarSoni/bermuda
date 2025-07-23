@@ -251,37 +251,46 @@ Be like texting a friend who lets you finish your thoughts."""
                 ]
             }
         
-        inference_prompt = f"""You are an expert form designer. Given the text dump below, infer a conversational form structure.
+        inference_prompt = f"""You are an expert survey researcher and form designer. Given the text dump below, create a comprehensive, industry-standard survey that thoroughly explores the topic.
 
-Extract:
-1. A clear, engaging form title (max 200 chars)
-2. 3-8 questions that capture the key information
-3. Use these question types only: text, multiple_choice, yes_no, number, rating
+Your task:
+1. Create a compelling, descriptive form title (max 200 chars)
+2. Generate 15-25 comprehensive questions that deeply explore all aspects mentioned
+3. Create logical question flow from general to specific
+4. Include follow-up questions and sub-topics
+5. Use diverse question types for engaging experience
 
 Question type guidelines:
-- text: Open-ended responses
-- multiple_choice: When there are clear categorical options (provide 2-8 options)
-- yes_no: Binary questions (provide options: ["Yes", "No"])
-- number: Numeric responses
-- rating: 1-5 scale questions (provide options: ["1", "2", "3", "4", "5"])
+- text: Open-ended responses for detailed insights
+- multiple_choice: Categorical choices (provide 3-10 logical options)
+- yes_no: Binary questions (options: ["Yes", "No"])  
+- number: Numeric responses (age, count, etc.)
+- rating: 1-5 scale questions (options: ["1", "2", "3", "4", "5"])
+
+Survey Design Principles:
+- Start with broad context questions
+- Progress to specific behaviors/preferences  
+- Include demographic and psychographic elements
+- Add validation and cross-reference questions
+- End with forward-looking or aspirational questions
 
 Return ONLY a JSON object with this exact structure:
 {{
-    "title": "Form Title Here",
+    "title": "Comprehensive Survey Title Here",
     "questions": [
         {{
-            "text": "Question text here?",
+            "text": "Engaging question text here?",
             "type": "text|multiple_choice|yes_no|number|rating",
-            "options": ["option1", "option2"],
+            "options": ["option1", "option2", "option3"],
             "enabled": true
         }}
     ]
 }}
 
-Text dump:
+Text dump to analyze:
 {text_dump}
 
-JSON:"""
+Generate comprehensive JSON survey:"""
 
         try:
             response = requests.post(
@@ -295,17 +304,17 @@ JSON:"""
                     'messages': [
                         {
                             'role': 'system',
-                            'content': 'You are a helpful form design assistant. Always return valid JSON only.'
+                            'content': 'You are an expert survey researcher. Generate comprehensive, industry-standard surveys with 15-25 thoughtful questions. Always return valid JSON only.'
                         },
                         {
                             'role': 'user',
                             'content': inference_prompt
                         }
                     ],
-                    'temperature': 0.3,
-                    'max_tokens': 1000
+                    'temperature': 0.4,
+                    'max_tokens': 2500
                 },
-                timeout=10
+                timeout=20
             )
             
             if response.status_code == 200:

@@ -60,7 +60,7 @@ Output JSON: {{'title': str, 'questions': [{{'text': str, 'type': 'text'|'multip
 ###
 Chain-of-Thought:
 Step 1: Summarize dump's intent.
-Step 2: Derive 5-10 clear questions.
+Step 2: Derive 10-15 clear questions.
 Step 3: Infer type per question (e.g., choices → multiple_choice with options; binary → yes_no; numeric → number; scale → rating; else text).
 Step 4: Self-critique: Are types/options logical/non-redundant?
 
