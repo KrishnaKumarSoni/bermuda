@@ -1,0 +1,313 @@
+    <!-- Landing Page -->
+    <div id="landingPage" class="overflow-hidden pt-20">
+        <!-- Hero Section -->
+        <section class="relative min-h-screen flex items-center justify-center">
+            <!-- Animated Background -->
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+                <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-orange-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+                <div class="absolute top-40 left-40 w-80 h-80 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+            </div>
+            
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <div class="space-y-8">
+                    <!-- Badge -->
+                    <div class="inline-flex items-center rounded-full bg-white/80 backdrop-blur-sm px-6 py-2 text-sm font-medium text-primary-700 ring-1 ring-primary-200 shadow-lg">
+                        <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i>
+                        Powered by OpenAI • Privacy-first
+                    </div>
+                    
+                    <!-- Main Headline -->
+                    <div class="space-y-6">
+                        <h1 class="font-heading text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight">
+                            <span class="block text-gray-900">Stop asking.</span>
+                            <span class="block bg-gradient-to-r from-primary-600 via-orange-500 to-red-500 bg-clip-text text-transparent">
+                                Start conversing.
+                            </span>
+                        </h1>
+                        
+                        <p class="max-w-4xl mx-auto text-xl sm:text-2xl text-gray-600 leading-relaxed font-light">
+                            Transform boring surveys into engaging conversations that people actually want to complete. 
+                            Get <span class="font-bold text-primary-600">3x higher response rates</span> and uncover insights that checkboxes miss.
+                        </p>
+                    </div>
+                    
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+                        <button id="getStartedBtn" class="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-primary-600 to-orange-600 rounded-2xl hover:from-primary-700 hover:to-orange-700 focus:outline-none focus:ring-4 focus:ring-primary-300 transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1">
+                            <i data-lucide="rocket" class="w-5 h-5 mr-2 group-hover:animate-pulse"></i>
+                            Create your first form
+                            <span class="ml-2 text-white/80 group-hover:translate-x-1 transition-transform">→</span>
+                        </button>
+                        <button id="viewDemoBtn" class="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 hover:bg-white focus:outline-none focus:ring-4 focus:ring-gray-200 transition-all duration-300 shadow-lg hover:shadow-xl">
+                            <i data-lucide="play" class="w-5 h-5 mr-2"></i>
+                            Watch demo
+                        </button>
+                    </div>
+                    
+                    <!-- Scroll Indicator -->
+                    <div class="pt-16">
+                        <div class="inline-flex flex-col items-center space-y-2 text-gray-400">
+                            <span class="text-sm font-medium">Scroll to explore</span>
+                            <i data-lucide="chevron-down" class="w-5 h-5 animate-bounce"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section id="features" class="py-16 bg-white border-y border-gray-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                    <div class="space-y-2">
+                        <div class="text-4xl font-black text-primary-600">3.2x</div>
+                        <div class="text-sm font-medium text-gray-600">Higher completion rates</div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-4xl font-black text-primary-600">89%</div>
+                        <div class="text-sm font-medium text-gray-600">Say it feels "human"</div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-4xl font-black text-primary-600">12s</div>
+                        <div class="text-sm font-medium text-gray-600">Average setup time</div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-4xl font-black text-primary-600">Zero</div>
+                        <div class="text-sm font-medium text-gray-600">Learning curve</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Problem/Solution -->
+        <section class="py-24 bg-gradient-to-b from-gray-50 to-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="font-heading text-4xl font-bold text-gray-900 mb-4">
+                        Traditional surveys are <span class="text-red-600">killing</span> your response rates
+                    </h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Long, impersonal forms feel like homework. People abandon them, rush through, or give shallow answers.
+                    </p>
+                </div>
+                
+                <div class="grid lg:grid-cols-2 gap-16 items-center">
+                    <div class="space-y-8">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="x" class="w-4 h-4 text-red-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">68% abandonment rate</h3>
+                                <p class="text-gray-600">People see a wall of questions and immediately hit back.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="x" class="w-4 h-4 text-red-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">Shallow, useless data</h3>
+                                <p class="text-gray-600">Multiple choice can't capture the "why" behind people's choices.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="x" class="w-4 h-4 text-red-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">Weeks to set up</h3>
+                                <p class="text-gray-600">Complex form builders with endless options that nobody needs.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-8">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">Natural conversation flow</h3>
+                                <p class="text-gray-600">AI asks follow-up questions like a curious human would.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">Rich, contextual insights</h3>
+                                <p class="text-gray-600">People share stories, not just data points. You get the full picture.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">Launch in seconds</h3>
+                                <p class="text-gray-600">Paste your research brief, hit generate. Your form is ready to share.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How it Works -->
+        <section id="how-it-works" class="py-24 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="font-heading text-4xl font-bold text-gray-900 mb-4">
+                        From idea to insights in <span class="text-primary-600">3 clicks</span>
+                    </h2>
+                    <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                        No complex setup, no training required. Just natural conversations that reveal what you need to know.
+                    </p>
+                </div>
+                
+                <div class="grid lg:grid-cols-3 gap-12">
+                    <div class="text-center space-y-6">
+                        <div class="relative">
+                            <div class="w-20 h-20 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto">
+                                <i data-lucide="edit-3" class="w-8 h-8 text-primary-600"></i>
+                            </div>
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                        </div>
+                        <h3 class="font-heading text-xl font-semibold text-gray-900">Describe what you want to learn</h3>
+                        <p class="text-gray-600 leading-relaxed">
+                            "I want to understand why customers are churning" or "What do users think about our new feature?" 
+                            Just paste your research brief—no need to craft individual questions.
+                        </p>
+                    </div>
+                    
+                    <div class="text-center space-y-6">
+                        <div class="relative">
+                            <div class="w-20 h-20 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto">
+                                <i data-lucide="share" class="w-8 h-8 text-primary-600"></i>
+                            </div>
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                        </div>
+                        <h3 class="font-heading text-xl font-semibold text-gray-900">Share your link</h3>
+                        <p class="text-gray-600 leading-relaxed">
+                            Send one simple link via email, Slack, or social media. No accounts to create, 
+                            no apps to download. Works perfectly on any device.
+                        </p>
+                    </div>
+                    
+                    <div class="text-center space-y-6">
+                        <div class="relative">
+                            <div class="w-20 h-20 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto">
+                                <i data-lucide="bar-chart-3" class="w-8 h-8 text-primary-600"></i>
+                            </div>
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                        </div>
+                        <h3 class="font-heading text-xl font-semibold text-gray-900">Get actionable insights</h3>
+                        <p class="text-gray-600 leading-relaxed">
+                            Watch responses pour in as people enjoy the conversation. 
+                            We automatically organize everything into clear, exportable reports.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Social Proof -->
+        <section id="pricing" class="py-24 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="font-heading text-4xl font-bold text-gray-900 mb-4">
+                        Loved by researchers, designers, and founders
+                    </h2>
+                </div>
+                
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center mb-4">
+                            <img src="https://i.pravatar.cc/40?img=1" alt="avatar" class="w-10 h-10 rounded-full mr-3"/>
+                            <div>
+                                <div class="font-semibold text-gray-900">Sarah Chen</div>
+                                <div class="text-sm text-gray-500">Product Manager, Stripe</div>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 italic">
+                            "Our user research response rate went from 12% to 47% overnight. 
+                            The conversational format makes people actually want to share their thoughts."
+                        </p>
+                        <div class="flex mt-4 text-yellow-400">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center mb-4">
+                            <img src="https://i.pravatar.cc/40?img=2" alt="avatar" class="w-10 h-10 rounded-full mr-3"/>
+                            <div>
+                                <div class="font-semibold text-gray-900">Marcus Rodriguez</div>
+                                <div class="text-sm text-gray-500">UX Researcher, Notion</div>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 italic">
+                            "I was skeptical about AI-generated questions, but they're incredibly thoughtful. 
+                            It asks follow-ups I wouldn't have thought of."
+                        </p>
+                        <div class="flex mt-4 text-yellow-400">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center mb-4">
+                            <img src="https://i.pravatar.cc/40?img=3" alt="avatar" class="w-10 h-10 rounded-full mr-3"/>
+                            <div>
+                                <div class="font-semibold text-gray-900">Emily Watson</div>
+                                <div class="text-sm text-gray-500">Founder, TechStartup</div>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 italic">
+                            "Finally got honest feedback about our pricing. The chat format made people comfortable sharing their real budget concerns."
+                        </p>
+                        <div class="flex mt-4 text-yellow-400">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <section class="py-24 bg-gradient-to-r from-primary-600 to-orange-600 text-white">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="font-heading text-4xl sm:text-5xl font-bold mb-6">
+                    Ready to get real answers?
+                </h2>
+                <p class="text-xl text-primary-100 mb-10 max-w-2xl mx-auto">
+                    Join thousands of researchers who've discovered the power of conversational surveys. 
+                    Your first form takes less than 30 seconds to create.
+                </p>
+                <div class="space-y-4">
+                    <button class="inline-flex items-center justify-center px-10 py-5 text-xl font-semibold text-primary-600 bg-white rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all duration-200 shadow-lg hover:shadow-xl" onclick="showCreateForm()">
+                        <i data-lucide="rocket" class="w-6 h-6 mr-3"></i>
+                        Create your first form
+                    </button>
+                    <p class="text-sm text-primary-200">
+                        Free forever • No credit card required • Set up in 30 seconds
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>

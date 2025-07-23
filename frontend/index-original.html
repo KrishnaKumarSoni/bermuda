@@ -1,0 +1,2763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bermuda - Conversational Forms</title>
+    <!-- Force refresh: v2025.07.23.04 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- Google Fonts - Design System Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Compiled Tailwind CSS -->
+    <link rel="stylesheet" href="style.css?v=2025.07.23.04">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        /* Design System Variables */
+        :root {
+            --primary: #CC5500;
+            --secondary: #FFDAB9;
+            --neutral: #FFFFFF;
+            --text-primary: #2C3E50;
+            --text-secondary: #7F8C8D;
+            --error: #E74C3C;
+            --success: #27AE60;
+        }
+
+        /* Base font size - minimum 14px */
+        body {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Typography */
+        .font-heading {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        }
+        
+        .font-body {
+            font-family: 'Inter Tight', system-ui, sans-serif;
+        }
+
+        /* Chat message styling - Updated to design system */
+        .message-bot {
+            margin-left: 0;
+            margin-right: 4rem;
+            border-radius: 1rem;
+            border-bottom-left-radius: 0.375rem;
+            background-color: #FFDAB9;
+            border: 1px solid #CC5500;
+            color: #CC5500;
+            padding: 0.75rem 1rem;
+            font-family: 'Inter Tight', system-ui, sans-serif;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .message-user {
+            margin-right: 0;
+            margin-left: 4rem;
+            border-radius: 1rem;
+            border-bottom-right-radius: 0.375rem;
+            background-color: #FFFFFF;
+            border: 1px solid #CC5500;
+            color: #2C3E50;
+            padding: 0.75rem 1rem;
+            font-family: 'Inter Tight', system-ui, sans-serif;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: 1rem;
+            border-bottom-left-radius: 0.375rem;
+            background-color: #FFDAB9;
+            border: 1px solid #CC5500;
+            padding: 0.75rem 1rem;
+            margin-right: 4rem;
+        }
+
+        .typing-dot {
+            height: 0.5rem;
+            width: 0.5rem;
+            border-radius: 9999px;
+            background-color: #CC5500;
+            animation: typingBounce 1.4s ease-in-out infinite;
+        }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .chat-message-enter {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* Design System Button Overrides */
+        .btn-primary {
+            background-color: var(--primary);
+            border: 1px solid var(--primary);
+            color: white;
+            border-radius: 0.375rem;
+            padding: 0.75rem 1.5rem;
+            font-family: 'Inter Tight', system-ui, sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #E07A00;
+            transform: scale(1.05);
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background-color: white;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 0.375rem;
+            padding: 0.75rem 1.5rem;
+            font-family: 'Inter Tight', system-ui, sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary);
+            transform: scale(1.05);
+            box-shadow: none;
+        }
+
+        /* Card styling - flat design */
+        .card {
+            background-color: white;
+            border: 1px solid var(--primary);
+            border-radius: 0.375rem;
+            padding: 1rem;
+            box-shadow: none;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: #E07A00;
+            box-shadow: none;
+        }
+
+        /* Modern Animations */
+        @keyframes blob {
+            0% {
+                transform: translate(0px, 0px) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+            100% {
+                transform: translate(0px, 0px) scale(1);
+            }
+        }
+        
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+        
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+        
+        .animation-delay-4000 {
+            animation-delay: 4s;
+        }
+        
+        /* Floating navbar background */
+        .navbar-scrolled {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Custom shadows */
+        .shadow-3xl {
+            box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
+        }
+    </style>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+</head>
+
+<body class="bg-white min-h-screen font-body">
+
+<!-- Floating Navigation -->
+<nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-300" id="navbar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gradient-to-r from-primary-500 to-orange-500 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">B</span>
+                    </div>
+                    <h1 class="text-xl font-heading font-bold text-gray-900">Bermuda</h1>
+                </div>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#features" class="text-gray-600 hover:text-primary-600 font-medium transition-colors">Features</a>
+                <a href="#how-it-works" class="text-gray-600 hover:text-primary-600 font-medium transition-colors">How it works</a>
+                <a href="#pricing" class="text-gray-600 hover:text-primary-600 font-medium transition-colors">Pricing</a>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button id="authButton" class="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+                    <span id="authText">Sign In</span>
+                </button>
+                <button id="navGetStarted" class="inline-flex items-center px-4 py-2 rounded-full text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="pt-20">
+    
+    <!-- Landing Page -->
+    <div id="landingPage" class="overflow-hidden pt-20">
+        <!-- Hero Section -->
+        <section class="relative min-h-screen flex items-center justify-center">
+            <!-- Animated Background -->
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+                <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-orange-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+                <div class="absolute top-40 left-40 w-80 h-80 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+            </div>
+            
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <div class="space-y-8">
+                    <!-- Badge -->
+                    <div class="inline-flex items-center rounded-full bg-white/80 backdrop-blur-sm px-6 py-2 text-sm font-medium text-primary-700 ring-1 ring-primary-200 shadow-lg">
+                        <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i>
+                        Powered by OpenAI • Privacy-first
+                    </div>
+                    
+                    <!-- Main Headline -->
+                    <div class="space-y-6">
+                        <h1 class="font-heading text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight">
+                            <span class="block text-gray-900">Stop asking.</span>
+                            <span class="block bg-gradient-to-r from-primary-600 via-orange-500 to-red-500 bg-clip-text text-transparent">
+                                Start conversing.
+                            </span>
+                        </h1>
+                        
+                        <p class="max-w-4xl mx-auto text-xl sm:text-2xl text-gray-600 leading-relaxed font-light">
+                            Transform boring surveys into engaging conversations that people actually want to complete. 
+                            Get <span class="font-bold text-primary-600">3x higher response rates</span> and uncover insights that checkboxes miss.
+                        </p>
+                    </div>
+                    
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+                        <button id="getStartedBtn" class="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-primary-600 to-orange-600 rounded-2xl hover:from-primary-700 hover:to-orange-700 focus:outline-none focus:ring-4 focus:ring-primary-300 transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1">
+                            <i data-lucide="rocket" class="w-5 h-5 mr-2 group-hover:animate-pulse"></i>
+                            Create your first form
+                            <span class="ml-2 text-white/80 group-hover:translate-x-1 transition-transform">→</span>
+                        </button>
+                        <button id="viewDemoBtn" class="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 hover:bg-white focus:outline-none focus:ring-4 focus:ring-gray-200 transition-all duration-300 shadow-lg hover:shadow-xl">
+                            <i data-lucide="play" class="w-5 h-5 mr-2"></i>
+                            Watch demo
+                        </button>
+                    </div>
+                    
+                    <!-- Scroll Indicator -->
+                    <div class="pt-16">
+                        <div class="inline-flex flex-col items-center space-y-2 text-gray-400">
+                            <span class="text-sm font-medium">Scroll to explore</span>
+                            <i data-lucide="chevron-down" class="w-5 h-5 animate-bounce"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section id="features" class="py-16 bg-white border-y border-gray-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                    <div class="space-y-2">
+                        <div class="text-4xl font-black text-primary-600">3.2x</div>
+                        <div class="text-sm font-medium text-gray-600">Higher completion rates</div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-4xl font-black text-primary-600">89%</div>
+                        <div class="text-sm font-medium text-gray-600">Say it feels "human"</div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-4xl font-black text-primary-600">12s</div>
+                        <div class="text-sm font-medium text-gray-600">Average setup time</div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-4xl font-black text-primary-600">Zero</div>
+                        <div class="text-sm font-medium text-gray-600">Learning curve</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Problem/Solution -->
+        <section class="py-24 bg-gradient-to-b from-gray-50 to-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="font-heading text-4xl font-bold text-gray-900 mb-4">
+                        Traditional surveys are <span class="text-red-600">killing</span> your response rates
+                    </h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Long, impersonal forms feel like homework. People abandon them, rush through, or give shallow answers.
+                    </p>
+                </div>
+                
+                <div class="grid lg:grid-cols-2 gap-16 items-center">
+                    <div class="space-y-8">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="x" class="w-4 h-4 text-red-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">68% abandonment rate</h3>
+                                <p class="text-gray-600">People see a wall of questions and immediately hit back.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="x" class="w-4 h-4 text-red-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">Shallow, useless data</h3>
+                                <p class="text-gray-600">Multiple choice can't capture the "why" behind people's choices.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="x" class="w-4 h-4 text-red-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">Weeks to set up</h3>
+                                <p class="text-gray-600">Complex form builders with endless options that nobody needs.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-8">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">Natural conversation flow</h3>
+                                <p class="text-gray-600">AI asks follow-up questions like a curious human would.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">Rich, contextual insights</h3>
+                                <p class="text-gray-600">People share stories, not just data points. You get the full picture.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900 mb-2">Launch in seconds</h3>
+                                <p class="text-gray-600">Paste your research brief, hit generate. Your form is ready to share.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How it Works -->
+        <section id="how-it-works" class="py-24 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="font-heading text-4xl font-bold text-gray-900 mb-4">
+                        From idea to insights in <span class="text-primary-600">3 clicks</span>
+                    </h2>
+                    <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                        No complex setup, no training required. Just natural conversations that reveal what you need to know.
+                    </p>
+                </div>
+                
+                <div class="grid lg:grid-cols-3 gap-12">
+                    <div class="text-center space-y-6">
+                        <div class="relative">
+                            <div class="w-20 h-20 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto">
+                                <i data-lucide="edit-3" class="w-8 h-8 text-primary-600"></i>
+                            </div>
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                        </div>
+                        <h3 class="font-heading text-xl font-semibold text-gray-900">Describe what you want to learn</h3>
+                        <p class="text-gray-600 leading-relaxed">
+                            "I want to understand why customers are churning" or "What do users think about our new feature?" 
+                            Just paste your research brief—no need to craft individual questions.
+                        </p>
+                    </div>
+                    
+                    <div class="text-center space-y-6">
+                        <div class="relative">
+                            <div class="w-20 h-20 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto">
+                                <i data-lucide="share" class="w-8 h-8 text-primary-600"></i>
+                            </div>
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                        </div>
+                        <h3 class="font-heading text-xl font-semibold text-gray-900">Share your link</h3>
+                        <p class="text-gray-600 leading-relaxed">
+                            Send one simple link via email, Slack, or social media. No accounts to create, 
+                            no apps to download. Works perfectly on any device.
+                        </p>
+                    </div>
+                    
+                    <div class="text-center space-y-6">
+                        <div class="relative">
+                            <div class="w-20 h-20 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto">
+                                <i data-lucide="bar-chart-3" class="w-8 h-8 text-primary-600"></i>
+                            </div>
+                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                        </div>
+                        <h3 class="font-heading text-xl font-semibold text-gray-900">Get actionable insights</h3>
+                        <p class="text-gray-600 leading-relaxed">
+                            Watch responses pour in as people enjoy the conversation. 
+                            We automatically organize everything into clear, exportable reports.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Social Proof -->
+        <section id="pricing" class="py-24 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="font-heading text-4xl font-bold text-gray-900 mb-4">
+                        Loved by researchers, designers, and founders
+                    </h2>
+                </div>
+                
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center mb-4">
+                            <img src="https://i.pravatar.cc/40?img=1" alt="avatar" class="w-10 h-10 rounded-full mr-3"/>
+                            <div>
+                                <div class="font-semibold text-gray-900">Sarah Chen</div>
+                                <div class="text-sm text-gray-500">Product Manager, Stripe</div>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 italic">
+                            "Our user research response rate went from 12% to 47% overnight. 
+                            The conversational format makes people actually want to share their thoughts."
+                        </p>
+                        <div class="flex mt-4 text-yellow-400">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center mb-4">
+                            <img src="https://i.pravatar.cc/40?img=2" alt="avatar" class="w-10 h-10 rounded-full mr-3"/>
+                            <div>
+                                <div class="font-semibold text-gray-900">Marcus Rodriguez</div>
+                                <div class="text-sm text-gray-500">UX Researcher, Notion</div>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 italic">
+                            "I was skeptical about AI-generated questions, but they're incredibly thoughtful. 
+                            It asks follow-ups I wouldn't have thought of."
+                        </p>
+                        <div class="flex mt-4 text-yellow-400">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center mb-4">
+                            <img src="https://i.pravatar.cc/40?img=3" alt="avatar" class="w-10 h-10 rounded-full mr-3"/>
+                            <div>
+                                <div class="font-semibold text-gray-900">Emily Watson</div>
+                                <div class="text-sm text-gray-500">Founder, TechStartup</div>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 italic">
+                            "Finally got honest feedback about our pricing. The chat format made people comfortable sharing their real budget concerns."
+                        </p>
+                        <div class="flex mt-4 text-yellow-400">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <section class="py-24 bg-gradient-to-r from-primary-600 to-orange-600 text-white">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="font-heading text-4xl sm:text-5xl font-bold mb-6">
+                    Ready to get real answers?
+                </h2>
+                <p class="text-xl text-primary-100 mb-10 max-w-2xl mx-auto">
+                    Join thousands of researchers who've discovered the power of conversational surveys. 
+                    Your first form takes less than 30 seconds to create.
+                </p>
+                <div class="space-y-4">
+                    <button class="inline-flex items-center justify-center px-10 py-5 text-xl font-semibold text-primary-600 bg-white rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all duration-200 shadow-lg hover:shadow-xl" onclick="showCreateForm()">
+                        <i data-lucide="rocket" class="w-6 h-6 mr-3"></i>
+                        Create your first form
+                    </button>
+                    <p class="text-sm text-primary-200">
+                        Free forever • No credit card required • Set up in 30 seconds
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboardPage" class="hidden min-h-screen bg-gradient-to-br from-gray-50 to-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <!-- Dashboard Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+                <div class="mb-6 sm:mb-0">
+                    <h1 class="text-4xl font-black text-gray-900 mb-2">Your Forms</h1>
+                    <p class="text-lg text-gray-600">Create and manage your conversational surveys</p>
+                </div>
+                <button id="createFormBtn" class="inline-flex items-center px-6 py-3 text-lg font-semibold text-white bg-gradient-to-r from-primary-600 to-orange-600 rounded-2xl hover:from-primary-700 hover:to-orange-700 focus:outline-none focus:ring-4 focus:ring-primary-300 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                    <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
+                    New Form
+                </button>
+            </div>
+
+            <!-- Forms Grid -->
+            <div id="formsGrid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Forms will be loaded here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="text-center py-16 hidden">
+                <div class="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-r from-primary-100 to-orange-100 flex items-center justify-center">
+                    <i data-lucide="file-text" class="w-10 h-10 text-primary-600"></i>
+                </div>
+                <h3 class="text-3xl font-bold text-gray-900 mb-4">No forms yet</h3>
+                <p class="text-lg text-gray-600 mb-6 max-w-md mx-auto">Create your first conversational form and start getting better responses from your audience</p>
+                <button class="inline-flex items-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-primary-600 to-orange-600 rounded-2xl hover:from-primary-700 hover:to-orange-700 focus:outline-none focus:ring-4 focus:ring-primary-300 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5" onclick="showCreateForm()">
+                    <i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>
+                    Create Your First Form
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Form Page -->
+    <div id="createFormPage" class="hidden min-h-screen bg-gradient-to-br from-gray-50 to-white">
+        <!-- Header -->
+        <div class="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-20 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button id="backToDashboard" class="inline-flex items-center px-4 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md">
+                            <i data-lucide="arrow-left" class="w-4 h-4 mr-2 text-gray-600"></i>
+                            <span class="font-medium text-gray-700">Back to Dashboard</span>
+                        </button>
+                        <div class="hidden sm:block w-px h-8 bg-gray-300"></div>
+                        <div class="hidden sm:block">
+                            <h1 class="text-2xl font-bold text-gray-900">Create New Form</h1>
+                            <p class="text-gray-600">Build engaging conversational surveys</p>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-3 px-4 py-2 bg-green-50 rounded-xl border border-green-200">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-sm font-medium text-green-800">AI Assistant Ready</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Form Creation Input -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div id="formCreationStep" class="space-y-6">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">What would you like to learn?</h2>
+                    <p class="text-base text-gray-600 max-w-3xl mx-auto">Describe your research goals and our AI will generate thoughtful questions that get real insights from your audience.</p>
+                </div>
+
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <!-- Main Input Area -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-base font-semibold text-gray-900 mb-4">
+                                        Describe your research goals
+                                    </label>
+                                    <div class="relative">
+                                        <textarea 
+                                            id="textDump" 
+                                            class="w-full border-2 border-gray-200 rounded-xl p-5 min-h-[220px] resize-none text-sm leading-relaxed focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200"
+                                            placeholder="Example: I want to understand our customers' coffee preferences. What types do they like? How often do they drink coffee? What factors influence their choice - price, taste, convenience? Are they interested in sustainable options?"
+                                            maxlength="2000"></textarea>
+                                        <div class="absolute bottom-3 right-3 text-xs text-gray-500">
+                                            <span id="textDumpCount">0</span>/2000
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- AI Options -->
+                                <div class="bg-gray-50 rounded-2xl p-6 space-y-4">
+                                    <h3 class="font-semibold text-gray-900 text-base">AI Generation Options</h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <label class="inline-flex items-center cursor-pointer group">
+                                            <input type="checkbox" id="includeDemographics" class="sr-only peer" checked>
+                                            <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-primary-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-primary-600"></div>
+                                            <span class="ml-3 text-gray-700 font-medium text-sm">Include demographics</span>
+                                        </label>
+                                        <label class="inline-flex items-center cursor-pointer group">
+                                            <input type="checkbox" id="generateFollowups" class="sr-only peer" checked>
+                                            <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-primary-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-primary-600"></div>
+                                            <span class="ml-3 text-gray-700 font-medium text-sm">Smart follow-ups</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button id="inferFormBtn" class="w-full inline-flex items-center justify-center py-4 px-6 text-base font-semibold text-white bg-gradient-to-r from-primary-600 to-orange-600 rounded-xl hover:from-primary-700 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-primary-300 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                                    <i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>
+                                    Generate Form with AI
+                                    <span class="ml-2 px-2 py-1 bg-white/20 rounded-full text-xs">
+                                        ~30s
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar with Tips -->
+                    <div class="space-y-6">
+                        <!-- Quick Tips -->
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                            <h3 class="font-bold text-gray-900 mb-4 flex items-center text-base">
+                                <i data-lucide="lightbulb" class="w-5 h-5 mr-2 text-yellow-500"></i>
+                                Quick Tips
+                            </h3>
+                            <ul class="space-y-3 text-sm text-gray-700">
+                                <li class="flex items-start space-x-3">
+                                    <div class="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Be specific about what you want to learn</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <div class="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Include context about your audience</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <div class="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Mention any constraints or requirements</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <div class="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>Paste research notes or bullet points</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Example Topics -->
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                            <h3 class="font-bold text-gray-900 mb-4 text-base">
+                                Popular Survey Topics
+                            </h3>
+                            <div class="space-y-3">
+                                <button class="example-topic w-full text-left p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 text-sm group" 
+                                        onclick="useExampleTopic('Customer satisfaction survey for our mobile app. Want to know: usability issues, favorite features, improvement suggestions, likelihood to recommend.')">
+                                    <div class="font-medium text-gray-900 group-hover:text-primary-700">Customer Feedback</div>
+                                    <div class="text-gray-600 group-hover:text-primary-600">App satisfaction & improvements</div>
+                                </button>
+                                <button class="example-topic w-full text-left p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 text-sm group"
+                                        onclick="useExampleTopic('Employee engagement survey. Topics: work satisfaction, management effectiveness, career development opportunities, work-life balance, company culture.')">
+                                    <div class="font-medium text-gray-900 group-hover:text-primary-700">Employee Engagement</div>
+                                    <div class="text-gray-600 group-hover:text-primary-600">Workplace satisfaction & culture</div>
+                                </button>
+                                <button class="example-topic w-full text-left p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 text-sm group"
+                                        onclick="useExampleTopic('Market research for new coffee blend. Target audience: coffee enthusiasts. Questions about: taste preferences, price sensitivity, packaging appeal, purchase frequency.')">
+                                    <div class="font-medium text-gray-900 group-hover:text-primary-700">Market Research</div>
+                                    <div class="text-gray-600 group-hover:text-primary-600">Product validation & preferences</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Form Builder -->
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24">
+            <div id="formBuilder" class="hidden space-y-6">
+            <!-- Form Title Section -->
+            <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Customize Your Form</h2>
+                    <div class="grid lg:grid-cols-3 gap-6 items-start">
+                        <div class="lg:col-span-2">
+                            <label class="block text-base font-semibold text-gray-900 mb-3">Form Title</label>
+                            <input type="text" id="formTitle" class="w-full border-2 border-gray-200 rounded-xl p-4 text-base font-semibold focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all duration-200" placeholder="Enter a compelling title...">
+                        </div>
+                        <div class="space-y-4">
+                            <div class="text-base font-semibold text-gray-900">Form Statistics</div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="text-center p-3 rounded-xl bg-primary-50">
+                                    <div id="questionCount" class="text-2xl font-bold text-primary-600">0</div>
+                                    <div class="text-xs text-gray-600">Questions</div>
+                                </div>
+                                <div class="text-center p-3 bg-gray-50 rounded-xl">
+                                    <div class="text-2xl font-bold text-gray-700">~3min</div>
+                                    <div class="text-xs text-gray-600">Duration</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions Section -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-900">Questions</h3>
+                    <button id="addQuestionBtn" class="inline-flex items-center px-5 py-3 text-sm font-semibold text-primary-600 border-2 border-primary-200 rounded-xl hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-300 transition-all duration-200">
+                        <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
+                        Add Question
+                    </button>
+                </div>
+                
+                <div id="questionsList" class="space-y-6">
+                    <!-- Questions will be populated here -->
+                </div>
+                
+                <!-- Add Question Placeholder -->
+                <div id="addQuestionPlaceholder" class="bg-white rounded-2xl shadow-lg border-2 border-dashed border-gray-300 hover:border-primary-300 transition-all duration-200 cursor-pointer p-6 text-center" onclick="addNewQuestion()">
+                    <div class="space-y-4">
+                        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto">
+                            <i data-lucide="plus" class="w-8 h-8 text-gray-400"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900">Add Another Question</h4>
+                            <p class="text-gray-600">Create custom questions or let AI suggest more</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demographics Section -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Demographics</h3>
+                        <p class="text-gray-600 mt-1 text-sm">Optional background information to collect</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-gray-600 font-medium">Enable all</span>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="enableAllDemographics" class="sr-only peer" onchange="toggleAllDemographics(this.checked)">
+                            <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-primary-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-primary-600"></div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                    <div id="demographicsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Demographics will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                <div class="flex flex-col lg:flex-row gap-6 justify-between items-center">
+                    <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="clock" class="w-5 h-5"></i>
+                            <span class="font-medium">Estimated completion: 2-4 minutes</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="shield-check" class="w-5 h-5"></i>
+                            <span class="font-medium">Anonymous by default</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button id="previewFormBtn" class="inline-flex items-center px-5 py-3 text-sm font-semibold text-primary-600 border-2 border-primary-200 rounded-xl hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-300 transition-all duration-200">
+                            <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                            Preview Experience
+                        </button>
+                        <button id="saveFormBtn" class="inline-flex items-center px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-primary-600 to-orange-600 rounded-xl hover:from-primary-700 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-primary-300 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                            <i data-lucide="rocket" class="w-4 h-4 mr-2"></i>
+                            Launch Form
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Page -->
+    <div id="chatPage" class="hidden">
+        <div class="max-w-4xl mx-auto">
+            <!-- Chat Header -->
+            <div class="card mb-6 p-8">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h1 id="chatFormTitle" class="font-heading font-bold mb-2" style="font-size: 1.875rem; color: var(--text-primary);"></h1>
+                        <p class="font-body" style="font-size: 1.125rem; color: var(--text-secondary);">Share your thoughts through our conversational interface</p>
+                    </div>
+                    <div class="flex items-center px-3 py-1.5 rounded" style="background-color: rgba(39, 174, 96, 0.1); border: 1px solid var(--success);">
+                        <div class="w-2 h-2 rounded-full mr-2" style="background-color: var(--success);"></div>
+                        <span class="font-body font-medium" style="font-size: 0.875rem; color: var(--success);">Secure & Anonymous</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="card h-[600px] flex flex-col">
+                <!-- Messages Area -->
+                <div id="chatMessages" class="flex-1 p-6 overflow-y-auto space-y-4">
+                    <!-- Messages will appear here -->
+                </div>
+
+                <!-- Chat Input -->
+                <div id="chatInputContainer" class="border-t p-6" style="border-color: var(--primary);">
+                    <div class="flex space-x-3">
+                        <input 
+                            type="text" 
+                            id="chatInput" 
+                            class="flex-1 border rounded p-3 font-body" 
+                            style="border-color: var(--primary);"
+                            placeholder="Type your response..."
+                            maxlength="1000">
+                        <button id="sendMessageBtn" class="inline-flex items-center px-4 py-2 rounded-md text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-4 focus:ring-primary-300 transition">
+                            <span>Send</span>
+                            <i data-lucide="send" class="w-4 h-4 ml-2"></i>
+                        </button>
+                    </div>
+                    <div class="flex justify-between items-center mt-3 font-body" style="font-size: 0.75rem; color: var(--text-secondary);">
+                        <span id="messageCount">Messages 0</span>
+                        <span id="charCount">0/1000 characters</span>
+                    </div>
+                </div>
+
+                <!-- Chat Paused State -->
+                <div id="chatPaused" class="hidden border-t p-6 text-center" style="border-color: var(--primary); background-color: rgba(255, 218, 185, 0.1);">
+                    <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background-color: var(--secondary);">
+                        <i data-lucide="pause-circle" class="w-8 h-8" style="color: var(--primary);"></i>
+                    </div>
+                    <h3 class="font-heading font-semibold mb-2" style="font-size: 1.125rem; color: var(--text-primary);">Chat Paused</h3>
+                    <p class="font-body mb-4" style="color: var(--text-secondary);">Your progress has been saved. You can continue anytime!</p>
+                    <button id="resumeChatBtn" class="inline-flex items-center px-4 py-2 rounded-md text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-4 focus:ring-primary-300 transition">
+                        <i data-lucide="play" class="w-5 h-5 mr-2"></i>
+                        Continue Chat
+                    </button>
+                </div>
+
+                <!-- Chat Completed State -->
+                <div id="chatCompleted" class="hidden border-t p-6 text-center" style="border-color: var(--primary); background-color: rgba(39, 174, 96, 0.1);">
+                    <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background-color: rgba(39, 174, 96, 0.2);">
+                        <i data-lucide="check-circle" class="w-8 h-8" style="color: var(--success);"></i>
+                    </div>
+                    <h3 class="font-heading font-semibold mb-2" style="font-size: 1.125rem; color: var(--text-primary);">Thank you!</h3>
+                    <p class="font-body" style="color: var(--text-secondary);">Your responses have been recorded successfully.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- Toast Notifications -->
+<div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2">
+    <!-- Toasts will appear here -->
+</div>
+
+<!-- Loading Spinner -->
+<div id="loadingSpinner" class="fixed inset-0 bg-black bg-opacity-25 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded p-8 flex items-center space-x-4" style="border: 1px solid var(--primary);">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: var(--primary);"></div>
+        <span class="font-body font-medium" style="color: var(--text-primary);">Loading...</span>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded max-w-4xl w-full max-h-[90vh] overflow-hidden" style="border: 1px solid var(--primary);">
+        <div class="flex items-center justify-between p-6 border-b" style="border-color: var(--primary);">
+            <h2 class="font-heading font-semibold" style="font-size: 1.25rem; color: var(--text-primary);">Preview Chat Experience</h2>
+            <button id="closePreviewModal" class="p-2 rounded" style="color: var(--text-secondary);">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
+            <div id="previewChatContainer" class="h-96 rounded border" style="background-color: var(--secondary); border-color: var(--primary);">
+                <!-- Preview chat will be rendered here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded max-w-md w-full" style="border: 1px solid var(--primary);">
+        <div class="flex items-center justify-between p-6 border-b" style="border-color: var(--primary);">
+            <h2 class="font-heading font-semibold" style="font-size: 1.25rem; color: var(--text-primary);">Share Your Form</h2>
+            <button id="closeShareModal" class="p-2 rounded" style="color: var(--text-secondary);">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-6">
+            <div>
+                <label class="block font-body font-medium mb-2" style="font-size: 0.875rem; color: var(--text-primary);">Share Link</label>
+                <div class="flex space-x-2">
+                    <input type="text" id="shareUrl" class="flex-1 border rounded p-3 font-body" style="border-color: var(--primary);" readonly>
+                    <button id="copyLinkBtn" class="inline-flex items-center px-4 py-2 rounded-md text-primary-500 border border-primary-500 hover:bg-primary-50 focus:outline-none focus:ring-4 focus:ring-primary-300 transition">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="text-center">
+                <div id="qrCode" class="inline-block p-4 rounded" style="background-color: var(--secondary);">
+                    <!-- QR Code will be generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Responses Modal -->
+<div id="responsesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+  <div class="bg-white rounded max-w-6xl w-full max-h-[90vh] overflow-hidden border border-primary-500">
+    <div class="flex items-center justify-between p-6 border-b border-primary-500">
+      <h2 id="responsesModalTitle" class="font-heading font-semibold text-xl text-primary-500">Form Responses</h2>
+      <button id="closeResponsesModal" class="p-2 rounded text-gray-500 hover:bg-gray-100">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]" id="responsesModalBody">
+      <!-- Dynamic content -->
+    </div>
+  </div>
+</div>
+
+<script>
+// Initialize Lucide icons
+lucide.createIcons();
+
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyAoWt0HAUvLzMD5OX43URZlbLFimA0wnmA",
+    authDomain: "bermuda-01.firebaseapp.com",
+    projectId: "bermuda-01",
+    storageBucket: "bermuda-01.firebasestorage.app",
+    messagingSenderId: "212698241186",
+    appId: "1:212698241186:web:dfe2ec1c46dd5a4e9c1ffb",
+    measurementId: "G-ZQGF5RB992",
+    databaseURL: "https://bermuda-01-default-rtdb.firebaseio.com"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const rtdb = firebase.database();
+
+// Global state
+let currentUser = null;
+let currentFormData = null;
+let currentChatSession = null;
+let messageCount = 0;
+
+// Utility functions
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    let bgColor, textColor;
+    
+    if (type === 'success') {
+        bgColor = 'var(--success)';
+        textColor = 'white';
+    } else if (type === 'error') {
+        bgColor = 'var(--error)';
+        textColor = 'white';
+    } else {
+        bgColor = 'var(--primary)';
+        textColor = 'white';
+    }
+    
+    toast.className = 'px-6 py-4 rounded font-body font-bold';
+    toast.style.backgroundColor = bgColor;
+    toast.style.color = textColor;
+    toast.style.boxShadow = 'none';
+    toast.textContent = message;
+    
+    document.getElementById('toastContainer').appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function showLoading() {
+    document.getElementById('loadingSpinner').classList.remove('hidden');
+}
+
+function hideLoading() {
+    document.getElementById('loadingSpinner').classList.add('hidden');
+}
+
+function generateSessionId() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+function formatTimestamp(date) {
+    return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Navigation functions
+function showPage(pageId) {
+    console.log(`🔄 Switching to page: ${pageId}`);
+    
+    const pages = ['landingPage', 'dashboardPage', 'createFormPage', 'chatPage'];
+    pages.forEach(page => {
+        const element = document.getElementById(page);
+        if (element) {
+            element.style.display = 'none';
+            element.classList.add('hidden');
+            console.log(`✅ Hidden page: ${page}`);
+        }
+    });
+    
+    // Also hide nested form elements to prevent bleed-through
+    const nestedElements = ['formCreationStep', 'formBuilder'];
+    nestedElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.style.display = 'none';
+            element.classList.add('hidden');
+            console.log(`✅ Hidden nested element: ${elementId}`);
+        }
+    });
+    
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+        targetPage.style.display = 'block';
+        targetPage.classList.remove('hidden');
+        console.log(`✅ Shown target page: ${pageId}`);
+        
+        // Show appropriate nested elements for the target page
+        if (pageId === 'createFormPage') {
+            const formCreationStep = document.getElementById('formCreationStep');
+            if (formCreationStep) {
+                formCreationStep.style.display = 'block';
+                formCreationStep.classList.remove('hidden');
+                console.log(`✅ Shown formCreationStep for createFormPage`);
+            }
+        }
+    } else {
+        console.error(`❌ Target page not found: ${pageId}`);
+    }
+    
+    // Update URL without reloading page
+    let newPath = '/';
+    if (pageId === 'dashboardPage') newPath = '/dashboard';
+    else if (pageId === 'createFormPage') newPath = '/create';
+    else if (pageId === 'chatPage') newPath = window.location.pathname; // Keep existing chat path
+    
+    if (window.location.pathname !== newPath && pageId !== 'chatPage') {
+        window.history.pushState({}, '', newPath);
+    }
+}
+
+function showDashboard() {
+    showPage('dashboardPage');
+    loadUserForms();
+    // Clear any form builder state
+    resetFormBuilder();
+}
+
+function showCreateForm() {
+    showPage('createFormPage');
+    resetFormBuilder();
+    // Show the form creation step, hide form builder initially - this is handled by showPage now
+    // but we need to ensure formBuilder stays hidden initially
+    const formBuilder = document.getElementById('formBuilder');
+    if (formBuilder) {
+        formBuilder.style.display = 'none';
+        formBuilder.classList.add('hidden');
+    }
+}
+
+function showChat(formId) {
+    showPage('chatPage');
+    initializeChat(formId);
+}
+
+// Authentication - moved to initialization section
+
+function updateAuthButton() {
+    const authButton = document.getElementById('authButton');
+    const authText = document.getElementById('authText');
+    
+    if (currentUser) {
+        authText.textContent = 'Sign Out';
+        authButton.onclick = () => auth.signOut();
+    } else {
+        authText.textContent = 'Sign In';
+        authButton.onclick = signInWithGoogle;
+    }
+}
+
+function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch((error) => {
+        showToast('Sign in failed: ' + error.message, 'error');
+    });
+}
+
+// Form creation functions
+async function inferFormFromText() {
+    const textDump = document.getElementById('textDump').value.trim();
+    
+    if (!textDump) {
+        showToast('Please enter some text to generate a form', 'error');
+        return;
+    }
+    
+    if (!currentUser) {
+        showToast('Please sign in to create forms', 'error');
+        return;
+    }
+    
+    showLoading();
+    
+    try {
+        const token = await currentUser.getIdToken();
+        const response = await fetch('https://us-central1-bermuda-01.cloudfunctions.net/api/infer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ dump: textDump })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to generate form');
+        }
+        
+        const formData = await response.json();
+        currentFormData = formData;
+        
+        displayFormBuilder(formData);
+        showToast('Form generated successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to generate form. Please try again.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+
+function renderQuestions(questions) {
+    const questionsList = document.getElementById('questionsList');
+    questionsList.innerHTML = '';
+    
+    questions.forEach((question, index) => {
+        const questionCard = createQuestionCard(question, index);
+        questionsList.appendChild(questionCard);
+    });
+    
+    // Re-initialize icons after rendering questions
+    lucide.createIcons();
+}
+
+function createQuestionCard(question, index) {
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-2xl shadow-lg border border-gray-200 p-8 hover:shadow-xl hover:border-primary-300 transition-all duration-300 group relative';
+    
+    const typeOptions = [
+        { value: 'text', label: 'Text Response', icon: 'type' },
+        { value: 'multiple_choice', label: 'Multiple Choice', icon: 'list' },
+        { value: 'yes_no', label: 'Yes/No', icon: 'check-circle' },
+        { value: 'rating', label: 'Rating (1-5)', icon: 'star' },
+        { value: 'number', label: 'Number', icon: 'hash' }
+    ];
+    
+    const currentType = typeOptions.find(t => t.value === question.type) || typeOptions[0];
+    
+    card.innerHTML = `
+        <!-- Header with drag handle and controls -->
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+            <div class="flex items-center space-x-3">
+                <div class="drag-handle cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i data-lucide="grip-vertical" class="w-5 h-5 text-gray-400"></i>
+                </div>
+                <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-orange-500 text-white rounded-2xl flex items-center justify-center text-sm font-bold shadow-lg">
+                    ${index + 1}
+                </div>
+                <div>
+                    <div class="font-bold text-gray-900 text-lg">Question ${index + 1}</div>
+                    <div class="text-sm text-gray-600 flex items-center space-x-2">
+                        <i data-lucide="${currentType.icon}" class="w-3 h-3"></i>
+                        <span>${currentType.label}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <label class="inline-flex items-center cursor-pointer group/toggle">
+                    <input type="checkbox" class="sr-only peer" ${question.enabled !== false ? 'checked' : ''} 
+                           onchange="toggleQuestion(${index}, this.checked)">
+                    <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-primary-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-primary-600"></div>
+                </label>
+                <button class="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50" 
+                        onclick="removeQuestion(${index})" title="Remove Question">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Question Content -->
+        <div class="space-y-6">
+            <div>
+                <label class="block text-lg font-semibold text-gray-900 mb-3">Question Text</label>
+                <textarea 
+                    class="w-full border-2 border-gray-200 rounded-2xl p-4 resize-none text-lg focus:border-primary-500 focus:ring-4 focus:ring-primary-200 transition-all duration-200" 
+                    rows="2"
+                    placeholder="What would you like to ask?" 
+                    onchange="updateQuestion(${index}, 'text', this.value)">${question.text || ''}</textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 ${(question.type === 'multiple_choice' || question.type === 'rating') ? 'lg:grid-cols-2' : ''} gap-4">
+                <div>
+                    <label class="block text-lg font-semibold text-gray-900 mb-3">Question Type</label>
+                    <select class="w-full border-2 border-gray-200 rounded-2xl p-4 text-lg focus:border-primary-500 focus:ring-4 focus:ring-primary-200 transition-all duration-200" onchange="updateQuestion(${index}, 'type', this.value)">
+                        ${typeOptions.map(option => `
+                            <option value="${option.value}" ${question.type === option.value ? 'selected' : ''}>
+                                ${option.label}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                ${(question.type === 'multiple_choice' || question.type === 'rating') ? `
+                <div>
+                    <label class="block text-lg font-semibold text-gray-900 mb-3">
+                        ${question.type === 'rating' ? 'Scale Labels (optional)' : 'Answer Options'}
+                    </label>
+                    <input type="text" 
+                           class="w-full border-2 border-gray-200 rounded-2xl p-4 text-lg focus:border-primary-500 focus:ring-4 focus:ring-primary-200 transition-all duration-200" 
+                            placeholder="${question.type === 'rating' ? 'Poor, Fair, Good, Great, Excellent' : 'Option 1, Option 2, Option 3'}" 
+                            value="${(question.options || []).join(', ')}"
+                            onchange="updateQuestion(${index}, 'options', this.value.split(',').map(s => s.trim()).filter(s => s))">
+                </div>
+                ` : ''}
+            </div>
+            
+            <!-- Question Preview -->
+            <div class="bg-primary-50 rounded-2xl p-6 border-l-4 border-primary-500">
+                <div class="text-sm font-bold text-primary-700 mb-2">PREVIEW</div>
+                <div class="text-lg text-gray-800">${question.text || 'Question preview will appear here'}</div>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function renderDemographics(demographics) {
+    const demographicsList = document.getElementById('demographicsList');
+    demographicsList.innerHTML = '';
+    
+    demographics.forEach((demo, index) => {
+        const demoCard = createDemographicCard(demo, index);
+        demographicsList.appendChild(demoCard);
+    });
+    
+    // Re-initialize icons after rendering demographics
+    lucide.createIcons();
+}
+
+function createDemographicCard(demo, index) {
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-2xl shadow-lg border border-gray-200 p-8 hover:shadow-xl hover:border-primary-300 transition-all duration-300';
+    
+    const demographicIcons = {
+        'age': 'calendar',
+        'gender': 'user',
+        'location': 'map-pin',
+        'education': 'graduation-cap',
+        'income': 'dollar-sign',
+        'occupation': 'briefcase',
+        'ethnicity': 'users'
+    };
+    
+    const iconName = demographicIcons[demo.name.toLowerCase()] || 'user-check';
+    
+    card.innerHTML = `
+        <div class="space-y-4">
+            <div class="flex flex-wrap items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-primary-100 rounded-2xl flex items-center justify-center">
+                        <i data-lucide="${iconName}" class="w-5 h-5 text-primary-600"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-gray-900 text-lg">${demo.name}</div>
+                        <div class="text-sm text-gray-600">${demo.type}</div>
+                    </div>
+                </div>
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" ${demo.enabled ? 'checked' : ''} 
+                           onchange="toggleDemographic(${index}, this.checked)">
+                    <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-primary-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-primary-600"></div>
+                </label>
+            </div>
+            <div class="text-sm text-gray-600 leading-relaxed">
+                ${getDemographicDescription(demo.name)}
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function getDemographicDescription(name) {
+    const descriptions = {
+        'Age': 'Age range or specific age',
+        'Gender': 'Gender identity',
+        'Location': 'Geographic location',
+        'Education': 'Educational background',
+        'Income': 'Household income range',
+        'Occupation': 'Job title or industry',
+        'Ethnicity': 'Ethnic background'
+    };
+    return descriptions[name] || 'Demographic information';
+}
+
+// Form builder event handlers
+function updateQuestion(index, field, value) {
+    if (currentFormData && currentFormData.questions[index]) {
+        currentFormData.questions[index][field] = value;
+    }
+}
+
+function toggleQuestion(index, enabled) {
+    if (currentFormData && currentFormData.questions[index]) {
+        currentFormData.questions[index].enabled = enabled;
+    }
+}
+
+function toggleDemographic(index, enabled) {
+    if (currentFormData && currentFormData.demographics[index]) {
+        currentFormData.demographics[index].enabled = enabled;
+    }
+}
+
+function gatherFormData() {
+    const formData = {
+        questions: [],
+        demographics: []
+    };
+    
+    // Gather questions
+    const questionElements = document.querySelectorAll('.question-item');
+    questionElements.forEach(element => {
+        const textInput = element.querySelector('.question-text');
+        const typeSelect = element.querySelector('.question-type');
+        const enabledToggle = element.querySelector('.question-enabled');
+        
+        if (textInput && typeSelect) {
+            const question = {
+                text: textInput.value.trim(),
+                type: typeSelect.value,
+                enabled: enabledToggle ? enabledToggle.checked : true
+            };
+            
+            // Gather options for multiple choice questions
+            if (['multiple_choice', 'yes_no', 'rating'].includes(question.type)) {
+                const optionInputs = element.querySelectorAll('.option-input');
+                question.options = [];
+                optionInputs.forEach(input => {
+                    if (input.value.trim()) {
+                        question.options.push(input.value.trim());
+                    }
+                });
+            }
+            
+            if (question.text) {
+                formData.questions.push(question);
+            }
+        }
+    });
+    
+    // Gather demographics
+    const demographicElements = document.querySelectorAll('.demographic-item');
+    demographicElements.forEach(element => {
+        const textInput = element.querySelector('.demographic-text');
+        const enabledToggle = element.querySelector('.demographic-enabled');
+        
+        if (textInput) {
+            const demographic = {
+                text: textInput.value.trim(),
+                enabled: enabledToggle ? enabledToggle.checked : true
+            };
+            
+            if (demographic.text) {
+                formData.demographics.push(demographic);
+            }
+        }
+    });
+    
+    return formData;
+}
+
+function getCurrentFormData() {
+    if (!currentFormData) {
+        return { questions: [], demographics: [], title: '' };
+    }
+    
+    // Get the current title from the input
+    const titleInput = document.getElementById('formTitle');
+    const title = titleInput ? titleInput.value.trim() : '';
+    
+    return {
+        ...currentFormData,
+        title: title
+    };
+}
+
+function previewForm() {
+    const formData = getCurrentFormData();
+    if (!formData.questions || formData.questions.length === 0) {
+        showToast('Please add some questions before previewing', 'error');
+        return;
+    }
+    
+    // Create a temporary form data and show it in a new tab
+    const previewData = {
+        ...formData,
+        id: 'preview',
+        title: formData.title || 'Preview Form'
+    };
+    
+    // Generate preview URL
+    const previewUrl = `/form/preview?data=${encodeURIComponent(JSON.stringify(previewData))}`;
+    window.open(previewUrl, '_blank');
+}
+
+async function saveForm() {
+    if (!currentUser) {
+        showToast('Please sign in to save forms', 'error');
+        return;
+    }
+    
+    // Check if we're editing an existing form
+    const isEditing = window.currentEditingFormId;
+    
+    // Get title
+    const title = document.getElementById('formTitle').value.trim();
+    if (!title) {
+        showToast('Please enter a form title', 'error');
+        return;
+    }
+    
+    // Validate we have current form data
+    if (!currentFormData) {
+        showToast('No form data available', 'error');
+        return;
+    }
+    
+    // Prepare form data
+    const formData = {
+        title: title,
+        questions: currentFormData.questions || [],
+        demographics: currentFormData.demographics || []
+    };
+    
+    // Validate we have at least one enabled question
+    const enabledQuestions = formData.questions.filter(q => q.enabled !== false);
+    if (enabledQuestions.length === 0) {
+        showToast('Please enable at least one question', 'error');
+        return;
+    }
+    
+    showLoading();
+    
+    try {
+        const token = await currentUser.getIdToken();
+        
+        let response;
+        if (isEditing) {
+            // Update existing form
+            response = await fetch(`https://us-central1-bermuda-01.cloudfunctions.net/api/forms/${window.currentEditingFormId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+        } else {
+            // Create new form
+            response = await fetch('https://us-central1-bermuda-01.cloudfunctions.net/api/save-form', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to save form');
+        }
+        
+        const result = await response.json();
+        
+        if (isEditing) {
+            showToast(result.message || 'Form updated successfully!', 'success');
+            // Clear editing state
+            clearFormBuilderState();
+            // Go back to dashboard
+            showDashboard();
+        } else {
+            showToast(result.message || 'Form saved successfully!', 'success');
+            
+            // Show share modal or redirect to dashboard
+            if (result.form_id) {
+                const shareUrl = `${window.location.origin}/form/${result.form_id}`;
+                // Just show a toast with the URL for now, then redirect to dashboard
+                showToast('Form created! Share link copied to clipboard.', 'success');
+                
+                // Copy URL to clipboard
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareUrl);
+                }
+                
+                // Redirect to dashboard after a short delay
+                setTimeout(() => {
+                    showDashboard();
+                }, 2000);
+            } else {
+                showDashboard();
+            }
+        }
+        
+    } catch (error) {
+        console.error('Save form error:', error);
+        showToast(`Failed to save form: ${error.message}`, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function clearFormBuilderState() {
+    // Clear editing state
+    window.currentEditingFormId = null;
+    
+    // Clear form builder
+    const titleInput = document.getElementById('formTitle');
+    if (titleInput) titleInput.value = '';
+    
+    const questionsList = document.getElementById('questionsList');
+    if (questionsList) questionsList.innerHTML = '';
+    
+    const demographicsList = document.getElementById('demographicsList');
+    if (demographicsList) demographicsList.innerHTML = '';
+    
+    // Reset save button text
+    const saveButton = document.getElementById('saveFormBtn');
+    if (saveButton) {
+        saveButton.innerHTML = '<i data-lucide="rocket" class="w-5 h-5 mr-2"></i>Launch Form';
+        // Re-initialize icons
+        lucide.createIcons();
+    }
+    
+    // Clear current form data
+    currentFormData = null;
+}
+
+function openForm(formId) {
+    // Navigate to the form responses/management view
+    showToast('Opening form responses...', 'info');
+    // For now, just show the form in a new tab
+    window.open(`/form/${formId}`, '_blank');
+}
+
+async function viewResponses(formId) {
+    if (!currentUser) {
+        showToast('Please sign in to view responses', 'error');
+        return;
+    }
+
+    showLoading();
+
+    try {
+        const token = await currentUser.getIdToken();
+        const response = await fetch(`https://us-central1-bermuda-01.cloudfunctions.net/api/forms/${formId}/responses`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load responses');
+        }
+
+        const responses = await response.json();
+
+        renderResponsesModal(responses, formId);
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to load responses', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function renderResponsesModal(responses, formId) {
+    const modal = document.getElementById('responsesModal');
+    const body = document.getElementById('responsesModalBody');
+    const title = document.getElementById('responsesModalTitle');
+
+    title.textContent = `Responses (${responses.length})`;
+    body.innerHTML = '';
+
+    if (responses.length === 0) {
+        body.innerHTML = '<p class="text-gray-600">No responses yet.</p>';
+    } else {
+        const first = responses[0];
+        const qObj = first.questions || {};
+        const headers = Object.keys(qObj);
+
+        if (headers.length === 0) {
+            // Fallback: show raw JSON
+            body.innerHTML = `<pre class="text-xs bg-gray-50 p-4 rounded">${JSON.stringify(responses, null, 2)}</pre>`;
+            return;
+        }
+
+        const table = document.createElement('table');
+        table.className = 'min-w-full border divide-y divide-gray-200 text-sm';
+
+        const thead = document.createElement('thead');
+        thead.innerHTML = `<tr>${headers.map(h=>`<th class=\"px-4 py-2 text-left font-semibold text-gray-700\">${h}</th>`).join('')}</tr>`;
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        responses.forEach(resp=>{
+            const row = document.createElement('tr');
+            row.className = 'odd:bg-gray-50 hover:bg-orange-50';
+            row.innerHTML = headers.map(h=>`<td class=\"px-4 py-2\">${(resp.questions||{})[h] ?? ''}</td>`).join('');
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+        body.appendChild(table);
+    }
+
+    modal.classList.remove('hidden');
+
+    document.getElementById('closeResponsesModal').onclick = () => {
+        modal.classList.add('hidden');
+    };
+
+    // Escape key to close
+    window.addEventListener('keydown', function escListener(e){
+        if(e.key==='Escape'){
+            modal.classList.add('hidden');
+            window.removeEventListener('keydown', escListener);
+        }
+    });
+
+    // Re-render lucide icons in modal
+    lucide.createIcons();
+}
+
+function shareForm(formId) {
+    const shareUrl = `${window.location.origin}/form/${formId}`;
+    
+    // Copy to clipboard
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast('Form link copied to clipboard!', 'success');
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = shareUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast('Form link copied to clipboard!', 'success');
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('Form link copied to clipboard!', 'success');
+    }
+}
+
+function testChat(formId) {
+    // Open form in chat mode for testing
+    showChat(formId);
+}
+
+async function deleteForm(formId) {
+    if (!confirm('Are you sure you want to delete this form? This action cannot be undone.')) return;
+    
+    if (!currentUser) {
+        showToast('Please sign in to delete forms', 'error');
+        return;
+    }
+    
+    showLoading();
+    
+    try {
+        const token = await currentUser.getIdToken();
+        
+        // Try DELETE first, fallback to POST workaround if CORS fails
+        let response;
+        try {
+            response = await fetch(`https://us-central1-bermuda-01.cloudfunctions.net/api/forms/${formId}`, {
+                method: 'DELETE',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+        } catch (corsError) {
+            // CORS workaround: Use POST with _method parameter
+            console.log('DELETE blocked by CORS, trying POST workaround...');
+            response = await fetch(`https://us-central1-bermuda-01.cloudfunctions.net/api/forms/${formId}`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ _method: 'DELETE' })
+            });
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
+            throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        showToast(data.message || 'Form deleted successfully', 'success');
+        loadUserForms();
+    } catch (error) {
+        console.error('Delete form error:', error);
+        showToast(`Failed to delete form: ${error.message}`, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function editForm(formId) {
+    if (!currentUser) {
+        showToast('Please sign in to edit forms', 'error');
+        return;
+    }
+    
+    showLoading();
+    
+    try {
+        // Fetch the current form data
+        const token = await currentUser.getIdToken();
+        const response = await fetch(`https://us-central1-bermuda-01.cloudfunctions.net/api/forms/${formId}`, {
+            method: 'GET',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch form data: ${response.status}`);
+        }
+        
+        const formData = await response.json();
+        
+        // Switch to form creation page and populate with existing data
+        showPage('createFormPage');
+        
+        // Set editing mode
+        window.currentEditingFormId = formId;
+        
+        // Hide form creation step, show form builder
+        const formCreationStep = document.getElementById('formCreationStep');
+        const formBuilder = document.getElementById('formBuilder');
+        if (formCreationStep) {
+            formCreationStep.style.display = 'none';
+            formCreationStep.classList.add('hidden');
+        }
+        if (formBuilder) {
+            formBuilder.style.display = 'block';
+            formBuilder.classList.remove('hidden');
+        }
+        
+        // Store the form data globally
+        currentFormData = formData;
+        
+        // Populate the form builder with existing data
+        populateFormBuilder(formData, formId);
+        
+        showToast('Form loaded for editing', 'success');
+        
+    } catch (error) {
+        console.error('Edit form error:', error);
+        showToast(`Failed to load form for editing: ${error.message}`, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function populateFormBuilder(formData, formId) {
+    // Store the form ID for updates
+    window.currentEditingFormId = formId;
+    
+    // Populate title
+    const titleInput = document.getElementById('formTitle');
+    if (titleInput) {
+        titleInput.value = formData.title || '';
+    }
+    
+    // Use the existing render functions
+    if (formData.questions) {
+        renderQuestions(formData.questions);
+        updateQuestionCount();
+    }
+    
+    if (formData.demographics) {
+        renderDemographics(formData.demographics);
+    }
+    
+    // Update the save button
+    const saveButton = document.getElementById('saveFormBtn');
+    if (saveButton) {
+        saveButton.innerHTML = '<i data-lucide="save" class="w-5 h-5 mr-2"></i>Update Form';
+        // Re-initialize icons
+        lucide.createIcons();
+    }
+}
+
+function showShareModal(formId, shareUrl) {
+    document.getElementById('shareUrl').value = shareUrl;
+    document.getElementById('shareModal').classList.remove('hidden');
+}
+
+function copyShareLink() {
+    const shareUrl = document.getElementById('shareUrl');
+    shareUrl.select();
+    shareUrl.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    showToast('Link copied to clipboard!', 'success');
+}
+
+// Chat functions
+async function initializeChat(formId) {
+    showLoading();
+    
+    try {
+        // Get form data
+        const response = await fetch(`https://us-central1-bermuda-01.cloudfunctions.net/api/forms/${formId}`);
+        
+        if (!response.ok) {
+            throw new Error('Form not found');
+        }
+        
+        const formData = await response.json();
+        currentFormData = formData;
+        
+        // Update UI
+        document.getElementById('chatFormTitle').textContent = formData.title;
+        
+        // Initialize chat session
+        currentChatSession = {
+            sessionId: generateSessionId(),
+            formId: formId,
+            messages: []
+        };
+        
+        // Clear messages
+        document.getElementById('chatMessages').innerHTML = '';
+        messageCount = 0;
+        updateMessageCount();
+        
+        // Start conversation
+        await sendMessage('');
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to load form. Please check the link.', 'error');
+        showPage('landingPage');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function sendMessage(message) {
+    if (!currentChatSession) return;
+    
+    // Add user message if not empty
+    if (message.trim()) {
+        addMessageToChat('user', message);
+        messageCount++;
+        updateMessageCount();
+    }
+    
+    // Show typing indicator instead of loading screen
+    showTypingIndicator();
+    
+    try {
+        const response = await fetch('https://us-central1-bermuda-01.cloudfunctions.net/api/chat-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                form_id: currentChatSession.formId,
+                session_id: currentChatSession.sessionId,
+                message: message,
+                device_id: getDeviceId(),
+                location: 'Unknown'
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', response.status, errorText);
+            throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        
+        // Remove typing indicator and add bot response
+        hideTypingIndicator();
+        addMessageToChat('bot', result.response);
+        messageCount++;
+        updateMessageCount();
+        
+        // Check if chat is completed or paused
+        if (result.completed) {
+            showChatCompleted();
+        } else if (result.paused) {
+            showChatPaused();
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        hideTypingIndicator();
+        showToast('Failed to send message. Please try again.', 'error');
+    }
+}
+
+function addMessageToChat(role, text) {
+    const messagesContainer = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    
+    const isBot = role === 'bot';
+    messageDiv.className = `flex ${isBot ? 'justify-start' : 'justify-end'} chat-message-enter`;
+    
+    const timestamp = formatTimestamp(new Date());
+    
+    messageDiv.innerHTML = `
+        <div class="${isBot ? 'message-bot' : 'message-user'} max-w-xs sm:max-w-md">
+            <div class="text-sm">${text}</div>
+            <div class="text-xs opacity-70 mt-1">${timestamp}</div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function updateMessageCount() {
+    document.getElementById('messageCount').textContent = `Messages ${messageCount}`;
+}
+
+function showTypingIndicator() {
+    const messagesContainer = document.getElementById('chatMessages');
+    
+    // Remove existing typing indicator if present
+    const existingIndicator = document.getElementById('typingIndicator');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typingIndicator';
+    typingDiv.className = 'flex justify-start chat-message-enter';
+    
+    typingDiv.innerHTML = `
+        <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(typingDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typingIndicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
+
+// updateCharCount function moved to Additional functions section
+
+function showChatCompleted() {
+    document.getElementById('chatInputContainer').classList.add('hidden');
+    document.getElementById('chatPaused').classList.add('hidden');
+    document.getElementById('chatCompleted').classList.remove('hidden');
+}
+
+function showChatPaused() {
+    document.getElementById('chatInputContainer').classList.add('hidden');
+    document.getElementById('chatCompleted').classList.add('hidden');
+    document.getElementById('chatPaused').classList.remove('hidden');
+}
+
+async function pauseChat() {
+    if (!currentChatSession) return;
+    
+    showLoading();
+    
+    try {
+        const response = await fetch('https://us-central1-bermuda-01.cloudfunctions.net/api/chat-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                form_id: currentChatSession.formId,
+                session_id: currentChatSession.sessionId,
+                message: 'i want to pause for now, continue later',
+                device_id: getDeviceId()
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to pause chat');
+        }
+        
+        const result = await response.json();
+        
+        // Add bot response about pausing
+        if (result.response) {
+            addMessageToChat('bot', result.response);
+            messageCount++;
+            updateMessageCount();
+        }
+        
+        showChatPaused();
+        showToast('Chat paused! You can continue anytime.', 'success');
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to pause chat. Please try again.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function resumeChat() {
+    if (!currentChatSession) return;
+    
+    showLoading();
+    
+    try {
+        const response = await fetch('https://us-central1-bermuda-01.cloudfunctions.net/api/resume-chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                session_id: currentChatSession.sessionId
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to resume chat');
+        }
+        
+        const result = await response.json();
+        
+        // Add resume message to chat
+        if (result.response) {
+            addMessageToChat('bot', result.response);
+            messageCount++;
+            updateMessageCount();
+        }
+        
+        // Show chat input again
+        document.getElementById('chatPaused').classList.add('hidden');
+        document.getElementById('chatInputContainer').classList.remove('hidden');
+        
+        showToast('Chat resumed! Continue where you left off.', 'success');
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to resume chat. Please try again.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function getDeviceId() {
+    let deviceId = localStorage.getItem('deviceId');
+    if (!deviceId) {
+        deviceId = generateSessionId();
+        localStorage.setItem('deviceId', deviceId);
+    }
+    return deviceId;
+}
+
+// Load user forms
+async function loadUserForms() {
+    if (!currentUser) return;
+    
+    showLoading();
+    
+    try {
+        const token = await currentUser.getIdToken();
+        const response = await fetch('https://us-central1-bermuda-01.cloudfunctions.net/api/forms', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load forms');
+        }
+        
+        const forms = await response.json();
+        displayForms(forms);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to load forms', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayForms(forms) {
+    const formsGrid = document.getElementById('formsGrid');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (forms.length === 0) {
+        formsGrid.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+    }
+    
+    emptyState.classList.add('hidden');
+    formsGrid.classList.remove('hidden');
+    
+    formsGrid.innerHTML = forms.map(form => `
+        <div class="card p-6">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex-1">
+                    <h3 class="font-heading font-bold mb-2" style="font-size: 1.125rem; color: var(--text-primary);">${form.title}</h3>
+                    <div class="flex items-center space-x-4 font-body" style="font-size: 0.875rem; color: var(--text-secondary);">
+                        <span>Created ${new Date(form.created_at).toLocaleDateString()}</span>
+                        <div class="px-2 py-1 rounded-full" style="background-color: var(--primary); color: white; font-size: 0.75rem;">
+                            ${form.response_count || 0}
+                        </div>
+                    </div>
+                </div>
+                <div class="w-3 h-3 rounded-full" style="background-color: var(--success);"></div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button class="btn-secondary py-2 px-3" style="font-size: 0.875rem;" onclick="testChat('${form.form_id}')">
+                    <i data-lucide="play" class="w-4 h-4 mr-1"></i>
+                    Test
+                </button>
+                <button class="btn-secondary py-2 px-3" style="font-size: 0.875rem;" onclick="viewResponses('${form.form_id}')">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 mr-1"></i>
+                    View
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-2">
+                <button class="btn-secondary py-2 px-2" style="font-size: 0.75rem;" onclick="editForm('${form.form_id}')" title="Edit Form">
+                    <i data-lucide="edit" class="w-3 h-3 mr-1"></i>
+                    Edit
+                </button>
+                <button class="btn-secondary py-2 px-2" style="font-size: 0.75rem;" onclick="shareForm('${form.form_id}')" title="Share Form">
+                    <i data-lucide="share" class="w-3 h-3 mr-1"></i>
+                    Share
+                </button>
+                <button class="py-2 px-2 border rounded" style="font-size: 0.75rem; border-color: var(--error); color: var(--error); background: white;" onclick="deleteForm('${form.form_id}')" title="Delete Form">
+                    <i data-lucide="trash-2" class="w-3 h-3 mr-1"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    // Re-initialize icons
+    lucide.createIcons();
+}
+
+function resetFormBuilder() {
+    // Clear text dump
+    const textDump = document.getElementById('textDump');
+    if (textDump) textDump.value = '';
+    
+    // Clear form title
+    const formTitle = document.getElementById('formTitle');
+    if (formTitle) formTitle.value = '';
+    
+    // Hide form builder, show form creation step
+    const formBuilder = document.getElementById('formBuilder');
+    if (formBuilder) formBuilder.classList.add('hidden');
+    
+    const formCreationStep = document.getElementById('formCreationStep');
+    if (formCreationStep) formCreationStep.classList.remove('hidden');
+    
+    // Clear current form data and editing state
+    currentFormData = null;
+    window.currentEditingFormId = null;
+    
+    // Reset progress indicators
+    updateProgress(0);
+}
+
+// URL routing
+function handleUrlRouting() {
+    const path = window.location.pathname;
+    
+    if (path.startsWith('/form/')) {
+        const formId = path.split('/form/')[1];
+        if (formId) {
+            showChat(formId);
+        } else {
+            showPage('landingPage');
+        }
+    } else if (path === '/dashboard') {
+        if (currentUser) {
+            showDashboard();
+        } else {
+            showPage('landingPage');
+        }
+    } else if (path === '/create') {
+        if (currentUser) {
+            showCreateForm();
+        } else {
+            showPage('landingPage');
+        }
+    } else if (currentUser && path === '/') {
+        showDashboard();
+    } else {
+        showPage('landingPage');
+    }
+}
+
+// Event listeners - moved to initialization section
+
+// Dashboard and form creation event listeners - moved to initialization section
+
+// Chat and modal event listeners - moved to initialization section
+
+// Pause/resume functionality removed for professional experience
+
+// Initialize app - CONSOLIDATED INITIALIZATION
+let isAppInitialized = false;
+
+function initializeApp() {
+    if (isAppInitialized) return;
+    isAppInitialized = true;
+    
+    console.log('🚀 Initializing Bermuda app...');
+    
+    // 1. Hide all pages initially except landing - using both display and hidden class
+    const pages = ['dashboardPage', 'createFormPage', 'chatPage'];
+    pages.forEach(pageId => {
+        const element = document.getElementById(pageId);
+        if (element) {
+            element.style.display = 'none';
+            element.classList.add('hidden');
+        }
+    });
+    
+    // 2. Hide all nested form elements as well
+    const nestedElements = ['formCreationStep', 'formBuilder'];
+    nestedElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.style.display = 'none';
+            element.classList.add('hidden');
+        }
+    });
+    
+    // 3. Show landing page initially
+    const landingPage = document.getElementById('landingPage');
+    if (landingPage) {
+        landingPage.style.display = 'block';
+        landingPage.classList.remove('hidden');
+    }
+    
+    // 4. Set up all event listeners
+    setupEventListeners();
+    
+    // 5. Initialize authentication
+    setupAuthentication();
+    
+    // 6. Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    
+    console.log('✅ App initialization complete');
+}
+
+function setupEventListeners() {
+    // Landing page buttons
+    const getStartedBtn = document.getElementById('getStartedBtn');
+    if (getStartedBtn) {
+        getStartedBtn.addEventListener('click', () => {
+            if (currentUser) {
+                showCreateForm();
+            } else {
+                signInWithGoogle();
+            }
+        });
+    }
+
+    const viewDemoBtn = document.getElementById('viewDemoBtn');
+    if (viewDemoBtn) {
+        viewDemoBtn.addEventListener('click', () => {
+            showChat('test-form-123');
+        });
+    }
+
+    const navGetStarted = document.getElementById('navGetStarted');
+    if (navGetStarted) {
+        navGetStarted.addEventListener('click', () => {
+            if (currentUser) {
+                showCreateForm();
+            } else {
+                signInWithGoogle();
+            }
+        });
+    }
+    
+    // Dashboard and form creation
+    const createFormBtn = document.getElementById('createFormBtn');
+    if (createFormBtn) {
+        createFormBtn.addEventListener('click', showCreateForm);
+    }
+    
+    const backToDashboard = document.getElementById('backToDashboard');
+    if (backToDashboard) {
+        backToDashboard.addEventListener('click', showDashboard);
+    }
+    
+    const inferFormBtn = document.getElementById('inferFormBtn');
+    if (inferFormBtn) {
+        inferFormBtn.addEventListener('click', inferFormFromText);
+    }
+    
+    const saveFormBtn = document.getElementById('saveFormBtn');
+    if (saveFormBtn) {
+        saveFormBtn.addEventListener('click', saveForm);
+    }
+    
+    const previewFormBtn = document.getElementById('previewFormBtn');
+    if (previewFormBtn) {
+        previewFormBtn.addEventListener('click', previewForm);
+    }
+    
+    // Chat and modals
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const message = e.target.value.trim();
+                if (message) {
+                    e.target.value = '';
+                    updateCharCount();
+                    sendMessage(message);
+                }
+            }
+        });
+        
+        chatInput.addEventListener('input', updateCharCount);
+    }
+
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    if (sendMessageBtn) {
+        sendMessageBtn.addEventListener('click', () => {
+            const input = document.getElementById('chatInput');
+            if (input) {
+                const message = input.value.trim();
+                if (message) {
+                    input.value = '';
+                    updateCharCount();
+                    sendMessage(message);
+                }
+            }
+        });
+    }
+
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', copyShareLink);
+    }
+
+    const closeShareModal = document.getElementById('closeShareModal');
+    if (closeShareModal) {
+        closeShareModal.addEventListener('click', () => {
+            const modal = document.getElementById('shareModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    }
+
+    const closePreviewModal = document.getElementById('closePreviewModal');
+    if (closePreviewModal) {
+        closePreviewModal.addEventListener('click', () => {
+            const modal = document.getElementById('previewModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Text dump counter
+    const textDump = document.getElementById('textDump');
+    if (textDump) {
+        textDump.addEventListener('input', updateTextDumpCount);
+    }
+    
+    console.log('✅ Event listeners attached');
+}
+
+function setupAuthentication() {
+    auth.onAuthStateChanged((user) => {
+        console.log('🔐 Auth state changed:', user ? 'Signed in' : 'Signed out');
+        currentUser = user;
+        updateAuthButton();
+        
+        // Handle routing based on auth state and current URL
+        setTimeout(() => {
+            handleUrlRouting();
+        }, 50);
+    });
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeApp);
+// Backup initialization on window load
+window.addEventListener('load', initializeApp);
+
+window.addEventListener('popstate', handleUrlRouting);
+
+// Additional functions for modern UI
+function updateTextDumpCount() {
+    const textDump = document.getElementById('textDump');
+    const counter = document.getElementById('textDumpCount');
+    if (textDump && counter) {
+        counter.textContent = textDump.value.length;
+    }
+}
+
+function updateCharCount() {
+    const input = document.getElementById('chatInput');
+    const count = document.getElementById('charCount');
+    if (input && count) {
+        count.textContent = `${input.value.length}/1000 characters`;
+    }
+}
+
+function useExampleTopic(text) {
+    const textDump = document.getElementById('textDump');
+    if (textDump) {
+        textDump.value = text;
+        updateTextDumpCount();
+        textDump.focus();
+    }
+}
+
+function addNewQuestion() {
+    if (!currentFormData) {
+        currentFormData = { questions: [], demographics: [] };
+    }
+    
+    const newQuestion = {
+        text: '',
+        type: 'text',
+        enabled: true,
+        options: []
+    };
+    
+    currentFormData.questions.push(newQuestion);
+    renderQuestions(currentFormData.questions);
+    updateQuestionCount();
+}
+
+function removeQuestion(index) {
+    if (currentFormData && currentFormData.questions[index]) {
+        currentFormData.questions.splice(index, 1);
+        renderQuestions(currentFormData.questions);
+        updateQuestionCount();
+    }
+}
+
+function toggleAllDemographics(enabled) {
+    if (currentFormData && currentFormData.demographics) {
+        currentFormData.demographics.forEach(demo => {
+            demo.enabled = enabled;
+        });
+        renderDemographics(currentFormData.demographics);
+    }
+}
+
+function updateQuestionCount() {
+    const questionCount = document.getElementById('questionCount');
+    if (questionCount && currentFormData) {
+        const enabledQuestions = currentFormData.questions.filter(q => q.enabled !== false).length;
+        questionCount.textContent = enabledQuestions;
+    }
+}
+
+function updateProgress(step) {
+    // Update step indicators
+    const steps = ['step1', 'step2', 'step3'];
+    const progressBars = ['progressBar1', 'progressBar2'];
+    
+    steps.forEach((stepId, index) => {
+        const stepElement = document.getElementById(stepId);
+        if (stepElement) {
+            const circle = stepElement.querySelector('div');
+            if (index < step) {
+                // Completed step
+                circle.className = 'w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-semibold shadow-lg';
+                stepElement.className = 'flex items-center space-x-3 step-indicator completed';
+            } else if (index === step) {
+                // Active step
+                circle.className = 'w-10 h-10 text-white rounded-full flex items-center justify-center text-sm font-semibold shadow-lg';
+                circle.style.backgroundColor = '#CC5500';
+                stepElement.className = 'flex items-center space-x-3 step-indicator active';
+            } else {
+                // Future step
+                circle.className = 'w-10 h-10 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-sm font-semibold';
+                stepElement.className = 'flex items-center space-x-3 step-indicator';
+            }
+        }
+    });
+    
+    // Update progress bars
+    progressBars.forEach((barId, index) => {
+        const bar = document.getElementById(barId);
+        if (bar) {
+            bar.style.width = index < step ? '100%' : '0%';
+        }
+    });
+}
+
+// Enhanced displayFormBuilder function
+function displayFormBuilder(formData) {
+    const formBuilder = document.getElementById('formBuilder');
+    if (formBuilder) {
+        formBuilder.style.display = 'block';
+        formBuilder.classList.remove('hidden');
+    }
+    document.getElementById('formTitle').value = formData.title || '';
+    
+    // Update progress to step 2
+    updateProgress(1);
+    
+    // Render questions
+    renderQuestions(formData.questions || []);
+    updateQuestionCount();
+    
+    // Render demographics
+    renderDemographics(formData.demographics || []);
+    
+    // Re-initialize icons after displaying form builder
+    lucide.createIcons();
+    
+    // Scroll to form builder
+    document.getElementById('formBuilder').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Text dump counter - moved to consolidated initialization
+
+// Re-initialize icons after any dynamic content
+lucide.createIcons();
+
+// Floating navbar scroll effect
+window.addEventListener('scroll', function() {
+    const navbar = document.getElementById('navbar');
+    if (window.scrollY > 50) {
+        navbar.classList.add('navbar-scrolled');
+    } else {
+        navbar.classList.remove('navbar-scrolled');
+    }
+});
+
+// Smooth scrolling for navigation links
+document.addEventListener('DOMContentLoaded', function() {
+    const navLinks = document.querySelectorAll('a[href^="#"]');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                const offsetTop = targetElement.offsetTop - 80; // Account for fixed navbar
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
+
+function renderFormCard(form) {
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-2xl shadow-lg border border-gray-200 p-8 hover:shadow-xl hover:border-primary-300 transition-all duration-300 group relative transform hover:-translate-y-1';
+    
+    const createdDate = new Date(form.created_at).toLocaleDateString();
+    const responseCount = form.response_count || 0;
+    
+    card.innerHTML = `
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-lg text-gray-900 mb-1 group-hover:text-primary-600 transition-colors truncate">${form.title}</h3>
+                <p class="text-xs text-gray-500">Created ${createdDate}</p>
+            </div>
+            <div class="flex items-center px-2 py-1 rounded-full text-xs font-semibold ${form.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}">
+                ${form.status === 'active' ? 'Active' : 'Draft'}
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="text-center p-2 bg-gray-50 rounded-lg">
+                <div class="text-xl font-bold text-primary-600">${responseCount}</div>
+                <div class="text-xs text-gray-600">Responses</div>
+            </div>
+            <div class="text-center p-2 bg-gray-50 rounded-lg">
+                <div class="text-xl font-bold text-gray-700">~3min</div>
+                <div class="text-xs text-gray-600">Duration</div>
+            </div>
+        </div>
+        
+        <div class="flex flex-wrap gap-2 mb-4">
+            <span class="px-3 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-600">Conversational</span>
+            <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600">AI-powered</span>
+        </div>
+        
+        <div class="flex gap-3">
+            <button class="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 transition-all duration-200" onclick="testChat('${form.form_id}')">
+                <i data-lucide="play" class="w-4 h-4 mr-1"></i>
+                Test
+            </button>
+            <button class="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 transition-all duration-200" onclick="viewResponses('${form.form_id}')">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 mr-1"></i>
+                Results
+            </button>
+        </div>
+        
+        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+            <div class="flex items-center space-x-1">
+                <button class="p-1 text-gray-400 hover:text-primary-600 rounded hover:bg-primary-50 transition-all duration-200" onclick="editForm('${form.form_id}')" title="Edit Form">
+                    <i data-lucide="edit-2" class="w-4 h-4"></i>
+                </button>
+                <button class="p-1 text-gray-400 hover:text-primary-600 rounded hover:bg-primary-50 transition-all duration-200" onclick="shareForm('${form.form_id}')" title="Share Form">
+                    <i data-lucide="share" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <button class="p-1 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition-all duration-200" onclick="deleteForm('${form.form_id}')" title="Delete Form">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `;
+    
+    return card;
+}
+</script>
+
+</body>
+</html>

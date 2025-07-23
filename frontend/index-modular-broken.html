@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -213,22 +215,32 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="css/components.css">
 
 </head>
 <body>
-    <!-- Dynamic content container -->
-    <div id="app-root"></div>
+    <!-- Page content will be loaded dynamically -->
+    <div id="app-container">
+        <div id="landingPage"></div>
+        <div id="dashboardPage" class="hidden"></div>
+        <div id="createFormPage" class="hidden"></div>
+        <div id="chatPage" class="hidden"></div>
+    </div>
 
-    <!-- Modular Scripts -->
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/navigation.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script src="js/forms.js"></script>
-    <script src="js/chat.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/content.js"></script>
-    <script src="js/init.js"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    
+    <!-- Modular JavaScript -->
+    <script src="js/config/firebase.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/auth/auth.js"></script>
+    <script src="js/dashboard/dashboard.js"></script>
+    <script src="js/forms/form-builder.js"></script>
+    <script src="js/forms/form-preview.js"></script>
+    <script src="js/chat/chat.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
