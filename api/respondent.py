@@ -21,7 +21,7 @@ import requests
 # Import our conversation managers and Firebase
 import sys
 sys.path.append(os.path.dirname(__file__))
-from conversation import create_conversation_manager
+# from conversation import create_conversation_manager  # REMOVED: unused
 from agentic_conversation import create_agentic_conversation_manager
 from modern_chat_agents import create_modern_chat_manager
 from natural_conversation_manager import create_natural_conversation_manager
@@ -32,7 +32,7 @@ app = Flask(__name__)
 CORS(app, origins=['https://bermuda-01.web.app'])
 
 # Global conversation managers
-conversation_manager = create_conversation_manager()
+# conversation_manager = create_conversation_manager()  # REMOVED: unused
 agentic_manager = create_agentic_conversation_manager()
 modern_chat_manager = create_modern_chat_manager()
 natural_conversation_manager = create_natural_conversation_manager()

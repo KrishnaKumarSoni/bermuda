@@ -2,7 +2,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bermuda - Conversational Forms</title>
-    <!-- Force refresh: v2025.07.23.04 -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💬%3C/text%3E%3C/svg%3E">
+    <!-- Force refresh: v2025.07.24.05 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -13,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Compiled Tailwind CSS -->
-    <link rel="stylesheet" href="style.css?v=2025.07.23.04">
+    <link rel="stylesheet" href="style.css?v=2025.07.24.05">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     
@@ -29,11 +30,16 @@
             --success: #27AE60;
         }
 
-        /* Base font size - minimum 14px */
-        body {
-            font-size: 14px;
-            line-height: 1.5;
-        }
+                  /* Base font size - minimum 15px */
+          body {
+              font-size: 15px;
+              line-height: 1.5;
+          }
+          
+          /* Ensure no text goes below 15px */
+          *, *::before, *::after {
+              font-size: max(15px, 1rem);
+          }
 
         /* Typography */
         .font-heading {
@@ -195,11 +201,40 @@
             animation-delay: 4s;
         }
         
-        /* Floating navbar background */
+        /* Enhanced Floating navbar styles */
         .navbar-scrolled {
             background-color: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Navbar responsive design */
+        @media (max-width: 768px) {
+            #navbar {
+                max-width: calc(100vw - 2rem);
+                padding: 0 1rem;
+            }
+            
+            #navbar .bg-white\/95 {
+                padding: 0.75rem 1rem;
+            }
+            
+            #postLoginNav .hidden {
+                display: none !important;
+            }
+            
+            #preLoginNav {
+                display: none !important;
+            }
+        }
+
+        /* Smooth navbar interactions */
+        #navbar button:hover {
+            transform: translateY(-1px);
+        }
+
+        #logoBtn:hover .w-8 {
+            transform: scale(1.05);
         }
         
         /* Custom shadows */
@@ -224,7 +259,7 @@
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/navigation.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/dashboard/dashboard.js"></script>
     <script src="js/forms.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/ui.js"></script>

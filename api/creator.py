@@ -15,7 +15,7 @@ from typing import Dict, List, Any, Optional
 # Import our conversation managers and Firebase
 import sys
 sys.path.append(os.path.dirname(__file__))
-from conversation import create_conversation_manager
+# from conversation import create_conversation_manager  # REMOVED: unused
 from agentic_conversation import create_agentic_conversation_manager
 from langchain_manager import get_langchain_manager
 from firebase_integration import firebase_manager
@@ -38,7 +38,7 @@ except Exception:
     pass
 
 # Global conversation managers for inference
-conversation_manager = create_conversation_manager()
+# conversation_manager = create_conversation_manager()  # REMOVED: unused
 agentic_manager = create_agentic_conversation_manager()
 langchain_manager = get_langchain_manager()
 

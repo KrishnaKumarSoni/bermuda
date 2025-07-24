@@ -605,6 +605,9 @@ function handleUrlRouting() {
     }
 }
 
+// Global initialization flag
+let isAppInitialized = false;
+
 function initializeApp() {
     if (isAppInitialized) return;
     isAppInitialized = true;

@@ -52,8 +52,16 @@ This directory contains archived files that were moved from the main repository 
 - `src/` - Tailwind CSS source files (compiled to `frontend/style.css`)
 - `cache-buster.txt` - Cache busting configuration (unused)
 - `.vercelignore` - Vercel ignore file (not used)
+- `requirements.txt` - Legacy requirements file (outdated deps vs `api/requirements.txt`)
 
 **Status**: Build artifacts - May be needed for build system changes
+
+### 📂 `unused-api/`
+**Unused API Files** (2 files)
+- `infer.py` - Duplicate inference endpoint (main.py routes to creator.py instead)
+- `conversation.py` - Legacy conversation manager (imported but never called)
+
+**Status**: Dead code - Safely removed from active codebase
 
 ---
 
